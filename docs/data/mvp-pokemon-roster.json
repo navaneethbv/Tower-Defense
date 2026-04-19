@@ -1,0 +1,34 @@
+{
+  "starters": [
+    {
+      "id": "bulbasaur",
+      "role": ["control", "poison", "sustain"],
+      "allowedTerrain": ["FIELD", "GRASS"],
+      "evolution": ["ivysaur", "venusaur"]
+    },
+    {
+      "id": "charmander",
+      "role": ["burn", "dps", "wave_clear"],
+      "allowedTerrain": ["FIELD", "MOUNTAIN"],
+      "evolution": ["charmeleon", "charizard"]
+    },
+    {
+      "id": "squirtle",
+      "role": ["balanced", "armor_break", "splash"],
+      "allowedTerrain": ["FIELD", "WATER"],
+      "evolution": ["wartortle", "blastoise"]
+    }
+  ],
+  "earlyUnlocks": [
+    "pidgey",
+    "pikachu",
+    "geodude",
+    "oddish",
+    "zubat",
+    "butterfree",
+    "meowth",
+    "abra",
+    "machop",
+    "gastly"
+  ]
+}
