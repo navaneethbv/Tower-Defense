@@ -1,0 +1,88 @@
+:root {
+  color-scheme: dark;
+  --bg: #111827;
+  --panel: #1f2937;
+  --accent: #60a5fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--bg);
+  color: #e5e7eb;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  min-height: 100vh;
+}
+
+.panel {
+  background: var(--panel);
+  padding: 1rem;
+  border-right: 1px solid #374151;
+  overflow-y: auto;
+}
+
+.board-wrap {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.stats p { margin: 0.25rem 0; }
+
+.button-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+button,
+select {
+  width: 100%;
+  background: #111827;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  padding: 0.6rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+button.active,
+button:hover,
+select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+#board {
+  width: min(100%, 960px);
+  height: auto;
+  border: 2px solid #374151;
+  border-radius: 12px;
+  background: #0b1220;
+}
+
+#selectedTower {
+  min-height: 1.2rem;
+  color: #bfdbfe;
+}
+
+#status {
+  min-height: 1.2rem;
+  color: #93c5fd;
+}

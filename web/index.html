@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pokémon Route Defense Prototype</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="panel">
+        <h1>Pokémon Route Defense</h1>
+        <div class="stats">
+          <p>Route: <span id="routeName">Route 1-1</span></p>
+          <p>Wave: <span id="wave">1</span></p>
+          <p>Hearts: <span id="hearts">20</span></p>
+          <p>Gold: <span id="gold">300</span></p>
+          <p>Stars Earned: <span id="stars">0</span></p>
+        </div>
+
+        <h2>Team</h2>
+        <div id="teamButtons" class="button-grid"></div>
+
+        <h2>Placement Targeting</h2>
+        <label for="targetMode">New tower target mode</label>
+        <select id="targetMode">
+          <option value="first">First</option>
+          <option value="last">Last</option>
+          <option value="strongest">Strongest</option>
+          <option value="weakest">Weakest</option>
+          <option value="fastest">Fastest</option>
+          <option value="slowest">Slowest</option>
+          <option value="closest">Closest</option>
+        </select>
+
+        <h2>Selected Tower</h2>
+        <p id="selectedTower">None selected</p>
+        <div class="row">
+          <button id="upgradeBtn">Upgrade (+1 level)</button>
+          <button id="sellBtn">Sell tower</button>
+        </div>
+
+        <h2>Shop</h2>
+        <button id="recruitBtn">Recruit Random Pokémon (120g)</button>
+        <p id="shopHint">Tip: first 2 recruits are role-biased.</p>
+
+        <h2>Controls</h2>
+        <ul>
+          <li>Select a Pokémon and click an empty tile to place.</li>
+          <li>Click a placed tower to inspect/upgrade/sell.</li>
+          <li>Press Start Wave (or Space) to send next wave.</li>
+          <li>Press U to upgrade selected tower.</li>
+        </ul>
+
+        <div class="row">
+          <button id="startWaveBtn">Start Wave</button>
+          <button id="resetBtn">Reset Run</button>
+        </div>
+        <p id="status"></p>
+      </section>
+
+      <section class="board-wrap">
+        <canvas id="board" width="864" height="576"></canvas>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
