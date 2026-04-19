@@ -219,8 +219,10 @@ Then open `http://localhost:8080`.
 
 - Fixed-path route with terrain bands
 - Starter placement and terrain validation
-- Auto-attacking Pokémon towers
+- Auto-attacking Pokémon towers with selectable target mode
+- Tower selection, upgrading, and selling
 - Wave spawning and enemy path movement
 - Gold/hearts/wave/stars loop
 - Random recruit shop with early role bias
+- Keyboard shortcuts (Space: start wave, U: upgrade selected)
 - Pokémon/enemy sprites loaded from PokeAPI sprite URLs

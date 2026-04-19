@@ -1,4 +1,15 @@
-import { TILE, COLS, ROWS, route, pokemonSpecies, recruitPool, enemies, buildWave } from "./data.js";
+import {
+  TILE,
+  COLS,
+  ROWS,
+  MAX_WAVES,
+  route,
+  pokemonSpecies,
+  recruitPool,
+  enemies,
+  buildWave,
+  towerUpgradeCost
+} from "./data.js";
 
 const board = document.getElementById("board");
 const ctx = board.getContext("2d");
@@ -13,7 +24,18 @@ const dom = {
   teamButtons: document.getElementById("teamButtons"),
   recruitBtn: document.getElementById("recruitBtn"),
   startWaveBtn: document.getElementById("startWaveBtn"),
-  resetBtn: document.getElementById("resetBtn")
+  resetBtn: document.getElementById("resetBtn"),
+  targetMode: document.getElementById("targetMode"),
+  selectedTower: document.getElementById("selectedTower"),
+  upgradeBtn: document.getElementById("upgradeBtn"),
+  sellBtn: document.getElementById("sellBtn")
+};
+
+const TERRAIN_COLORS = {
+  FIELD: "#20513b",
+  GRASS: "#1f6a3a",
+  WATER: "#245f8c",
+  MOUNTAIN: "#4c566a"
 };
 
 const pathSet = new Set(route.path.map(([x, y]) => `${x},${y}`));
@@ -28,6 +50,7 @@ const state = {
   recruitCount: 0,
   activeTeam: ["bulbasaur", "charmander", "squirtle"],
   selectedSpecies: "bulbasaur",
+  selectedTowerIndex: null,
   placed: [],
   enemies: [],
   spawnQueue: [],
@@ -36,7 +59,6 @@ const state = {
 };
 
 const images = new Map();
-
 function sprite(url) {
   if (!images.has(url)) {
     const img = new Image();
@@ -46,7 +68,7 @@ function sprite(url) {
   return images.get(url);
 }
 
-function getTileTerrain(y) {
+function tileTerrain(y) {
   if (route.terrainBands.waterRows.includes(y)) return "WATER";
   if (route.terrainBands.mountainRows.includes(y)) return "MOUNTAIN";
   if (route.terrainBands.grassRows.includes(y)) return "GRASS";
@@ -56,14 +78,35 @@ function getTileTerrain(y) {
 function canPlace(speciesId, x, y) {
   if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return false;
   if (pathSet.has(`${x},${y}`)) return false;
-  if (state.placed.some((p) => p.x === x && p.y === y)) return false;
-  const terrain = getTileTerrain(y);
-  return pokemonSpecies[speciesId].allowedTerrain.includes(terrain);
+  if (state.placed.some((t) => t.x === x && t.y === y)) return false;
+  return pokemonSpecies[speciesId].allowedTerrain.includes(tileTerrain(y));
 }
 
-function addStatus(msg, bad = false) {
-  dom.status.textContent = msg;
-  dom.status.style.color = bad ? "#fca5a5" : "#93c5fd";
+function status(message, isError = false) {
+  dom.status.textContent = message;
+  dom.status.style.color = isError ? "#fca5a5" : "#93c5fd";
+}
+
+function updateSelectedTowerText() {
+  if (state.selectedTowerIndex === null) {
+    dom.selectedTower.textContent = "None selected";
+    dom.upgradeBtn.disabled = true;
+    dom.sellBtn.disabled = true;
+    return;
+  }
+
+  const tower = state.placed[state.selectedTowerIndex];
+  if (!tower) {
+    state.selectedTowerIndex = null;
+    updateSelectedTowerText();
+    return;
+  }
+
+  const spec = pokemonSpecies[tower.speciesId];
+  const nextCost = towerUpgradeCost(tower.level);
+  dom.selectedTower.textContent = `${spec.name} Lv.${tower.level} • ${tower.targetMode.toUpperCase()} • Next upgrade: ${nextCost}g`;
+  dom.upgradeBtn.disabled = false;
+  dom.sellBtn.disabled = false;
 }
 
 function updateHud() {
@@ -72,53 +115,44 @@ function updateHud() {
   dom.hearts.textContent = String(state.hearts);
   dom.gold.textContent = String(state.gold);
   dom.stars.textContent = String(state.stars);
+  dom.startWaveBtn.disabled = state.runningWave || state.gameOver;
+
   const recruitCost = 120 + state.recruitCount * 15;
   dom.recruitBtn.textContent = `Recruit Random Pokémon (${recruitCost}g)`;
-  dom.startWaveBtn.disabled = state.runningWave || state.gameOver;
+  updateSelectedTowerText();
 }
 
-function buildTeamButtons() {
+function teamButtons() {
   dom.teamButtons.innerHTML = "";
   state.activeTeam.forEach((speciesId) => {
     const s = pokemonSpecies[speciesId];
     const btn = document.createElement("button");
     btn.textContent = `${s.name} (${s.cost}g)`;
-    btn.dataset.species = speciesId;
-    if (speciesId === state.selectedSpecies) btn.classList.add("active");
+    btn.classList.toggle("active", speciesId === state.selectedSpecies);
     btn.addEventListener("click", () => {
       state.selectedSpecies = speciesId;
-      buildTeamButtons();
+      state.selectedTowerIndex = null;
+      status(`Selected ${s.name} for placement.`);
+      teamButtons();
+      updateHud();
     });
     dom.teamButtons.appendChild(btn);
   });
 }
 
-function placeTower(gridX, gridY) {
-  if (state.gameOver) return;
-  const speciesId = state.selectedSpecies;
-  if (!canPlace(speciesId, gridX, gridY)) {
-    addStatus("Invalid tile for that Pokémon.", true);
-    return;
-  }
-  const species = pokemonSpecies[speciesId];
-  if (state.gold < species.cost) {
-    addStatus("Not enough gold.", true);
-    return;
-  }
-  state.gold -= species.cost;
-  state.placed.push({ speciesId, x: gridX, y: gridY, cooldown: 0, level: 1 });
-  addStatus(`${species.name} placed.`);
-  updateHud();
+function enemyMaxHp(enemy) {
+  return enemies[enemy.type].hp + Math.floor((state.wave - 1) * 6);
 }
 
 function spawnEnemy(type) {
-  const e = enemies[type];
+  const base = enemies[type];
   state.enemies.push({
     type,
-    hp: e.hp + Math.floor((state.wave - 1) * 6),
-    speed: e.speed,
-    reward: e.reward,
-    heartDamage: e.heartDamage,
+    hp: base.hp + Math.floor((state.wave - 1) * 6),
+    speed: base.speed,
+    reward: base.reward,
+    heartDamage: base.heartDamage,
+    armor: base.armor ?? 0,
     pathIndex: 0,
     x: pathPixels[0].x,
     y: pathPixels[0].y,
@@ -126,27 +160,12 @@ function spawnEnemy(type) {
   });
 }
 
-function startWave() {
-  if (state.runningWave || state.gameOver) return;
-  state.runningWave = true;
-  state.elapsedWave = 0;
-  state.spawnQueue = buildWave(state.wave - 1);
-  addStatus(`Wave ${state.wave} started.`);
-  updateHud();
-}
-
 function recruitRandom() {
-  if (state.gameOver) return;
   const cost = 120 + state.recruitCount * 15;
-  if (state.gold < cost) {
-    addStatus("Not enough gold to recruit.", true);
-    return;
-  }
+  if (state.gold < cost) return status("Not enough gold to recruit.", true);
 
-  const biased = state.recruitCount < 2;
-  const pool = biased
-    ? recruitPool.filter((id) => ["dps", "control"].includes(pokemonSpecies[id].role))
-    : recruitPool;
+  const biasedPool = recruitPool.filter((id) => ["dps", "control"].includes(pokemonSpecies[id].role));
+  const pool = state.recruitCount < 2 ? biasedPool : recruitPool;
   const pick = pool[Math.floor(Math.random() * pool.length)];
 
   state.gold -= cost;
@@ -154,48 +173,144 @@ function recruitRandom() {
 
   if (!state.activeTeam.includes(pick)) {
     state.activeTeam.push(pick);
-    addStatus(`Recruited ${pokemonSpecies[pick].name}!`);
-    buildTeamButtons();
+    status(`Recruited ${pokemonSpecies[pick].name}.`);
+    teamButtons();
   } else {
     state.gold += 30;
-    addStatus(`Duplicate ${pokemonSpecies[pick].name} converted to +30g.`);
+    status(`Duplicate ${pokemonSpecies[pick].name}; converted to +30g.`);
   }
   updateHud();
 }
 
-function dist(a, b) {
+function startWave() {
+  if (state.runningWave || state.gameOver) return;
+  state.runningWave = true;
+  state.elapsedWave = 0;
+  state.spawnQueue = buildWave(state.wave - 1);
+  status(`Wave ${state.wave} started.`);
+  updateHud();
+}
+
+function placeTower(x, y) {
+  const speciesId = state.selectedSpecies;
+  const spec = pokemonSpecies[speciesId];
+  if (!canPlace(speciesId, x, y)) return status("Invalid tile for this Pokémon.", true);
+  if (state.gold < spec.cost) return status("Not enough gold.", true);
+
+  state.gold -= spec.cost;
+  state.placed.push({
+    speciesId,
+    x,
+    y,
+    level: 1,
+    cooldown: 0,
+    targetMode: dom.targetMode.value
+  });
+  state.selectedTowerIndex = state.placed.length - 1;
+  status(`${spec.name} placed on ${tileTerrain(y)}.`);
+  updateHud();
+}
+
+function selectTower(x, y) {
+  const found = state.placed.findIndex((t) => t.x === x && t.y === y);
+  if (found === -1) {
+    state.selectedTowerIndex = null;
+    updateHud();
+    return false;
+  }
+  state.selectedTowerIndex = found;
+  const tower = state.placed[found];
+  const spec = pokemonSpecies[tower.speciesId];
+  status(`Selected ${spec.name} tower.`);
+  updateHud();
+  return true;
+}
+
+function upgradeSelectedTower() {
+  if (state.selectedTowerIndex === null) return;
+  const tower = state.placed[state.selectedTowerIndex];
+  if (!tower) return;
+
+  const cost = towerUpgradeCost(tower.level);
+  if (state.gold < cost) return status("Not enough gold to upgrade.", true);
+
+  state.gold -= cost;
+  tower.level += 1;
+  status(`${pokemonSpecies[tower.speciesId].name} upgraded to Lv.${tower.level}.`);
+  updateHud();
+}
+
+function sellSelectedTower() {
+  if (state.selectedTowerIndex === null) return;
+  const tower = state.placed[state.selectedTowerIndex];
+  if (!tower) return;
+
+  const baseCost = pokemonSpecies[tower.speciesId].cost;
+  const invested = Array.from({ length: tower.level - 1 }, (_, i) => towerUpgradeCost(i + 1)).reduce((a, b) => a + b, 0);
+  const refund = Math.round((baseCost + invested) * 0.65);
+  state.gold += refund;
+  state.placed.splice(state.selectedTowerIndex, 1);
+  state.selectedTowerIndex = null;
+  status(`Tower sold for ${refund}g.`);
+  updateHud();
+}
+
+function distance(a, b) {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+function chooseTarget(towerPoint, candidates, mode) {
+  if (!candidates.length) return null;
+
+  switch (mode) {
+    case "last":
+      return [...candidates].sort((a, b) => a.pathIndex - b.pathIndex)[0];
+    case "strongest":
+      return [...candidates].sort((a, b) => b.hp - a.hp)[0];
+    case "weakest":
+      return [...candidates].sort((a, b) => a.hp - b.hp)[0];
+    case "fastest":
+      return [...candidates].sort((a, b) => b.speed - a.speed)[0];
+    case "slowest":
+      return [...candidates].sort((a, b) => a.speed - b.speed)[0];
+    case "closest":
+      return [...candidates].sort((a, b) => distance(towerPoint, a) - distance(towerPoint, b))[0];
+    case "first":
+    default:
+      return [...candidates].sort((a, b) => b.pathIndex - a.pathIndex)[0];
+  }
+}
+
 function updateTowers(dt) {
-  state.placed.forEach((tower) => {
+  for (const tower of state.placed) {
     const spec = pokemonSpecies[tower.speciesId];
     tower.cooldown -= dt;
-    if (tower.cooldown > 0) return;
+    if (tower.cooldown > 0) continue;
 
     const towerPoint = { x: tower.x * TILE + TILE / 2, y: tower.y * TILE + TILE / 2 };
-    const inRange = state.enemies
-      .filter((e) => e.alive && dist(towerPoint, e) <= spec.range * TILE)
-      .sort((a, b) => b.pathIndex - a.pathIndex);
+    const rangePx = spec.range * TILE * (1 + (tower.level - 1) * 0.08);
+    const inRange = state.enemies.filter((enemy) => enemy.alive && distance(towerPoint, enemy) <= rangePx);
+    if (!inRange.length) continue;
 
-    if (!inRange.length) return;
+    const target = chooseTarget(towerPoint, inRange, tower.targetMode);
+    if (!target) continue;
 
-    const target = inRange[0];
-    target.hp -= spec.damage * (1 + (tower.level - 1) * 0.25);
+    const baseDmg = spec.damage * (1 + (tower.level - 1) * 0.22);
+    const finalDmg = Math.max(1, baseDmg - target.armor);
+    target.hp -= finalDmg;
 
-    if (spec.role === "control" && Math.random() < 0.15) {
-      target.speed *= 0.8;
+    if (spec.role === "control" && Math.random() < 0.12) {
+      target.speed = Math.max(0.5, target.speed * 0.84);
     }
 
     if (target.hp <= 0 && target.alive) {
       target.alive = false;
       state.gold += target.reward;
     }
-
-    tower.cooldown = spec.cooldown;
-  });
+    tower.cooldown = Math.max(0.16, spec.cooldown * Math.pow(0.98, tower.level - 1));
+  }
 }
 
 function updateEnemies(dt) {
@@ -210,7 +325,7 @@ function updateEnemies(dt) {
         state.hearts = 0;
         state.gameOver = true;
         state.runningWave = false;
-        addStatus("Defeat. Hearts reached 0.", true);
+        status("Defeat. Hearts reached 0.", true);
       }
       continue;
     }
@@ -218,26 +333,26 @@ function updateEnemies(dt) {
     const next = pathPixels[nextIndex];
     const vx = next.x - enemy.x;
     const vy = next.y - enemy.y;
-    const d = Math.sqrt(vx * vx + vy * vy) || 1;
-    const move = enemy.speed * TILE * dt;
+    const length = Math.sqrt(vx * vx + vy * vy) || 1;
+    const step = enemy.speed * TILE * dt;
 
-    if (move >= d) {
+    if (step >= length) {
       enemy.x = next.x;
       enemy.y = next.y;
       enemy.pathIndex = nextIndex;
     } else {
-      enemy.x += (vx / d) * move;
-      enemy.y += (vy / d) * move;
+      enemy.x += (vx / length) * step;
+      enemy.y += (vy / length) * step;
     }
   }
 
-  state.enemies = state.enemies.filter((e) => e.alive);
+  state.enemies = state.enemies.filter((enemy) => enemy.alive);
 }
 
 function updateWave(dt) {
   if (!state.runningWave) return;
-  state.elapsedWave += dt;
 
+  state.elapsedWave += dt;
   while (state.spawnQueue.length && state.spawnQueue[0].delay <= state.elapsedWave) {
     const { type } = state.spawnQueue.shift();
     spawnEnemy(type);
@@ -247,18 +362,14 @@ function updateWave(dt) {
     state.runningWave = false;
     state.gold += 35 + state.wave * 4;
     state.stars += 1;
-    addStatus(`Wave ${state.wave} cleared!`);
+    status(`Wave ${state.wave} cleared.`);
     state.wave += 1;
-    if (state.wave > 20) {
+
+    if (state.wave > MAX_WAVES) {
       state.gameOver = true;
-      addStatus("Victory! Prototype route cleared.");
+      status("Victory! Route cleared.");
     }
   }
-}
-
-function drawTile(x, y, color) {
-  ctx.fillStyle = color;
-  ctx.fillRect(x * TILE, y * TILE, TILE - 1, TILE - 1);
 }
 
 function drawBoard() {
@@ -267,33 +378,42 @@ function drawBoard() {
   for (let y = 0; y < ROWS; y += 1) {
     for (let x = 0; x < COLS; x += 1) {
       const key = `${x},${y}`;
-      if (pathSet.has(key)) {
-        drawTile(x, y, "#9f7a47");
-      } else {
-        const terrain = getTileTerrain(y);
-        const color = terrain === "WATER" ? "#245f8c" : terrain === "MOUNTAIN" ? "#4c566a" : terrain === "GRASS" ? "#1f6a3a" : "#20513b";
-        drawTile(x, y, color);
-      }
+      const color = pathSet.has(key) ? "#9f7a47" : TERRAIN_COLORS[tileTerrain(y)];
+      ctx.fillStyle = color;
+      ctx.fillRect(x * TILE, y * TILE, TILE - 1, TILE - 1);
     }
   }
 
-  state.placed.forEach((tower) => {
+  state.placed.forEach((tower, idx) => {
     const spec = pokemonSpecies[tower.speciesId];
-    const x = tower.x * TILE + 8;
-    const y = tower.y * TILE + 8;
-    const img = sprite(spec.sprite);
-    ctx.drawImage(img, x, y, TILE - 16, TILE - 16);
+    const px = tower.x * TILE + 7;
+    const py = tower.y * TILE + 7;
+
+    if (state.selectedTowerIndex === idx) {
+      ctx.strokeStyle = "#93c5fd";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(tower.x * TILE + 2, tower.y * TILE + 2, TILE - 4, TILE - 4);
+    }
+
+    ctx.drawImage(sprite(spec.sprite), px, py, TILE - 14, TILE - 14);
   });
 
   state.enemies.forEach((enemy) => {
-    const img = sprite(enemies[enemy.type].sprite);
-    ctx.drawImage(img, enemy.x - 18, enemy.y - 18, 36, 36);
+    ctx.drawImage(sprite(enemies[enemy.type].sprite), enemy.x - 18, enemy.y - 18, 36, 36);
     ctx.fillStyle = "#111827";
     ctx.fillRect(enemy.x - 16, enemy.y - 24, 32, 4);
     ctx.fillStyle = "#ef4444";
-    const ratio = Math.max(0, enemy.hp / (enemies[enemy.type].hp + Math.floor((state.wave - 1) * 6)));
-    ctx.fillRect(enemy.x - 16, enemy.y - 24, 32 * ratio, 4);
+    ctx.fillRect(enemy.x - 16, enemy.y - 24, 32 * Math.max(0, enemy.hp / enemyMaxHp(enemy)), 4);
   });
+}
+
+function clickBoard(event) {
+  const rect = board.getBoundingClientRect();
+  const x = Math.floor(((event.clientX - rect.left) * (board.width / rect.width)) / TILE);
+  const y = Math.floor(((event.clientY - rect.top) * (board.height / rect.height)) / TILE);
+
+  if (selectTower(x, y)) return;
+  placeTower(x, y);
 }
 
 function reset() {
@@ -306,29 +426,34 @@ function reset() {
     recruitCount: 0,
     activeTeam: ["bulbasaur", "charmander", "squirtle"],
     selectedSpecies: "bulbasaur",
+    selectedTowerIndex: null,
     placed: [],
     enemies: [],
     spawnQueue: [],
     elapsedWave: 0,
     gameOver: false
   });
-  buildTeamButtons();
+  teamButtons();
   updateHud();
-  addStatus("Run reset.");
+  status("Run reset.");
 }
 
-board.addEventListener("click", (event) => {
-  const rect = board.getBoundingClientRect();
-  const scaleX = board.width / rect.width;
-  const scaleY = board.height / rect.height;
-  const x = Math.floor(((event.clientX - rect.left) * scaleX) / TILE);
-  const y = Math.floor(((event.clientY - rect.top) * scaleY) / TILE);
-  placeTower(x, y);
-});
-
+board.addEventListener("click", clickBoard);
 dom.recruitBtn.addEventListener("click", recruitRandom);
 dom.startWaveBtn.addEventListener("click", startWave);
 dom.resetBtn.addEventListener("click", reset);
+dom.upgradeBtn.addEventListener("click", upgradeSelectedTower);
+dom.sellBtn.addEventListener("click", sellSelectedTower);
+
+document.addEventListener("keydown", (event) => {
+  if (event.code === "Space") {
+    event.preventDefault();
+    startWave();
+  }
+  if (event.key.toLowerCase() === "u") {
+    upgradeSelectedTower();
+  }
+});
 
 let last = performance.now();
 function loop(now) {
@@ -344,7 +469,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-buildTeamButtons();
+teamButtons();
 updateHud();
-addStatus("Select a starter, place it, and start wave 1.");
+status("Place your starter, then press Start Wave.");
 requestAnimationFrame(loop);

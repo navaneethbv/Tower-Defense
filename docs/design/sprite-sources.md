@@ -1,22 +1,28 @@
 # Sprite Sources (Web Research)
 
-These are practical sprite sources for prototype use.
-
 ## Primary Source
 - PokeAPI sprites repository: https://github.com/PokeAPI/sprites
-- Raw sprite URL pattern used in this prototype:
-  - `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{dex}.png`
+- API docs: https://pokeapi.co/docs
 
-Examples used by the prototype:
-- Bulbasaur: https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png
-- Charmander: https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png
-- Squirtle: https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png
-- Pikachu: https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png
-- Rattata: https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/19.png
+Raw URL pattern used by the prototype:
+- `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{dex}.png`
 
-## API Docs
-- https://pokeapi.co/docs
+Examples currently used:
+- Bulbasaur: `.../1.png`
+- Charmander: `.../4.png`
+- Squirtle: `.../7.png`
+- Pidgey: `.../16.png`
+- Rattata: `.../19.png`
+- Pikachu: `.../25.png`
+- Zubat: `.../41.png`
+- Oddish: `.../43.png`
+- Geodude: `.../74.png`
+- Onix: `.../95.png`
 
-## Trademark / IP Note
+## Local asset pull attempt
+A local sprite download was attempted in this environment using `curl`, but outbound tunnel requests to sprite hosts returned `403 Forbidden`.
+Because of that environment limitation, sprites remain referenced as remote URLs in `web/data.js` for now.
+
+## Trademark / IP note
 Pokémon names and characters are trademarks of Nintendo/Game Freak/The Pokémon Company.
-If this project is distributed publicly/commercially, verify legal usage rights for all art assets.
+Verify legal usage rights before distribution.
