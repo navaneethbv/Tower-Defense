@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "id": "route_1_1",
+      "name": "Route 1-1",
+      "unlockStars": 0,
+      "waves": 30,
+      "terrainMix": ["FIELD", "GRASS"],
+      "specialRule": "intro"
+    },
+    {
+      "id": "route_1_2",
+      "name": "Route 1-2",
+      "unlockStars": 1,
+      "waves": 40,
+      "terrainMix": ["FIELD", "GRASS", "WATER"],
+      "specialRule": "invisible_intro"
+    },
+    {
+      "id": "route_1_3",
+      "name": "Route 1-3",
+      "unlockStars": 30,
+      "waves": 50,
+      "terrainMix": ["FIELD", "GRASS", "WATER", "MOUNTAIN"],
+      "specialRule": "boss_route"
+    }
+  ]
+}
