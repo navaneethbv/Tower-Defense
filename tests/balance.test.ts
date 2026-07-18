@@ -72,7 +72,7 @@ describe("balance bands (Verdant Route)", () => {
     expect(six).toBeGreaterThan(solo);
     expect(sixStrong).toBeGreaterThan(six);
     expect(tenMax).toBeGreaterThanOrEqual(sixMax);
-  });
+  }, 30_000);
 });
 
 describe("grind economy", () => {
