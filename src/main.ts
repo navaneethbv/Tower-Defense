@@ -8,8 +8,10 @@ import { showHome } from "./ui/screens/homeScreen";
 import { showLoadout } from "./ui/screens/loadoutScreen";
 import { showShop } from "./ui/screens/shopScreen";
 import { showCollection } from "./ui/screens/collectionScreen";
-import { runGame } from "./ui/gameScreen";
+import { runGame, showCaptureResults } from "./ui/gameScreen";
 import { syncAchievements } from "./meta/achievements";
+import { milestoneFor, isMilestoneWave } from "./waves/milestones";
+import { makeOwned } from "./meta/ivs";
 
 // Top-level game flow: starter pick (once) -> home hub -> loadout -> run -> apply
 // results -> back to home. State lives in the SaveGame, persisted after each step.
@@ -17,6 +19,23 @@ async function main(): Promise<void> {
   const app = document.getElementById("app");
   if (!app) throw new Error("#app root not found");
   app.style.alignItems = "flex-start";
+
+  if (import.meta.env.DEV) {
+    const qaCaptureWave = Number(new URLSearchParams(window.location.search).get("__qaCapture"));
+    if (isMilestoneWave(qaCaptureWave)) {
+      const qaMap = getMap("verdant_route");
+      const qaEncounter = milestoneFor(qaMap, qaCaptureWave, 42)!;
+      await showCaptureResults(app, [
+        {
+          pokemon: makeOwned(qaEncounter.speciesId, { damage: 12, range: 9, attackSpeed: 14 }),
+          wave: qaCaptureWave,
+          tier: qaEncounter.tier,
+          guaranteed: true,
+        },
+      ]);
+      return;
+    }
+  }
 
   const save = loadSave();
 
@@ -52,9 +71,10 @@ async function main(): Promise<void> {
     const runSeed = (Math.random() * 0xffffffff) >>> 0;
     const result = await runGame(app, map, team, runSeed, save.settings, () => saveSave(save));
 
-    // Persist run outcome: coins, best wave, milestone eggs, and persistent XP.
-    applyCompletedRun(save, map, result);
+    // Persist the run atomically, then present any direct milestone captures.
+    const applied = applyCompletedRun(save, map, result);
     saveSave(save);
+    await showCaptureResults(app, applied.captures);
   }
 }
 

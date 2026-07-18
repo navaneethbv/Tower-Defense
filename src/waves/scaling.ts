@@ -5,12 +5,24 @@ import type { EnemyDef, WaveGenParams } from "../types";
 
 export const COUNT_CAP = 40;
 
+export function actForWave(waveNumber: number): 1 | 2 | 3 | 4 {
+  return Math.min(4, Math.max(1, Math.ceil(waveNumber / 25))) as 1 | 2 | 3 | 4;
+}
+
 // Power-law HP growth: steep in the early waves (so a lone tower is quickly
 // overwhelmed) but sub-exponential later (so a full, upgraded team can still
 // clear wave 50). `hpGrowth` is the power exponent; `hpBase`/30 scales it.
 export function waveHpMultiplier(params: WaveGenParams, waveNumber: number): number {
+  const act = actForWave(waveNumber);
+  const actStart = (act - 1) * 25 + 1;
+  const actPressure = 1 + (act - 1) * 0.08 + (waveNumber - actStart) * 0.002;
   const lateGameRelief = 1 / (1 + 0.055 * Math.max(0, waveNumber - 10));
-  return (params.hpBase / 30) * Math.pow(waveNumber, params.hpGrowth) * lateGameRelief;
+  return (
+    (params.hpBase / 30) *
+    Math.pow(waveNumber, params.hpGrowth) *
+    lateGameRelief *
+    actPressure
+  );
 }
 
 export function enemyHp(def: EnemyDef, params: WaveGenParams, waveNumber: number): number {
@@ -32,7 +44,9 @@ export function enemySpeed(def: EnemyDef, waveNumber: number): number {
 }
 
 export function enemyArmor(def: EnemyDef, waveNumber: number): number {
-  return def.armor + Math.floor(waveNumber / 12);
+  const earlyArmor = Math.floor(Math.min(waveNumber, 50) / 12);
+  const lateArmor = Math.floor(Math.max(0, waveNumber - 50) / 20);
+  return def.armor + earlyArmor + lateArmor;
 }
 
 export function enemyReward(def: EnemyDef, waveNumber: number): number {

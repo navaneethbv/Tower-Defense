@@ -75,7 +75,7 @@ describe("egg economy", () => {
     expect(common).toBeLessThan(9_000);
   });
 
-  it("applies a completed run and grants milestone eggs only for a new best", () => {
+  it("keeps completed-run milestone rewards out of the egg inventory", () => {
     const save = freshSave();
     const map = getMap("verdant_route");
 
@@ -83,15 +83,17 @@ describe("egg economy", () => {
       wavesCleared: 12,
       bossKills: 1,
       runXpByUid: {},
+      runSeed: 1,
     });
 
     expect(first.newBest).toBe(true);
-    expect(first.eggsGranted).toHaveLength(1);
+    expect(first.eggsGranted).toEqual([]);
 
     const second = applyCompletedRun(save, map, {
       wavesCleared: 11,
       bossKills: 1,
       runXpByUid: {},
+      runSeed: 1,
     });
 
     expect(second.newBest).toBe(false);

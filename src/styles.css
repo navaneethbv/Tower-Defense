@@ -83,9 +83,46 @@ canvas {
 }
 
 .board-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.milestone-banner {
+  position: absolute;
+  z-index: 5;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 9px 14px;
+  border: 2px solid #fbbf24;
+  background: #182536;
+  color: #fef3c7;
+  box-shadow: 4px 4px 0 #08121d;
+  font-weight: 700;
+  text-align: center;
+}
+
+.milestone-banner[hidden] {
+  display: none;
+}
+
+.milestone-banner.tier-power,
+.capture-card.tier-power {
+  border-color: #fb923c;
+}
+
+.milestone-banner.tier-mythical,
+.capture-card.tier-mythical {
+  border-color: #c084fc;
+}
+
+.milestone-banner.tier-legendary,
+.capture-card.tier-legendary {
+  border-color: #f472b6;
 }
 
 .topbar {
@@ -280,6 +317,57 @@ button.ability-btn:hover:not(:disabled) {
   border-radius: 12px;
   padding: 24px 32px;
   text-align: center;
+}
+
+.capture-screen {
+  padding: 24px 0 40px;
+  text-align: center;
+}
+
+.capture-kicker,
+.capture-tier {
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.capture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 280px));
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.capture-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px;
+  border: 3px solid #60a5fa;
+  background: var(--panel);
+  box-shadow: 4px 4px 0 #08121d;
+}
+
+.capture-card img {
+  width: 112px;
+  height: 112px;
+  image-rendering: pixelated;
+}
+
+.capture-card h2 {
+  margin: 0;
+}
+
+.capture-card small {
+  color: var(--muted);
+}
+
+.capture-continue {
+  min-width: 220px;
 }
 
 /* --- Meta screens --- */

@@ -1,4 +1,11 @@
-import type { MapConfig, OwnedPokemon, SaveGame, TargetingMode } from "../types";
+import type {
+  CapturedPokemon,
+  MapConfig,
+  MilestoneEncounter,
+  OwnedPokemon,
+  SaveGame,
+  TargetingMode,
+} from "../types";
 import { getSpecies } from "../data/species";
 import { spriteUrl, TILE, BOARD_WIDTH, BOARD_HEIGHT } from "../data/constants";
 import { GameSession } from "../engine/game";
@@ -7,6 +14,7 @@ import { drawBoard } from "../engine/render/renderer";
 import type { Tower } from "../engine/tower";
 import { advanceAutoWaveTimer } from "../engine/autoWave";
 import { playSound } from "./audio";
+import { generateWave } from "../waves/generator";
 
 const TARGETING_MODES: TargetingMode[] = [
   "first",
@@ -23,6 +31,77 @@ export interface GameScreenResult {
   wavesCleared: number;
   bossKills: number;
   runXpByUid: Record<string, number>;
+  runSeed: number;
+}
+
+export interface CaptureResultView {
+  speciesName: string;
+  sprite: string;
+  tierLabel: string;
+  waveLabel: string;
+  rewardLabel: string;
+  ivLabel: string;
+}
+
+function titleCase(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function milestoneBannerView(encounter: MilestoneEncounter): string {
+  const species = getSpecies(encounter.speciesId);
+  return `Special encounter · ${titleCase(encounter.tier)} · ${species.name} · Wave ${encounter.wave}`;
+}
+
+export function captureResultView(capture: CapturedPokemon): CaptureResultView {
+  const species = getSpecies(capture.pokemon.speciesId);
+  const { damage, range, attackSpeed } = capture.pokemon.ivs;
+  return {
+    speciesName: species.name,
+    sprite: spriteUrl(species.dex),
+    tierLabel: titleCase(capture.tier),
+    waveLabel: `Wave ${capture.wave}`,
+    rewardLabel: capture.guaranteed
+      ? "Guaranteed first-clear capture"
+      : "Repeat-clear bonus capture",
+    ivLabel: `DMG ${damage} · RNG ${range} · SPD ${attackSpeed}`,
+  };
+}
+
+export function showCaptureResults(
+  root: HTMLElement,
+  captures: CapturedPokemon[],
+): Promise<void> {
+  if (captures.length === 0) return Promise.resolve();
+  return new Promise((resolve) => {
+    root.innerHTML = "";
+    const screen = document.createElement("section");
+    screen.className = "capture-screen meta-screen";
+    screen.innerHTML = `
+      <p class="capture-kicker">Route rewards</p>
+      <h1>Milestone captured!</h1>
+      <p class="muted">These Pokémon joined your collection with newly rolled IVs.</p>
+      <div class="capture-grid">
+        ${captures
+          .map((capture) => {
+            const view = captureResultView(capture);
+            return `<article class="capture-card tier-${capture.tier}">
+              <span class="capture-tier">${view.tierLabel}</span>
+              <img src="${view.sprite}" alt="${view.speciesName}" />
+              <h2>${view.speciesName}</h2>
+              <span>${view.waveLabel}</span>
+              <b>${view.rewardLabel}</b>
+              <small>${view.ivLabel}</small>
+            </article>`;
+          })
+          .join("")}
+      </div>
+      <button class="primary capture-continue">Continue to routes</button>
+    `;
+    screen.querySelector<HTMLButtonElement>(".capture-continue")!.addEventListener("click", () =>
+      resolve(),
+    );
+    root.appendChild(screen);
+  });
 }
 
 // Renders and drives a single run. Resolves when the run ends (win or loss).
@@ -39,6 +118,7 @@ export function runGame(
     let deployUid: string | null = null;
     let hoveredTile: { col: number; row: number } | null = null;
     let autoWaveDelay = 0.75;
+    let milestoneBannerTimer: number | undefined;
 
     const game = new GameSession(map, team, runSeed, {
       onChange: () => renderHud(),
@@ -47,6 +127,12 @@ export function runGame(
         showGameOver(won, wavesCleared);
       },
     });
+    if (import.meta.env.DEV) {
+      const qaStartWave = Number(new URLSearchParams(window.location.search).get("__qaStartWave"));
+      if (Number.isInteger(qaStartWave) && qaStartWave >= 0 && qaStartWave < map.totalWaves) {
+        game.waveNumber = qaStartWave;
+      }
+    }
 
     root.innerHTML = "";
     const layout = document.createElement("div");
@@ -69,6 +155,7 @@ export function runGame(
           <button id="hud-start" class="primary"></button>
         </div>
         <canvas id="board" width="${BOARD_WIDTH}" height="${BOARD_HEIGHT}"></canvas>
+        <div id="milestone-banner" class="milestone-banner" aria-live="polite" hidden></div>
       </div>
       <aside class="sidebar">
         <h3>Team</h3>
@@ -90,6 +177,7 @@ export function runGame(
     const teamPanel = layout.querySelector<HTMLElement>("#team-panel")!;
     const towerPanel = layout.querySelector<HTMLElement>("#tower-panel")!;
     const hint = layout.querySelector<HTMLElement>("#hint")!;
+    const milestoneBanner = layout.querySelector<HTMLElement>("#milestone-banner")!;
 
     const loop = new GameLoop(
       (dt) => {
@@ -351,12 +439,28 @@ export function runGame(
       `;
       layout.appendChild(overlay);
       overlay.querySelector<HTMLButtonElement>("#overlay-done")!.addEventListener("click", () => {
-        resolve({ won, wavesCleared, bossKills: game.bossKills, runXpByUid: game.runXpByUid() });
+        resolve({
+          won,
+          wavesCleared,
+          bossKills: game.bossKills,
+          runXpByUid: game.runXpByUid(),
+          runSeed,
+        });
       });
     }
 
     function startWave(): void {
       if (game.phase !== "building") return;
+      const plan = generateWave(map, game.waveNumber + 1, runSeed);
+      if (plan.milestone) {
+        milestoneBanner.textContent = milestoneBannerView(plan.milestone);
+        milestoneBanner.className = `milestone-banner tier-${plan.milestone.tier}`;
+        milestoneBanner.hidden = false;
+        if (milestoneBannerTimer !== undefined) window.clearTimeout(milestoneBannerTimer);
+        milestoneBannerTimer = window.setTimeout(() => {
+          milestoneBanner.hidden = true;
+        }, 4500);
+      }
       game.startWave();
       playSound("wave", settings.muted);
     }

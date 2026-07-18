@@ -94,6 +94,43 @@ describe("save system", () => {
     expect(loaded.achievements).toEqual([]);
   });
 
+  it("migrates completed version 2 milestones into claimed captures", () => {
+    const legacyEgg = { uid: "legacy-egg", rarity: "rare", source: "wave_drop", obtainedAt: 1 };
+    const legacyPokemon = {
+      uid: "legacy-pokemon",
+      speciesId: "charmander",
+      ivs: { damage: 1, range: 2, attackSpeed: 3 },
+      level: 4,
+      xp: 5,
+      hatchedAt: 6,
+    };
+    localStorage.setItem(
+      "ptd.save",
+      JSON.stringify({
+        version: 2,
+        bestWaveByMap: { verdant_route: 50 },
+        eggDropsClaimedByMap: { verdant_route: 50 },
+        eggs: [legacyEgg],
+        collection: [legacyPokemon],
+      }),
+    );
+
+    const loaded = loadSave();
+    expect(loaded.version).toBe(3);
+    expect(loaded.milestoneCapturesByMap.verdant_route).toEqual({ 25: true, 50: true });
+    expect(loaded.eggs).toEqual([legacyEgg]);
+    expect(loaded.collection).toEqual([legacyPokemon]);
+  });
+
+  it("infers claimed captures from old best waves without an egg marker", () => {
+    localStorage.setItem(
+      "ptd.save",
+      JSON.stringify({ version: 2, bestWaveByMap: { verdant_route: 50 } }),
+    );
+
+    expect(loadSave().milestoneCapturesByMap.verdant_route).toEqual({ 25: true, 50: true });
+  });
+
   it("grants starter coins exactly once via chooseStarter", () => {
     const s = freshSave();
     chooseStarter(s, "uid-1", "charmander");
@@ -220,7 +257,8 @@ describe("persistent leveling", () => {
     const res = applyCompletedRun(s, map, {
       wavesCleared: 10,
       bossKills: 1,
-      runXpByUid: { "x": 50, "nonexistent": 100 }
+      runXpByUid: { "x": 50, "nonexistent": 100 },
+      runSeed: 1,
     });
 
     expect(res.newBest).toBe(true);

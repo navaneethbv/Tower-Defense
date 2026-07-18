@@ -12,6 +12,7 @@ import {
   isBossWave,
   isSwarmWave,
 } from "./scaling";
+import { milestoneFor } from "./milestones";
 
 function statMods(def: EnemyDef, params: WaveGenParams, n: number, extraHp = 1, boss = false): EnemyStatMods {
   return {
@@ -49,8 +50,22 @@ export function generateWave(map: MapConfig, n: number, runSeed: number): WavePl
   const rng = makeRng(waveSeed(runSeed, n, params.seedSalt));
   const interval = spawnInterval(params, n);
   const spawns: WaveSpawn[] = [];
+  const milestone = milestoneFor(map, n, runSeed);
 
-  if (isBossWave(n)) {
+  if (milestone) {
+    const escortCount = Math.min(12, Math.round(waveCount(params, n) * 0.3));
+    const escortId = weightedPick(activePool(params, n), rng);
+    const escort = getEnemy(escortId);
+    for (let i = 0; i < escortCount; i++) {
+      spawns.push({ enemyId: escortId, delay: i * interval, mods: statMods(escort, params, n) });
+    }
+    const boss = getEnemy(milestone.speciesId);
+    spawns.push({
+      enemyId: milestone.speciesId,
+      delay: escortCount * interval + 1.5,
+      mods: statMods(boss, params, n, n === 100 ? 6.5 : 5.25, true),
+    });
+  } else if (isBossWave(n)) {
     // Escort swarm (60% of a normal wave) then the boss.
     const escortCount = Math.round(waveCount(params, n) * 0.6);
     const escortId = weightedPick(activePool(params, n), rng);
@@ -89,8 +104,9 @@ export function generateWave(map: MapConfig, n: number, runSeed: number): WavePl
   spawns.sort((a, b) => a.delay - b.delay);
   return {
     waveNumber: n,
-    isBoss: isBossWave(n),
+    isBoss: Boolean(milestone) || isBossWave(n),
     spawns,
     goldReward: waveClearBonus(n),
+    milestone,
   };
 }

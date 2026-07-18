@@ -1,8 +1,9 @@
-import type { SaveGame } from "../types";
+import type { MilestoneCaptureRecord, SaveGame } from "../types";
 import { STARTER_POKECOINS } from "../data/constants";
 
 const KEY = "ptd.save";
-export const CURRENT_VERSION = 2;
+export const CURRENT_VERSION = 3;
+const CAPTURE_MILESTONES = [25, 50, 75, 100] as const;
 
 export function freshSave(): SaveGame {
   const now = Date.now();
@@ -17,6 +18,7 @@ export function freshSave(): SaveGame {
     team: [null, null, null, null, null, null],
     bestWaveByMap: {},
     eggDropsClaimedByMap: {},
+    milestoneCapturesByMap: {},
     settings: { speed: 1, muted: false, autoWave: false, particles: true },
     stats: {
       runs: 0,
@@ -35,6 +37,7 @@ function migrate(raw: Record<string, unknown>): SaveGame {
   const base = freshSave();
   const rawSettings = asRecord(raw.settings);
   const rawStats = asRecord(raw.stats);
+  const rawVersion = typeof raw.version === "number" ? raw.version : 0;
   const merged = {
     ...base,
     ...raw,
@@ -43,13 +46,45 @@ function migrate(raw: Record<string, unknown>): SaveGame {
     achievements: Array.isArray(raw.achievements)
       ? raw.achievements.filter((value): value is string => typeof value === "string")
       : [],
+    eggDropsClaimedByMap: asNumberRecord(raw.eggDropsClaimedByMap),
+    milestoneCapturesByMap: asCaptureRecord(raw.milestoneCapturesByMap),
   } as SaveGame;
+  if (rawVersion < 3) {
+    for (const [mapId, bestWave] of Object.entries(asNumberRecord(raw.bestWaveByMap))) {
+      const claimed = merged.milestoneCapturesByMap[mapId] ?? {};
+      for (const milestone of CAPTURE_MILESTONES) {
+        if (bestWave >= milestone) claimed[milestone] = true;
+      }
+      if (Object.keys(claimed).length > 0) merged.milestoneCapturesByMap[mapId] = claimed;
+    }
+  }
   merged.version = CURRENT_VERSION;
   return merged;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
+}
+
+function asNumberRecord(value: unknown): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(asRecord(value)).filter((entry): entry is [string, number] =>
+      typeof entry[1] === "number",
+    ),
+  );
+}
+
+function asCaptureRecord(value: unknown): MilestoneCaptureRecord {
+  const record: MilestoneCaptureRecord = {};
+  for (const [mapId, rawMilestones] of Object.entries(asRecord(value))) {
+    const milestones = asRecord(rawMilestones);
+    const claimed: Partial<Record<25 | 50 | 75 | 100, boolean>> = {};
+    for (const milestone of CAPTURE_MILESTONES) {
+      if (milestones[String(milestone)] === true) claimed[milestone] = true;
+    }
+    if (Object.keys(claimed).length > 0) record[mapId] = claimed;
+  }
+  return record;
 }
 
 export function loadSave(): SaveGame {
