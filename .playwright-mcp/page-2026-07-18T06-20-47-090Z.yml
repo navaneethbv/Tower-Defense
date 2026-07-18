@@ -1,0 +1,24 @@
+- generic [ref=f3e3]:
+  - heading "Choose your partner" [level=1] [ref=f3e4]
+  - paragraph [ref=f3e5]: You'll also receive 500 PokéCoins to hatch more.
+  - generic [ref=f3e6]:
+    - button "Bulbasaur Bulbasaur grass / poison Vine whips that slow enemies." [ref=f3e7] [cursor=pointer]:
+      - img "Bulbasaur" [ref=f3e8]
+      - generic [ref=f3e9]: Bulbasaur
+      - generic [ref=f3e10]: grass / poison
+      - generic [ref=f3e11]: Vine whips that slow enemies.
+    - button "Charmander Charmander fire Embers that burn." [ref=f3e12] [cursor=pointer]:
+      - img "Charmander" [ref=f3e13]
+      - generic [ref=f3e14]: Charmander
+      - generic [ref=f3e15]: fire
+      - generic [ref=f3e16]: Embers that burn.
+    - button "Squirtle Squirtle water Reliable bubble shots." [ref=f3e17] [cursor=pointer]:
+      - img "Squirtle" [ref=f3e18]
+      - generic [ref=f3e19]: Squirtle
+      - generic [ref=f3e20]: water
+      - generic [ref=f3e21]: Reliable bubble shots.
+    - button "Pikachu Pikachu electric Fast sparks that can stun." [ref=f3e22] [cursor=pointer]:
+      - img "Pikachu" [ref=f3e23]
+      - generic [ref=f3e24]: Pikachu
+      - generic [ref=f3e25]: electric
+      - generic [ref=f3e26]: Fast sparks that can stun.

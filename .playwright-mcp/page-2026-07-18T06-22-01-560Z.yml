@@ -1,0 +1,19 @@
+- generic [ref=f4e54]:
+  - generic [ref=f4e56]:
+    - generic [ref=f4e57]: ❤️ 15
+    - generic [ref=f4e58]: 🪙 250
+    - generic [ref=f4e59]: 🌊 Wave 0/50
+    - generic [ref=f4e60]:
+      - text: Speed
+      - combobox "Speed" [ref=f4e61]:
+        - option "1×" [selected]
+        - option "2×"
+        - option "3×"
+    - button "Start Wave 1" [ref=f4e62] [cursor=pointer]
+  - complementary [ref=f4e64]:
+    - heading "Team" [level=3] [ref=f4e65]
+    - button "Charmander Charmander 🪙80" [ref=f4e67] [cursor=pointer]:
+      - img "Charmander" [ref=f4e68]
+      - generic [ref=f4e69]: Charmander
+      - generic [ref=f4e70]: 🪙80
+    - paragraph [ref=f4e71]: Select a Pokémon, then click a tile to deploy.

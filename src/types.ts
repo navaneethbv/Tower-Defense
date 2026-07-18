@@ -1,0 +1,188 @@
+// Shared domain types. This module has no runtime logic and no dependencies.
+
+export type TypeName =
+  | "normal"
+  | "fire"
+  | "water"
+  | "grass"
+  | "electric"
+  | "ice"
+  | "fighting"
+  | "poison"
+  | "ground"
+  | "flying"
+  | "psychic"
+  | "bug"
+  | "rock"
+  | "ghost"
+  | "dragon"
+  | "dark"
+  | "steel"
+  | "fairy";
+
+export type Terrain = "grass" | "water" | "mountain";
+
+export type Rarity = "common" | "rare" | "legendary";
+
+export type Role = "dps" | "aoe" | "sniper" | "support" | "tank_killer" | "balanced";
+
+export type TargetingMode =
+  | "first"
+  | "last"
+  | "strongest"
+  | "weakest"
+  | "fastest"
+  | "slowest"
+  | "closest";
+
+export type StatusKind = "slow" | "poison" | "burn" | "stun" | "armorBreak" | "curse";
+
+export interface StatusApplication {
+  kind: StatusKind;
+  chance: number; // 0..1
+  duration: number; // seconds
+  magnitude: number; // slow %, dps, etc. depending on kind
+}
+
+export interface AbilityDef {
+  id: string;
+  name: string;
+  description: string;
+  cooldown: number; // seconds
+  kind: AbilityKind;
+}
+
+export type AbilityKind =
+  | "line_blast"
+  | "area_damage"
+  | "aoe_burn"
+  | "path_wave"
+  | "chain"
+  | "aoe_push"
+  | "aoe_stun"
+  | "multishot"
+  | "execute"
+  | "status_burst";
+
+export interface EvolutionDef {
+  speciesId: string;
+  atLevel: number;
+}
+
+export interface SpeciesDef {
+  id: string;
+  dex: number;
+  name: string;
+  types: TypeName[];
+  attackType: TypeName;
+  role: Role;
+  rarity: Rarity;
+  base: { damage: number; cooldown: number; range: number; cost: number };
+  allowedTerrain: Terrain[];
+  favoredTerrain: Terrain;
+  projectile: { color: string; kind: string };
+  evolutions?: EvolutionDef[];
+  ability?: AbilityDef;
+  onHitStatus?: StatusApplication;
+  description: string;
+}
+
+export interface EnemyDef {
+  id: string;
+  name: string;
+  dex: number;
+  types: TypeName[];
+  hp: number;
+  speed: number; // tiles per second (base)
+  reward: number;
+  heartDamage: number;
+  armor: number;
+  regen?: number; // hp per second
+  spectral?: boolean; // only hittable by super-effective / ghost / psychic
+  boss?: boolean;
+}
+
+export interface IVs {
+  damage: number; // 0..15 (%)
+  range: number;
+  attackSpeed: number;
+}
+
+export interface OwnedPokemon {
+  uid: string;
+  speciesId: string;
+  ivs: IVs;
+  level: number;
+  xp: number;
+  hatchedAt: number;
+  nickname?: string;
+}
+
+export interface Egg {
+  uid: string;
+  rarity: Rarity;
+  source: "shop" | "wave_drop";
+  obtainedAt: number;
+}
+
+export interface WaveGenParams {
+  enemyPool: { enemyId: string; minWave: number; weight: number }[];
+  bossPool: { enemyId: string; minWave: number }[];
+  baseCount: number;
+  countGrowth: number;
+  hpBase: number;
+  hpGrowth: number;
+  spawnInterval: number;
+  seedSalt: number;
+}
+
+export interface MapConfig {
+  id: string;
+  name: string;
+  description: string;
+  cols: number;
+  rows: number;
+  path: { x: number; y: number }[]; // waypoints in tile coordinates
+  terrain: Terrain[][]; // [row][col]
+  totalWaves: number;
+  waveGen: WaveGenParams;
+  unlockRequirement: { mapId: string; wave: number } | null;
+  rewardMultiplier: number;
+}
+
+export interface EnemyStatMods {
+  hp: number;
+  speed: number;
+  armor: number;
+  reward: number;
+  heartDamage: number;
+  boss: boolean;
+}
+
+export interface WaveSpawn {
+  enemyId: string;
+  delay: number; // seconds after wave start
+  mods: EnemyStatMods;
+}
+
+export interface WavePlan {
+  waveNumber: number;
+  isBoss: boolean;
+  spawns: WaveSpawn[];
+  goldReward: number;
+}
+
+export interface SaveGame {
+  version: number;
+  createdAt: number;
+  updatedAt: number;
+  pokeCoins: number;
+  starterChosen: string | null;
+  collection: OwnedPokemon[];
+  eggs: Egg[];
+  team: (string | null)[];
+  bestWaveByMap: Record<string, number>;
+  eggDropsClaimedByMap: Record<string, number>;
+  settings: { speed: 1 | 2 | 3; muted: boolean };
+  stats: { runs: number; totalWavesCleared: number; hatches: number };
+}
