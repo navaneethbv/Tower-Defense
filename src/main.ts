@@ -1,4 +1,5 @@
 import "./styles.css";
+import { inject } from "@vercel/analytics";
 import { getMap } from "./data/maps";
 import { loadSave, saveSave } from "./meta/save";
 import { teamMembers } from "./meta/collection";
@@ -10,6 +11,9 @@ import { showShop } from "./ui/screens/shopScreen";
 import { showCollection } from "./ui/screens/collectionScreen";
 import { runGame } from "./ui/gameScreen";
 import { syncAchievements } from "./meta/achievements";
+
+// Initialize Vercel Web Analytics
+inject();
 
 // Top-level game flow: starter pick (once) -> home hub -> loadout -> run -> apply
 // results -> back to home. State lives in the SaveGame, persisted after each step.
