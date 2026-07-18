@@ -2,6 +2,7 @@ import type { Rarity, SaveGame } from "../../types";
 import { EGG_PRICES } from "../../meta/economy";
 import { buyEgg, canBuyEgg } from "../../meta/eggs";
 import { rarityColor } from "../components";
+import { playSound } from "../audio";
 
 const EGG_INFO: { rarity: Rarity; name: string; odds: string }[] = [
   { rarity: "common", name: "Common Egg", odds: "Mostly common Pokémon, small shot at a rare." },
@@ -41,7 +42,10 @@ export function showShop(root: HTMLElement, save: SaveGame): Promise<void> {
           <button class="primary buy-btn" ${afford ? "" : "disabled"}>Buy · 🪙${price}</button>
         `;
         card.querySelector<HTMLButtonElement>(".buy-btn")!.addEventListener("click", () => {
-          if (buyEgg(save, info.rarity)) render();
+          if (buyEgg(save, info.rarity)) {
+            playSound("purchase", save.settings.muted);
+            render();
+          }
         });
         grid.appendChild(card);
       }

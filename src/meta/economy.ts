@@ -37,6 +37,8 @@ export function applyRunResult(
   save.pokeCoins += coinsEarned;
   save.stats.runs += 1;
   save.stats.totalWavesCleared += wavesCleared;
+  save.stats.bossesDefeated += bossKills;
+  if (wavesCleared >= map.totalWaves) save.stats.victories += 1;
   if (newBest) save.bestWaveByMap[map.id] = wavesCleared;
   return { coinsEarned, newBest };
 }

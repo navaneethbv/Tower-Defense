@@ -1,10 +1,12 @@
-import type { MapConfig, OwnedPokemon, TargetingMode } from "../types";
+import type { MapConfig, OwnedPokemon, SaveGame, TargetingMode } from "../types";
 import { getSpecies } from "../data/species";
 import { spriteUrl, TILE, BOARD_WIDTH, BOARD_HEIGHT } from "../data/constants";
 import { GameSession } from "../engine/game";
 import { GameLoop } from "../engine/loop";
 import { drawBoard } from "../engine/render/renderer";
 import type { Tower } from "../engine/tower";
+import { advanceAutoWaveTimer } from "../engine/autoWave";
+import { playSound } from "./audio";
 
 const TARGETING_MODES: TargetingMode[] = [
   "first",
@@ -29,10 +31,13 @@ export function runGame(
   map: MapConfig,
   team: OwnedPokemon[],
   runSeed: number,
+  settings: SaveGame["settings"],
+  onSettingsChange: () => void,
 ): Promise<GameScreenResult> {
   return new Promise((resolve) => {
     let selectedTower: Tower | null = null;
     let deployUid: string | null = null;
+    let autoWaveDelay = 0.75;
 
     const game = new GameSession(map, team, runSeed, {
       onChange: () => renderHud(),
@@ -59,6 +64,7 @@ export function runGame(
               <option value="3">3×</option>
             </select>
           </label>
+          <label class="auto-wave"><input id="hud-auto-wave" type="checkbox" /> Auto-wave</label>
           <button id="hud-start" class="primary"></button>
         </div>
         <canvas id="board" width="${BOARD_WIDTH}" height="${BOARD_HEIGHT}"></canvas>
@@ -79,17 +85,32 @@ export function runGame(
     const hudWave = layout.querySelector<HTMLElement>("#hud-wave")!;
     const hudStart = layout.querySelector<HTMLButtonElement>("#hud-start")!;
     const hudSpeed = layout.querySelector<HTMLSelectElement>("#hud-speed")!;
+    const hudAutoWave = layout.querySelector<HTMLInputElement>("#hud-auto-wave")!;
     const teamPanel = layout.querySelector<HTMLElement>("#team-panel")!;
     const towerPanel = layout.querySelector<HTMLElement>("#tower-panel")!;
     const hint = layout.querySelector<HTMLElement>("#hint")!;
 
     const loop = new GameLoop(
-      (dt) => game.update(dt),
+      (dt) => {
+        game.update(dt);
+        const autoWave = advanceAutoWaveTimer(
+          autoWaveDelay,
+          dt,
+          settings.autoWave,
+          game.phase === "building",
+          game.towers.length > 0,
+        );
+        autoWaveDelay = autoWave.delay;
+        if (autoWave.start) startWave();
+      },
       () => {
-        drawBoard(ctx, game, selectedTower);
+        drawBoard(ctx, game, selectedTower, settings.particles);
         renderAbilityState();
       },
     );
+    loop.speed = settings.speed;
+    hudSpeed.value = String(settings.speed);
+    hudAutoWave.checked = settings.autoWave;
 
     const onKeyDown = (event: KeyboardEvent): void => {
       const target = event.target;
@@ -100,11 +121,18 @@ export function runGame(
     window.addEventListener("keydown", onKeyDown);
 
     hudSpeed.addEventListener("change", () => {
-      loop.speed = Number(hudSpeed.value);
+      settings.speed = Number(hudSpeed.value) as SaveGame["settings"]["speed"];
+      loop.speed = settings.speed;
+      onSettingsChange();
+    });
+
+    hudAutoWave.addEventListener("change", () => {
+      settings.autoWave = hudAutoWave.checked;
+      onSettingsChange();
     });
 
     hudStart.addEventListener("click", () => {
-      if (game.phase === "building") game.startWave();
+      startWave();
     });
 
     canvas.addEventListener("click", (ev) => {
@@ -117,6 +145,7 @@ export function runGame(
         if (res.ok) {
           deployUid = null;
           selectedTower = res.tower;
+          playSound("deploy", settings.muted);
         } else {
           hint.textContent = res.reason;
           hint.classList.add("bad");
@@ -243,6 +272,7 @@ export function runGame(
       } else {
         hint.textContent = `${selectedTower.species.ability.name} hit ${result.affected} target${result.affected === 1 ? "" : "s"}.`;
         hint.classList.remove("bad");
+        playSound("ability", settings.muted);
       }
       renderAbilityState();
     }
@@ -262,6 +292,7 @@ export function runGame(
     function showGameOver(won: boolean, wavesCleared: number): void {
       const overlay = document.createElement("div");
       window.removeEventListener("keydown", onKeyDown);
+      playSound(won ? "victory" : "defeat", settings.muted);
       overlay.className = "overlay";
       overlay.innerHTML = `
         <div class="overlay-card">
@@ -274,6 +305,12 @@ export function runGame(
       overlay.querySelector<HTMLButtonElement>("#overlay-done")!.addEventListener("click", () => {
         resolve({ won, wavesCleared, bossKills: game.bossKills, runXpByUid: game.runXpByUid() });
       });
+    }
+
+    function startWave(): void {
+      if (game.phase !== "building") return;
+      game.startWave();
+      playSound("wave", settings.muted);
     }
 
     renderHud();

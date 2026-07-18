@@ -15,7 +15,7 @@ export const STARTER_POKECOINS = 500;
 
 // Global balance tuning. Kept central so the sim harness can sweep without
 // touching per-species data. RANGE_SCALE tightens coverage so a single tower
-// can't blanket the board — team size (more pokemon) becomes the real answer.
+// can't blanket the board, so team size (more pokemon) becomes the real answer.
 export const RANGE_SCALE = 0.78;
 
 // Sprite location (self-hosted under public/sprites)

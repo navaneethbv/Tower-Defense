@@ -9,7 +9,8 @@ export const COUNT_CAP = 40;
 // overwhelmed) but sub-exponential later (so a full, upgraded team can still
 // clear wave 50). `hpGrowth` is the power exponent; `hpBase`/30 scales it.
 export function waveHpMultiplier(params: WaveGenParams, waveNumber: number): number {
-  return (params.hpBase / 30) * Math.pow(waveNumber, params.hpGrowth);
+  const lateGameRelief = 1 / (1 + 0.055 * Math.max(0, waveNumber - 10));
+  return (params.hpBase / 30) * Math.pow(waveNumber, params.hpGrowth) * lateGameRelief;
 }
 
 export function enemyHp(def: EnemyDef, params: WaveGenParams, waveNumber: number): number {

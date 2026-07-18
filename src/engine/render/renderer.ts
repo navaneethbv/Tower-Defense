@@ -10,7 +10,12 @@ const TERRAIN_COLORS: Record<string, string> = {
 };
 
 // Draws the whole battlefield each frame. Pure view: reads GameSession, mutates nothing.
-export function drawBoard(ctx: CanvasRenderingContext2D, game: GameSession, selected: Tower | null): void {
+export function drawBoard(
+  ctx: CanvasRenderingContext2D,
+  game: GameSession,
+  selected: Tower | null,
+  showEffects = true,
+): void {
   const { map, path } = game;
   ctx.clearRect(0, 0, map.cols * TILE, map.rows * TILE);
 
@@ -116,21 +121,23 @@ export function drawBoard(ctx: CanvasRenderingContext2D, game: GameSession, sele
     ctx.fillText(`${t.level}`, t.col * TILE + 9, t.row * TILE + 7);
   }
 
-  // Projectiles
-  for (const p of game.projectiles) {
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.pos.x, p.pos.y, 4, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  if (showEffects) {
+    // Projectiles
+    for (const p of game.projectiles) {
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.pos.x, p.pos.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
-  // Floating text
-  ctx.font = "bold 13px system-ui";
-  ctx.textAlign = "center";
-  for (const f of game.floating) {
-    ctx.globalAlpha = Math.max(0, f.life);
-    ctx.fillStyle = f.color;
-    ctx.fillText(f.text, f.x, f.y - (0.9 - f.life) * 24);
-    ctx.globalAlpha = 1;
+    // Floating text
+    ctx.font = "bold 13px system-ui";
+    ctx.textAlign = "center";
+    for (const f of game.floating) {
+      ctx.globalAlpha = Math.max(0, f.life);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x, f.y - (0.9 - f.life) * 24);
+      ctx.globalAlpha = 1;
+    }
   }
 }

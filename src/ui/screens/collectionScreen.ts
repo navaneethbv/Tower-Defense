@@ -4,6 +4,7 @@ import { spriteUrl } from "../../data/constants";
 import { hatchEgg } from "../../meta/eggs";
 import { displayName, ivScore } from "../../meta/collection";
 import { ivBarsHtml, rarityColor } from "../components";
+import { playSound } from "../audio";
 
 // The player's box: hatch eggs (with a reveal) and browse every owned Pokémon.
 export function showCollection(root: HTMLElement, save: SaveGame): Promise<void> {
@@ -43,6 +44,7 @@ export function showCollection(root: HTMLElement, save: SaveGame): Promise<void>
           const hatched = hatchEgg(save, egg.uid);
           if (hatched) {
             reveal = hatched;
+            playSound("hatch", save.settings.muted);
             render();
           }
         });

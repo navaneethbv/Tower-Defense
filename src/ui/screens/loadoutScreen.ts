@@ -25,7 +25,7 @@ export function showLoadout(root: HTMLElement, save: SaveGame, map: MapConfig): 
       wrap.className = "meta-screen loadout-screen";
       wrap.innerHTML = `
         <div class="home-top">
-          <h1>${map.name} — Team</h1>
+          <h1>${map.name}: Team</h1>
           <button id="back-btn">← Back</button>
         </div>
         <p class="muted">Pick up to ${slots} Pokémon (${selected.length}/${slots} chosen). Tap to add or remove.</p>

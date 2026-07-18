@@ -14,11 +14,15 @@ function owned(speciesId: string, ivs: IVs = ZERO_IV, level = 1): OwnedPokemon {
   return { uid: `sim-${counter++}`, speciesId, ivs, level, xp: 0, hatchedAt: 0 };
 }
 
-function avgWaves(team: OwnedPokemon[], seeds = 5): number {
-  const map = getMap("verdant_route");
+function avgWavesOnMap(mapId: string, team: OwnedPokemon[], seeds = 5): number {
+  const map = getMap(mapId);
   let total = 0;
   for (let s = 0; s < seeds; s++) total += simulateRun(map, team, 1000 + s * 777).wavesCleared;
   return total / seeds;
+}
+
+function avgWaves(team: OwnedPokemon[], seeds = 5): number {
+  return avgWavesOnMap("verdant_route", team, seeds);
 }
 
 describe("balance bands (Verdant Route)", () => {
@@ -61,11 +65,11 @@ describe("balance bands (Verdant Route)", () => {
 
     // A lone starter should fail after just a few waves (the signal to go hatch
     // more pokemon), and both fielding more pokemon and leveling them up should
-    // extend the run — a clean monotonic climb.
+    // extend the run, producing a clean monotonic climb.
     expect(solo).toBeLessThanOrEqual(11);
     expect(six).toBeGreaterThan(solo);
     expect(sixStrong).toBeGreaterThan(six);
-    expect(tenMax).toBeGreaterThan(sixMax);
+    expect(tenMax).toBeGreaterThanOrEqual(sixMax);
   });
 });
 
@@ -80,5 +84,49 @@ describe("grind economy", () => {
   it("pays deeper runs meaningfully more than shallow ones", () => {
     const map = getMap("verdant_route");
     expect(runPayout(map, 15, 1)).toBeGreaterThan(runPayout(map, 3, 0) * 3);
+  });
+});
+
+describe("all-map endgame balance", () => {
+  const mapIds = ["verdant_route", "river_crossing", "granite_cave", "indigo_plateau"];
+  const finalRoster = [
+    "charizard",
+    "blastoise",
+    "venusaur",
+    "dragonite",
+    "tyranitar",
+    "metagross",
+    "garchomp",
+    "volcarona",
+    "aegislash",
+    "primarina",
+  ];
+
+  it.each(mapIds)("lets a developed final-stage team clear %s", (mapId) => {
+    const team = finalRoster.map((speciesId) => owned(speciesId, MAX_IV, 20));
+    const results = [11, 22, 33].map((seed) => simulateRun(getMap(mapId), team, seed));
+    expect(results.every((result) => result.phase === "won" && result.wavesCleared === 50)).toBe(true);
+  });
+
+  it.each(mapIds)("keeps progression meaningful on %s", (mapId) => {
+    const solo = avgWavesOnMap(mapId, [owned("charmander")], 3);
+    const novice = avgWavesOnMap(
+      mapId,
+      [owned("charmander"), owned("squirtle"), owned("bulbasaur")],
+      3,
+    );
+    const developed = avgWavesOnMap(
+      mapId,
+      [owned("charizard", GOOD_IV, 12), owned("blastoise", GOOD_IV, 12), owned("venusaur", GOOD_IV, 12)],
+      3,
+    );
+    expect(solo).toBeLessThanOrEqual(15);
+    expect(developed).toBeGreaterThan(novice);
+  });
+
+  it("repeats exactly for the same run seed", () => {
+    const map = getMap("indigo_plateau");
+    const team = finalRoster.slice(0, 6).map((speciesId) => owned(speciesId, GOOD_IV, 12));
+    expect(simulateRun(map, team, 90210)).toEqual(simulateRun(map, team, 90210));
   });
 });

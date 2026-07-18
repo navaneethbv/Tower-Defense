@@ -86,12 +86,20 @@ export function simulateRun(map: MapConfig, team: OwnedPokemon[], runSeed: numbe
     }
   };
 
+  const activateReadyAbilities = (): void => {
+    if (game.enemies.length === 0) return;
+    for (const tower of game.towers) {
+      if (tower.species.ability && tower.abilityCooldownLeft <= 0) game.activateAbility(tower);
+    }
+  };
+
   let guard = 0;
   while (game.phase !== "won" && game.phase !== "lost" && guard++ < 500000) {
     if (game.phase === "building") {
       manage();
       game.startWave();
     }
+    activateReadyAbilities();
     game.update(dt);
   }
 

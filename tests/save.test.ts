@@ -56,6 +56,43 @@ describe("save system", () => {
     expect(loaded.collection).toEqual([]);
   });
 
+  it("migrates version 1 settings and stats without losing nested values", () => {
+    const collection = [
+      {
+        uid: "legacy",
+        speciesId: "charmander",
+        ivs: { damage: 1, range: 2, attackSpeed: 3 },
+        level: 4,
+        xp: 5,
+        hatchedAt: 6,
+      },
+    ];
+    localStorage.setItem(
+      "ptd.save",
+      JSON.stringify({
+        version: 1,
+        collection,
+        team: ["legacy", null, null, null, null, null],
+        settings: { speed: 3, muted: true },
+        stats: { runs: 7, totalWavesCleared: 81, hatches: 4 },
+      }),
+    );
+
+    const loaded = loadSave();
+
+    expect(loaded.collection).toEqual(collection);
+    expect(loaded.team[0]).toBe("legacy");
+    expect(loaded.settings).toEqual({ speed: 3, muted: true, autoWave: false, particles: true });
+    expect(loaded.stats).toEqual({
+      runs: 7,
+      totalWavesCleared: 81,
+      hatches: 4,
+      bossesDefeated: 0,
+      victories: 0,
+    });
+    expect(loaded.achievements).toEqual([]);
+  });
+
   it("grants starter coins exactly once via chooseStarter", () => {
     const s = freshSave();
     chooseStarter(s, "uid-1", "charmander");
@@ -85,6 +122,7 @@ describe("economy", () => {
     expect(r1.newBest).toBe(true);
     expect(s.bestWaveByMap[map.id]).toBe(12);
     expect(s.pokeCoins).toBe(r1.coinsEarned);
+    expect(s.stats.bossesDefeated).toBe(1);
     const before = s.pokeCoins;
     const r2 = applyRunResult(s, map, 8, 0); // worse run
     expect(r2.newBest).toBe(false);

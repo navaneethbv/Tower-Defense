@@ -183,6 +183,13 @@ export interface SaveGame {
   team: (string | null)[];
   bestWaveByMap: Record<string, number>;
   eggDropsClaimedByMap: Record<string, number>;
-  settings: { speed: 1 | 2 | 3; muted: boolean };
-  stats: { runs: number; totalWavesCleared: number; hatches: number };
+  settings: { speed: 1 | 2 | 3; muted: boolean; autoWave: boolean; particles: boolean };
+  stats: {
+    runs: number;
+    totalWavesCleared: number;
+    hatches: number;
+    bossesDefeated: number;
+    victories: number;
+  };
+  achievements: string[];
 }

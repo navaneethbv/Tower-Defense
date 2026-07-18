@@ -11,6 +11,7 @@ import { chooseTarget, canHit } from "./targeting";
 import { resolveHit } from "./combat";
 import { getEffectiveness } from "../data/typeChart";
 import { executeAbility, type AbilityActivationResult } from "./abilities";
+import { makeRng, type Rng } from "../waves/rng";
 
 export type RunPhase = "building" | "wave" | "won" | "lost";
 
@@ -55,6 +56,7 @@ export class GameSession {
   private spawner = new Spawner();
   private placedUids = new Set<string>();
   private events: GameEvents;
+  private combatRng: Rng;
 
   constructor(map: MapConfig, team: OwnedPokemon[], runSeed: number, events: GameEvents = {}) {
     this.map = map;
@@ -62,6 +64,7 @@ export class GameSession {
     this.team = team;
     this.runSeed = runSeed;
     this.events = events;
+    this.combatRng = makeRng(runSeed ^ 0x9e3779b9);
   }
 
   private terrainAt(col: number, row: number) {
@@ -98,8 +101,8 @@ export class GameSession {
     const member = this.team.find((m) => m.uid === uid)!;
     const species = getSpecies(member.speciesId);
     const favored = this.terrainAt(col, row) === species.favoredTerrain;
-    // Persistent collection level grants up to +20% damage in-run.
-    const persistentBonus = Math.min(0.2, (member.level - 1) * 0.01);
+    // Persistent collection progress is the main endgame power curve.
+    const persistentBonus = Math.min(1, (member.level - 1) * 0.05);
     const tower = new Tower(member.uid, member.speciesId, member.ivs, col, row, favored, persistentBonus);
     this.towers.push(tower);
     this.placedUids.add(uid);
@@ -133,7 +136,7 @@ export class GameSession {
   }
 
   // Gold can buy only a few levels per tower, so dumping a whole run's gold into
-  // one tower hits a wall fast. Deploying more pokemon is the efficient spend —
+  // one tower hits a wall fast. Deploying more pokemon is the efficient spend,
   // this is what makes hatching a bigger team the real path to going further.
   static readonly MAX_GOLD_LEVELS = 4;
 
@@ -211,7 +214,7 @@ export class GameSession {
       if (!p.update(dt)) continue;
       if (!p.target.alive) continue;
       const res = resolveHit(p.target, p.attackType, p.damage);
-      if (res.dealt > 0 && p.status && Math.random() < p.status.chance) {
+      if (res.dealt > 0 && p.status && this.combatRng.next() < p.status.chance) {
         p.target.status.apply(p.status.kind, p.status.duration, p.status.magnitude);
       }
       if (res.killed) this.onKill(p.target);

@@ -9,6 +9,7 @@ import { showLoadout } from "./ui/screens/loadoutScreen";
 import { showShop } from "./ui/screens/shopScreen";
 import { showCollection } from "./ui/screens/collectionScreen";
 import { runGame } from "./ui/gameScreen";
+import { syncAchievements } from "./meta/achievements";
 
 // Top-level game flow: starter pick (once) -> home hub -> loadout -> run -> apply
 // results -> back to home. State lives in the SaveGame, persisted after each step.
@@ -26,7 +27,8 @@ async function main(): Promise<void> {
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const action = await showHome(app, save);
+    if (syncAchievements(save).length > 0) saveSave(save);
+    const action = await showHome(app, save, () => saveSave(save));
 
     if (action.type === "shop") {
       await showShop(app, save);
@@ -48,7 +50,7 @@ async function main(): Promise<void> {
     if (team.length === 0) continue;
 
     const runSeed = (Math.random() * 0xffffffff) >>> 0;
-    const result = await runGame(app, map, team, runSeed);
+    const result = await runGame(app, map, team, runSeed, save.settings, () => saveSave(save));
 
     // Persist run outcome: coins, best wave, milestone eggs, and persistent XP.
     applyCompletedRun(save, map, result);

@@ -102,6 +102,14 @@ canvas {
   flex: 1;
 }
 
+.topbar .speed,
+.topbar .auto-wave {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
 .topbar .speed select,
 .target-row select,
 #target-mode {
@@ -306,6 +314,72 @@ button.ability-btn:hover:not(:disabled) {
   gap: 12px;
   margin-top: 12px;
   flex-wrap: wrap;
+}
+
+.home-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.home-settings label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.achievement-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  padding-bottom: 24px;
+}
+
+.achievement-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+}
+
+.achievement-card.locked {
+  opacity: 0.5;
+}
+
+.achievement-card.unlocked {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--border));
+}
+
+.achievement-card span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.achievement-card small {
+  color: var(--muted);
+  line-height: 1.25;
+}
+
+.achievement-icon {
+  font-size: 1.25rem;
 }
 
 .starter-grid {

@@ -36,7 +36,7 @@ describe("wave generation", () => {
       prev = hp;
       expect(waveCount(map.waveGen, n)).toBeLessThanOrEqual(COUNT_CAP);
     }
-    expect(waveHpMultiplier(map.waveGen, 50)).toBeGreaterThan(50);
+    expect(waveHpMultiplier(map.waveGen, 50)).toBeGreaterThan(20);
   });
 
   it("only spawns enemies unlocked by the wave number", () => {

@@ -1,6 +1,7 @@
 import type { SaveGame } from "../../types";
 import { MAPS } from "../../data/maps";
 import { isMapUnlocked, unlockedSlots, nextSlotHint } from "../../meta/progression";
+import { ACHIEVEMENTS } from "../../meta/achievements";
 
 export type HomeAction =
   | { type: "play"; mapId: string }
@@ -8,7 +9,11 @@ export type HomeAction =
   | { type: "collection" };
 
 // Hub screen: shows currency, deploy slots, map select, and nav to shop/box.
-export function showHome(root: HTMLElement, save: SaveGame): Promise<HomeAction> {
+export function showHome(
+  root: HTMLElement,
+  save: SaveGame,
+  onSettingsChange: () => void = () => {},
+): Promise<HomeAction> {
   return new Promise((resolve) => {
     root.innerHTML = "";
     const wrap = document.createElement("div");
@@ -23,10 +28,28 @@ export function showHome(root: HTMLElement, save: SaveGame): Promise<HomeAction>
       <div class="home-nav">
         <button id="nav-shop">🥚 Egg Shop</button>
         <button id="nav-box">📦 Collection & Team</button>
-        <span class="muted">Deploy slots: <b>${slots}</b>${hint ? ` — ${hint}` : ""}</span>
+        <span class="muted">Deploy slots: <b>${slots}</b>${hint ? `: ${hint}` : ""}</span>
+      </div>
+      <div class="home-settings" aria-label="Game settings">
+        <label><input id="setting-muted" type="checkbox" ${save.settings.muted ? "checked" : ""} /> Mute sounds</label>
+        <label><input id="setting-particles" type="checkbox" ${save.settings.particles ? "checked" : ""} /> Battle effects</label>
+        <label><input id="setting-auto-wave" type="checkbox" ${save.settings.autoWave ? "checked" : ""} /> Auto-wave</label>
       </div>
       <h2>Routes</h2>
       <div class="map-grid"></div>
+      <div class="achievement-heading">
+        <h2>Achievements</h2>
+        <span class="muted">${save.achievements.length}/${ACHIEVEMENTS.length} unlocked</span>
+      </div>
+      <div class="achievement-grid">
+        ${ACHIEVEMENTS.map((achievement) => {
+          const unlocked = save.achievements.includes(achievement.id);
+          return `<article class="achievement-card ${unlocked ? "unlocked" : "locked"}">
+            <span class="achievement-icon">${unlocked ? "🏅" : "🔒"}</span>
+            <span><b>${achievement.title}</b><small>${achievement.description}</small></span>
+          </article>`;
+        }).join("")}
+      </div>
     `;
     const grid = wrap.querySelector<HTMLElement>(".map-grid")!;
     for (const map of MAPS) {
@@ -53,6 +76,15 @@ export function showHome(root: HTMLElement, save: SaveGame): Promise<HomeAction>
     }
     wrap.querySelector<HTMLButtonElement>("#nav-shop")!.addEventListener("click", () => resolve({ type: "shop" }));
     wrap.querySelector<HTMLButtonElement>("#nav-box")!.addEventListener("click", () => resolve({ type: "collection" }));
+    const bindSetting = (id: string, key: "muted" | "particles" | "autoWave"): void => {
+      wrap.querySelector<HTMLInputElement>(id)!.addEventListener("change", (event) => {
+        save.settings[key] = (event.currentTarget as HTMLInputElement).checked;
+        onSettingsChange();
+      });
+    };
+    bindSetting("#setting-muted", "muted");
+    bindSetting("#setting-particles", "particles");
+    bindSetting("#setting-auto-wave", "autoWave");
     root.appendChild(wrap);
   });
 }
