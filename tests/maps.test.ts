@@ -1,9 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { MAPS } from "../src/data/maps";
+import { getMap, MAPS } from "../src/data/maps";
 import { getEnemy } from "../src/data/enemies";
 import { generateWave } from "../src/waves/generator";
 
 describe("map configs", () => {
+  it("rejects unknown route ids", () => {
+    expect(() => getMap("missing_route")).toThrow("Unknown map id: missing_route");
+  });
+
   it("defines nine authored 100-wave routes with safe habitat pads", () => {
     expect(MAPS.map((map) => map.id)).toEqual([
       "verdant_route",

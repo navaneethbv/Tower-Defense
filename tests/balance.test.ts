@@ -59,7 +59,6 @@ describe("balance bands (Verdant Route)", () => {
     const tenMax = avgWaves(
       Array.from({ length: 10 }, (_, i) => owned(roster[i % roster.length]!, MAX_IV, 20)),
     );
-    // eslint-disable-next-line no-console
     console.log(
       "BALANCE  solo=%s trio=%s six=%s sixStrong=%s sixMax=%s tenMax=%s",
       solo, trio, six, sixStrong, sixMax, tenMax,

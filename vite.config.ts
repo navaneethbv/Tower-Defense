@@ -20,6 +20,7 @@ export default defineConfig({
         "src/engine/render/**/*.ts",
         "src/ui/**/*.ts",
         "src/data/generated/**/*.ts",
+        "src/data/maps/authored/**/*.ts",
       ],
       thresholds: {
         statements: 95,

@@ -137,6 +137,15 @@ The production project is linked as `navaneethbv/tower-defense`.
 vercel --prod
 ```
 
+## Repository quality controls
+
+GitHub Actions runs lint, 95 percent coverage-gated tests, and a production build on every push and pull request.
+The workflow also uploads the coverage report and passes it to SonarQube Cloud when the `SONAR_TOKEN` repository secret is configured.
+The SonarQube Cloud project uses the key `navaneethbv_Tower-Defense` and the organization `navaneethbv`.
+Until that project and secret are created in SonarQube Cloud, the Sonar job reports the missing setup in its job summary and remains non-blocking.
+Dependabot checks npm and GitHub Actions dependencies weekly, and `CODEOWNERS` assigns repository-wide ownership to `@navaneethbv`.
+The protected `main` branch requires pull requests, green Lint, Test, and Build checks, resolved conversations, and linear history.
+
 ## Fan project notice
 
 This is a free, non-commercial fan project created for educational and entertainment purposes.

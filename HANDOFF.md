@@ -30,7 +30,7 @@ npm run build
 npm run preview -- --host 127.0.0.1
 ```
 
-The current automated gate contains 138 passing tests across 21 files.
+The current automated gate contains 139 passing tests across 21 files.
 The browser flow has been inspected at 1440 by 900 and 390 by 844.
 The verified flow covers home settings, reload persistence, route selection, loadout selection, mouse and keyboard deployment, milestone presentation, capture reveal, auto-wave start, and 3x speed.
 Earlier Phase 4 browser verification also covered starter selection, egg purchase, hatch reveal, collection display, and loadout use.
@@ -63,6 +63,15 @@ Vercel CLI was upgraded from 54.21.0 to 56.3.1.
 The local checkout is linked to `navaneethbv/tower-defense`.
 The production deployment is live at `https://tower-defense-navy.vercel.app`.
 Production boot, local starter sprites, starter persistence, desktop layout, mobile layout, root delivery, and immutable sprite caching were smoke-tested successfully.
+
+## Repository controls
+
+The `Quality` GitHub Actions workflow runs independent Lint, Test, Build, and SonarCloud jobs.
+Tests enforce the existing 95 percent coverage thresholds and upload LCOV for SonarQube Cloud analysis.
+The SonarQube Cloud project key is `navaneethbv_Tower-Defense`, and analysis requires a repository `SONAR_TOKEN` secret that is not currently configured.
+The SonarCloud job remains non-blocking and writes a setup notice until that secret exists.
+Dependabot checks npm and GitHub Actions weekly, and `CODEOWNERS` assigns the repository to `@navaneethbv`.
+The `main` branch is protected by required pull requests, Lint, Test, and Build checks, resolved conversations, linear history, and force-push and deletion prevention.
 
 ## Working tree
 

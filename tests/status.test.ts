@@ -41,7 +41,7 @@ describe("StatusSet", () => {
 
     // Poison deals DoT
     status.apply("poison", 3.0, 10); // 10 dps
-    let dot = status.tick(0.5);
+    const dot = status.tick(0.5);
     expect(dot).toBe(5); // 10 * 0.5
 
     // Stun forces speed factor to 0

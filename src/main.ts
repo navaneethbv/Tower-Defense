@@ -44,7 +44,6 @@ async function main(): Promise<void> {
     saveSave(save);
   }
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     if (syncAchievements(save).length > 0) saveSave(save);
     const action = await showHome(app, save, () => saveSave(save));
