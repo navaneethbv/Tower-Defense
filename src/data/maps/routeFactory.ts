@@ -66,11 +66,11 @@ export function makeWaveGen(
       enemyId,
       minWave: 10 + index * 20,
     })),
-    baseCount: 8 + Math.floor(difficulty / 3),
-    countGrowth: 0.72 + difficulty * 0.025,
-    hpBase: 28 + difficulty * 3,
-    hpGrowth: 1.1 + difficulty * 0.008,
-    spawnInterval: Math.max(0.48, 0.64 - difficulty * 0.012),
+    baseCount: 7 + Math.floor((difficulty - 1) / 5),
+    countGrowth: 0.72 + difficulty * 0.005,
+    hpBase: 30 + difficulty * 0.75,
+    hpGrowth: 1.106 + difficulty * 0.0015,
+    spawnInterval: Math.max(0.56, 0.68 - difficulty * 0.006),
     seedSalt,
   };
 }

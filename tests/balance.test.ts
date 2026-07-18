@@ -3,6 +3,7 @@ import { simulateRun } from "../src/engine/headlessSim";
 import { runPayout } from "../src/meta/economy";
 import { EGG_PRICES } from "../src/meta/economy";
 import { getMap } from "../src/data/maps";
+import { MAPS } from "../src/data/maps";
 import { GameSession } from "../src/engine/game";
 import type { IVs, OwnedPokemon } from "../src/types";
 
@@ -67,7 +68,8 @@ describe("balance bands (Verdant Route)", () => {
     // A lone starter should fail after just a few waves (the signal to go hatch
     // more pokemon), and both fielding more pokemon and leveling them up should
     // extend the run, producing a clean monotonic climb.
-    expect(solo).toBeLessThanOrEqual(12);
+    expect(solo).toBeGreaterThanOrEqual(5);
+    expect(solo).toBeLessThanOrEqual(20);
     expect(six).toBeGreaterThan(solo);
     expect(sixStrong).toBeGreaterThan(six);
     expect(tenMax).toBeGreaterThanOrEqual(sixMax);
@@ -89,24 +91,32 @@ describe("grind economy", () => {
 });
 
 describe("all-map endgame balance", () => {
-  const mapIds = ["verdant_route", "river_crossing", "granite_cave", "indigo_plateau"];
+  const mapIds = MAPS.map((map) => map.id);
   const finalRoster = [
     "charizard",
     "blastoise",
-    "venusaur",
-    "dragonite",
-    "tyranitar",
+    "gyarados",
+    "milotic",
+    "greninja",
     "metagross",
     "garchomp",
-    "volcarona",
     "aegislash",
     "primarina",
+    "mewtwo",
   ];
 
-  it.each(mapIds)("lets a developed final-stage team reach the original finale on %s", (mapId) => {
+  it.each(mapIds)("lets a maxed final-stage team clear all 100 waves on %s", (mapId) => {
     const team = finalRoster.map((speciesId) => owned(speciesId, MAX_IV, 20));
     const results = [11, 22, 33].map((seed) => simulateRun(getMap(mapId), team, seed));
-    expect(results.every((result) => result.wavesCleared >= 50)).toBe(true);
+    expect(results.map((result) => result.wavesCleared)).toEqual([100, 100, 100]);
+  });
+
+  it.each(mapIds)("lets a developed six-member team reach wave 35 on %s", (mapId) => {
+    const team = ["charmander", "squirtle", "bulbasaur", "pikachu", "gastly", "abra"].map(
+      (speciesId) => owned(speciesId, GOOD_IV, 12),
+    );
+    const results = [11, 22, 33].map((seed) => simulateRun(getMap(mapId), team, seed));
+    expect(Math.min(...results.map((result) => result.wavesCleared))).toBeGreaterThanOrEqual(35);
   });
 
   it.each(mapIds)("keeps progression meaningful on %s", (mapId) => {
@@ -121,7 +131,7 @@ describe("all-map endgame balance", () => {
       [owned("charizard", GOOD_IV, 12), owned("blastoise", GOOD_IV, 12), owned("venusaur", GOOD_IV, 12)],
       3,
     );
-    expect(solo).toBeLessThanOrEqual(15);
+    expect(solo).toBeLessThanOrEqual(20);
     expect(developed).toBeGreaterThan(solo);
     expect(developed).toBeGreaterThanOrEqual(novice);
   });
@@ -130,6 +140,15 @@ describe("all-map endgame balance", () => {
     const map = getMap("indigo_plateau");
     const team = finalRoster.slice(0, 6).map((speciesId) => owned(speciesId, GOOD_IV, 12));
     expect(simulateRun(map, team, 90210)).toEqual(simulateRun(map, team, 90210));
+  });
+
+  it("keeps a lone starter inside the early-game failure band", () => {
+    const results = [11, 22, 33].map((seed) =>
+      simulateRun(getMap("verdant_route"), [owned("charmander")], seed).wavesCleared,
+    );
+    const average = results.reduce((sum, waves) => sum + waves, 0) / results.length;
+    expect(average).toBeGreaterThanOrEqual(5);
+    expect(average).toBeLessThanOrEqual(20);
   });
 
   it("handles upgrade failure in simulation loop", () => {

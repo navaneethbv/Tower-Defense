@@ -8,7 +8,7 @@ export const riverCrossing = makeRoute(source, {
   description: "Fast currents divide shoreline, island, and ridge habitats.",
   totalWaves: WAVES_PER_MAP,
   theme: { palette: "river", groundTile: 3, pathTile: 2 },
-  waveGen: makeWaveGen("water", 202, 2),
+  waveGen: makeWaveGen("water", 202, 1),
   unlockRequirement: { mapId: "verdant_route", wave: 25 },
   rewardMultiplier: 1.2,
 });

@@ -8,7 +8,7 @@ export const frostboundLake = makeRoute(source, {
   description: "Icy channels create long lanes between frozen islands.",
   totalWaves: WAVES_PER_MAP,
   theme: { palette: "frost", groundTile: 6, pathTile: 13 },
-  waveGen: makeWaveGen("frost", 505, 5),
+  waveGen: { ...makeWaveGen("frost", 505, 1), hpBase: 24, hpGrowth: 1.1 },
   unlockRequirement: { mapId: "ember_caldera", wave: 25 },
   rewardMultiplier: 1.8,
 });

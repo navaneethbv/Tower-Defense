@@ -63,7 +63,7 @@ export function generateWave(map: MapConfig, n: number, runSeed: number): WavePl
     spawns.push({
       enemyId: milestone.speciesId,
       delay: escortCount * interval + 1.5,
-      mods: statMods(boss, params, n, n === 100 ? 6.5 : 5.25, true),
+      mods: statMods(boss, params, n, n === 100 ? 4 : 3.25, true),
     });
   } else if (isBossWave(n)) {
     // Escort swarm (60% of a normal wave) then the boss.
@@ -78,13 +78,13 @@ export function generateWave(map: MapConfig, n: number, runSeed: number): WavePl
     spawns.push({
       enemyId: bossEntry.enemyId,
       delay: escortCount * interval + 1.5,
-      mods: statMods(boss, params, n, 4.5, true),
+      mods: statMods(boss, params, n, n <= 20 ? 3.5 : 2, true),
     });
   } else if (isSwarmWave(n)) {
     // Single-archetype swarm: more, weaker enemies.
     const id = weightedPick(activePool(params, n), rng);
     const def = getEnemy(id);
-    const count = Math.round(waveCount(params, n) * 1.6);
+    const count = Math.round(waveCount(params, n) * 1.25);
     for (let i = 0; i < count; i++) {
       spawns.push({ enemyId: id, delay: i * interval, mods: statMods(def, params, n, 0.75) });
     }
@@ -106,7 +106,7 @@ export function generateWave(map: MapConfig, n: number, runSeed: number): WavePl
     waveNumber: n,
     isBoss: Boolean(milestone) || isBossWave(n),
     spawns,
-    goldReward: waveClearBonus(n),
+    goldReward: Math.round(waveClearBonus(n) * Math.sqrt(map.rewardMultiplier)),
     milestone,
   };
 }

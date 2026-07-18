@@ -64,6 +64,7 @@ export class GameSession {
     this.path = new PathGeometry(map);
     this.team = team;
     this.runSeed = runSeed;
+    this.gold = Math.round(STARTING_GOLD * map.rewardMultiplier);
     this.events = events;
     this.combatRng = makeRng(runSeed ^ 0x9e3779b9);
     this.padsByTile = new Map(

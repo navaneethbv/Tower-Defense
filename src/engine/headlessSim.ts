@@ -3,6 +3,8 @@ import { getSpecies } from "../data/species";
 import { GameSession } from "./game";
 import type { Tower } from "./tower";
 import { TILE } from "../data/constants";
+import { getEnemy } from "../data/enemies";
+import { getEffectiveness } from "../data/typeChart";
 
 export interface SimResult {
   wavesCleared: number;
@@ -59,13 +61,45 @@ export function simulateRun(map: MapConfig, team: OwnedPokemon[], runSeed: numbe
   const pathPts = samplePath(game);
   const dt = 1 / 30;
 
+  const routeFit = (speciesId: string): number => {
+    const species = getSpecies(speciesId);
+    const earlyEnemies = map.waveGen.enemyPool
+      .filter((entry) => entry.minWave <= 1)
+      .map((entry) => getEnemy(entry.enemyId));
+    return earlyEnemies.reduce((total, enemy) => {
+      const effectiveness = getEffectiveness(species.attackType, enemy.types);
+      const canDamageSpectral =
+        !enemy.spectral ||
+        effectiveness > 1 ||
+        species.attackType === "ghost" ||
+        species.attackType === "psychic";
+      return total + (canDamageSpectral ? effectiveness : 0.01);
+    }, 0) / earlyEnemies.length;
+  };
+
   const manage = (): void => {
-    // Deploy any affordable, unplaced member on its best tile.
-    for (const m of team) {
-      if (game.isPlaced(m.uid)) continue;
-      if (game.gold < getSpecies(m.speciesId).base.cost) continue;
-      const tile = bestTile(game, m.uid, m.speciesId, pathPts);
-      if (tile) game.placeTower(m.uid, tile.col, tile.row);
+    // Choose affordable deployments by route coverage and matchup rather than
+    // by roster order. Players can reorder teams, so the simulator should model
+    // a competent route-specific lead.
+    while (true) {
+      const candidates = team
+        .filter(
+          (member) =>
+            !game.isPlaced(member.uid) && game.gold >= getSpecies(member.speciesId).base.cost,
+        )
+        .map((member) => {
+          const tile = bestTile(game, member.uid, member.speciesId, pathPts);
+          const species = getSpecies(member.speciesId);
+          const offense = species.base.damage / species.base.cooldown;
+          return tile
+            ? { member, tile, score: tile.score * routeFit(member.speciesId) * offense }
+            : null;
+        })
+        .filter((candidate): candidate is NonNullable<typeof candidate> => candidate !== null)
+        .sort((left, right) => right.score - left.score);
+      const best = candidates[0];
+      if (!best) break;
+      game.placeTower(best.member.uid, best.tile.col, best.tile.row);
     }
     // Spend remaining gold leveling the weakest placed tower, keeping a buffer
     // to redeploy the rest of the team as gold accrues.

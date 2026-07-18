@@ -15,7 +15,7 @@ export function actForWave(waveNumber: number): 1 | 2 | 3 | 4 {
 export function waveHpMultiplier(params: WaveGenParams, waveNumber: number): number {
   const act = actForWave(waveNumber);
   const actStart = (act - 1) * 25 + 1;
-  const actPressure = 1 + (act - 1) * 0.08 + (waveNumber - actStart) * 0.002;
+  const actPressure = 1 + (act - 1) * 0.04 + (waveNumber - actStart) * 0.001;
   const lateGameRelief = 1 / (1 + 0.055 * Math.max(0, waveNumber - 10));
   return (
     (params.hpBase / 30) *
