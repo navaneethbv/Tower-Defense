@@ -17,7 +17,7 @@ function setup(speciesId: string) {
 function addEnemy(game: GameSession, x: number, y: number, hp = 500): Enemy {
   const enemy = new Enemy(
     getEnemy("rattata"),
-    { hp, speed: 0, armor: 0, reward: 5, heartDamage: 1, boss: false },
+    { hp, speed: 1.2, armor: 0, reward: 5, heartDamage: 1, boss: false },
     game.path,
   );
   enemy.pos = { x, y };
@@ -85,4 +85,121 @@ describe("active abilities", () => {
 
     expect(tower.abilityCooldownLeft).toBeCloseTo(before - 0.5);
   });
+
+  it("executes aoe_push ability", () => {
+    const { game, tower } = setup("pidgeot");
+    const enemy = addEnemy(game, tower.pos.x + 20, tower.pos.y);
+    enemy.distance = 100;
+    enemy.pos = game.path.positionAt(100);
+
+    const result = game.activateAbility(tower);
+    expect(result.ok).toBe(true);
+    expect(enemy.distance).toBe(52); // Math.max(0, 100 - 48)
+  });
+
+  it("executes aoe_stun ability", () => {
+    const { game, tower } = setup("sandslash");
+    const enemy = addEnemy(game, tower.pos.x + 20, tower.pos.y);
+
+    const result = game.activateAbility(tower);
+    expect(result.ok).toBe(true);
+    expect(enemy.status.has("stun")).toBe(true);
+  });
+
+  it("executes multishot ability", () => {
+    const { game, tower } = setup("snorlax");
+    const enemy1 = addEnemy(game, tower.pos.x + 20, tower.pos.y);
+    const enemy2 = addEnemy(game, tower.pos.x - 20, tower.pos.y);
+
+    const result = game.activateAbility(tower);
+    if (!result.ok) throw new Error("ability failed");
+    expect(result.affected).toBe(2);
+    expect(enemy1.hp).toBeLessThan(enemy1.maxHp);
+    expect(enemy2.hp).toBeLessThan(enemy2.maxHp);
+  });
+
+  it("executes execute ability", () => {
+    const { game, tower } = setup("umbreon");
+    const enemy = addEnemy(game, tower.pos.x + 20, tower.pos.y, 100);
+    // reduce HP below 30% to trigger execution
+    enemy.hp = 25;
+
+    const result = game.activateAbility(tower);
+    expect(result.ok).toBe(true);
+    expect(enemy.hp).toBeLessThan(25);
+  });
+
+  it("executes status_burst ability", () => {
+    const { game, tower } = setup("gengar");
+    const enemy = addEnemy(game, tower.pos.x + 20, tower.pos.y);
+
+    const result = game.activateAbility(tower);
+    expect(result.ok).toBe(true);
+    expect(enemy.status.has("slow") || enemy.status.has("poison") || enemy.status.has("burn") || enemy.status.has("curse")).toBe(true);
+  });
 });
+
+describe("game session helper methods", () => {
+  it("updates targeting mode of a tower", () => {
+    const { game, tower } = setup("pikachu");
+    game.setTargeting(tower, "strongest");
+    expect(tower.targeting).toBe("strongest");
+  });
+
+  it("calculates run XP correctly", () => {
+    const { game, tower } = setup("pikachu");
+    tower.runXp = 15;
+    const runXp = game.runXpByUid();
+    expect(runXp[tower.ownerUid]).toBe(15);
+  });
+
+  it("sells a tower and updates gold", () => {
+    const { game, tower } = setup("pikachu");
+    const initialGold = game.gold;
+    tower.totalInvested = 100;
+    
+    // Sell an actual tower
+    game.sellTower(tower);
+    expect(game.towers).not.toContain(tower);
+    expect(game.gold).toBe(initialGold + 60);
+
+    // Try selling a non-deployed tower (should return early)
+    const otherTower = new Tower("other-uid", "pikachu", IVS, 1, 1, false);
+    const goldBefore = game.gold;
+    game.sellTower(otherTower);
+    expect(game.gold).toBe(goldBefore);
+  });
+
+  it("triggers event callbacks when defined", () => {
+    let changed = false;
+    let waveClearedVal = 0;
+    let gameOverWon: boolean | null = null;
+
+    const member = { uid: "uid", speciesId: "charmander", ivs: IVS, level: 1, xp: 0, hatchedAt: 0 };
+    const game = new GameSession(getMap("verdant_route"), [member], 1, {
+      onChange: () => { changed = true; },
+      onWaveCleared: (w) => { waveClearedVal = w; },
+      onGameOver: (won, _w) => { gameOverWon = won; }
+    });
+
+    // trigger onChange
+    game.placeTower("uid", 1, 1);
+    expect(changed).toBe(true);
+
+    // trigger onWaveCleared and onGameOver (won)
+    game.phase = "wave";
+    game.waveNumber = 50;
+    game.update(0.1);
+    expect(waveClearedVal).toBe(50);
+    expect(gameOverWon).toBe(true);
+
+    // trigger onGameOver (lost)
+    const game2 = new GameSession(getMap("verdant_route"), [], 1, {
+      onGameOver: (won, _w) => { gameOverWon = won; }
+    });
+    game2.lives = 0;
+    game2.update(0.1);
+    expect(gameOverWon).toBe(false);
+  });
+});
+

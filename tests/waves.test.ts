@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { generateWave } from "../src/waves/generator";
 import { waveHpMultiplier, waveCount, COUNT_CAP, isBossWave } from "../src/waves/scaling";
 import { getMap } from "../src/data/maps";
+import * as rngModule from "../src/waves/rng";
 
 const map = getMap("verdant_route");
 
@@ -43,5 +44,34 @@ describe("wave generation", () => {
     const plan = generateWave(map, 2, 42);
     const early = new Set(["rattata", "pidgey"]);
     for (const s of plan.spawns) expect(early.has(s.enemyId)).toBe(true);
+  });
+
+  it("handles empty pick and forces generator fallback path", () => {
+    const rng = rngModule.makeRng(123);
+    expect(() => rng.pick([])).toThrow("pick from empty array");
+
+    // Mock makeRng to verify the weightedPick fallback branch
+    const spy = vi.spyOn(rngModule, "makeRng").mockImplementation(() => {
+      return {
+        next: () => 1.5,
+        int: (min, _max) => min,
+        pick: (items) => {
+          if (items.length === 0) throw new Error("pick from empty array");
+          return items[0]!;
+        },
+      };
+    });
+
+    const plan = generateWave(map, 2, 42);
+    expect(plan.spawns.length).toBeGreaterThan(0);
+
+    spy.mockRestore();
+  });
+
+  it("successfully picks an item from a non-empty list", () => {
+    const rng = rngModule.makeRng(12345);
+    const items = ["a", "b", "c"];
+    const picked = rng.pick(items);
+    expect(items).toContain(picked);
   });
 });

@@ -1,8 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { simulateRun } from "../src/engine/headlessSim";
 import { runPayout } from "../src/meta/economy";
 import { EGG_PRICES } from "../src/meta/economy";
 import { getMap } from "../src/data/maps";
+import { GameSession } from "../src/engine/game";
 import type { IVs, OwnedPokemon } from "../src/types";
 
 const ZERO_IV: IVs = { damage: 0, range: 0, attackSpeed: 0 };
@@ -128,5 +129,17 @@ describe("all-map endgame balance", () => {
     const map = getMap("indigo_plateau");
     const team = finalRoster.slice(0, 6).map((speciesId) => owned(speciesId, GOOD_IV, 12));
     expect(simulateRun(map, team, 90210)).toEqual(simulateRun(map, team, 90210));
+  });
+
+  it("handles upgrade failure in simulation loop", () => {
+    const map = getMap("verdant_route");
+    const team = [owned("charmander")];
+    const spy = vi.spyOn(GameSession.prototype, "upgradeTower").mockReturnValue(false);
+    
+    // Run the simulation with upgradeTower always returning false
+    const res = simulateRun(map, team, 12345);
+    expect(res).toBeDefined();
+
+    spy.mockRestore();
   });
 });

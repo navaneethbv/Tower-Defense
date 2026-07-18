@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ENEMIES } from "../src/data/enemies";
+import { ENEMIES, getEnemy } from "../src/data/enemies";
 import { MAPS } from "../src/data/maps";
 import { getSpecies } from "../src/data/species";
 
@@ -43,5 +43,9 @@ describe("expanded enemy roster", () => {
       expect(map.waveGen.enemyPool.length).toBeGreaterThanOrEqual(12);
       expect(map.waveGen.bossPool.length).toBeGreaterThanOrEqual(5);
     }
+  });
+
+  it("throws error for unknown enemy IDs", () => {
+    expect(() => getEnemy("nonexistent")).toThrow("Unknown enemy id: nonexistent");
   });
 });

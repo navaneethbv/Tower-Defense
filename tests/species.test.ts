@@ -3,6 +3,7 @@ import {
   SPECIES,
   baseSpeciesByRarity,
   getSpecies,
+  hasSpecies,
   isBaseSpecies,
   selectEvolution,
 } from "../src/data/species";
@@ -90,6 +91,9 @@ describe("runtime species roster", () => {
     expect(getSpecies("charmander").base.damage).toBe(12);
     expect(getSpecies("venusaur").ability?.id).toBe("solar_beam");
     expect(getSpecies("blastoise").ability?.id).toBe("surf");
+    expect(hasSpecies("charmander")).toBe(true);
+    expect(hasSpecies("nonexistent")).toBe(false);
+    expect(() => getSpecies("nonexistent")).toThrow("Unknown species id: nonexistent");
   });
 
   it("assigns reusable active kits across the expanded roster", () => {

@@ -6,3 +6,5 @@ dist
 .vercel
 .cache
 .env*.local
+coverage
+.superpowers
