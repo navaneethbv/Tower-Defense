@@ -136,6 +136,25 @@ export interface WaveGenParams {
   seedSalt: number;
 }
 
+export interface DeploymentPad {
+  id: string;
+  col: number;
+  row: number;
+  terrain: Terrain;
+}
+
+export interface MapTheme {
+  palette: string;
+  groundTile: number;
+  pathTile: number;
+}
+
+export interface MapDecor {
+  tile: number;
+  col: number;
+  row: number;
+}
+
 export interface MapConfig {
   id: string;
   name: string;
@@ -144,6 +163,10 @@ export interface MapConfig {
   rows: number;
   path: { x: number; y: number }[]; // waypoints in tile coordinates
   terrain: Terrain[][]; // [row][col]
+  theme: MapTheme;
+  tiles: number[];
+  decor: MapDecor[];
+  deploymentPads: DeploymentPad[];
   totalWaves: number;
   waveGen: WaveGenParams;
   unlockRequirement: { mapId: string; wave: number } | null;

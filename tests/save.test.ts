@@ -134,7 +134,7 @@ describe("economy", () => {
   it("registers victory when full waves are cleared", () => {
     const s = freshSave();
     const map = getMap("verdant_route");
-    applyRunResult(s, map, 50, 5);
+    applyRunResult(s, map, map.totalWaves, 10);
     expect(s.stats.victories).toBe(1);
   });
 });
@@ -149,7 +149,7 @@ describe("progression", () => {
     expect(unlockedSlots(s)).toBe(8);
     s.bestWaveByMap = { verdant_route: 40, river_crossing: 40, granite_cave: 40 };
     expect(unlockedSlots(s)).toBe(9);
-    s.bestWaveByMap = { indigo_plateau: 50 };
+    s.bestWaveByMap = { indigo_plateau: 100 };
     expect(unlockedSlots(s)).toBe(10);
   });
 
@@ -157,7 +157,7 @@ describe("progression", () => {
     const s = freshSave();
     expect(isMapUnlocked(s, getMap("verdant_route"))).toBe(true);
     expect(isMapUnlocked(s, getMap("river_crossing"))).toBe(false);
-    s.bestWaveByMap = { verdant_route: 20 };
+    s.bestWaveByMap = { verdant_route: 25 };
     expect(isMapUnlocked(s, getMap("river_crossing"))).toBe(true);
   });
 });
@@ -206,7 +206,7 @@ describe("persistent leveling", () => {
     expect(nextSlotHint(s)).toBe("Reach wave 40 on 3 maps to unlock a 9th slot.");
     s.bestWaveByMap = { verdant_route: 40, river_crossing: 40, granite_cave: 40 };
     expect(nextSlotHint(s)).toBe("Clear the Indigo Plateau to unlock a 10th slot.");
-    s.bestWaveByMap = { indigo_plateau: 50 };
+    s.bestWaveByMap = { indigo_plateau: 100 };
     expect(nextSlotHint(s)).toBeNull();
   });
 

@@ -4,6 +4,44 @@ import { getEnemy } from "../src/data/enemies";
 import { generateWave } from "../src/waves/generator";
 
 describe("map configs", () => {
+  it("defines nine authored 100-wave routes with safe habitat pads", () => {
+    expect(MAPS.map((map) => map.id)).toEqual([
+      "verdant_route",
+      "river_crossing",
+      "granite_cave",
+      "ember_caldera",
+      "frostbound_lake",
+      "shadow_marsh",
+      "skygarden_ruins",
+      "ancient_sanctuary",
+      "indigo_plateau",
+    ]);
+    expect(new Set(MAPS.map((map) => map.id)).size).toBe(9);
+
+    for (const map of MAPS) {
+      expect(map.totalWaves).toBe(100);
+      expect(map.tiles).toHaveLength(map.rows * map.cols);
+      expect(map.deploymentPads.length).toBeGreaterThanOrEqual(10);
+      expect(new Set(map.deploymentPads.map((pad) => pad.id)).size).toBe(
+        map.deploymentPads.length,
+      );
+      expect(new Set(map.deploymentPads.map((pad) => pad.terrain)).size).toBeGreaterThanOrEqual(
+        2,
+      );
+      for (const pad of map.deploymentPads) {
+        expect(pad.col).toBeGreaterThanOrEqual(0);
+        expect(pad.col).toBeLessThan(map.cols);
+        expect(pad.row).toBeGreaterThanOrEqual(0);
+        expect(pad.row).toBeLessThan(map.rows);
+        expect(map.terrain[pad.row]![pad.col]).toBe(pad.terrain);
+      }
+    }
+
+    expect(
+      new Set(MAPS.find((map) => map.id === "indigo_plateau")!.deploymentPads.map((pad) => pad.terrain)),
+    ).toEqual(new Set(["grass", "water", "mountain"]));
+  });
+
   it("every enemy and boss id in every pool resolves", () => {
     for (const map of MAPS) {
       for (const e of map.waveGen.enemyPool) expect(() => getEnemy(e.enemyId)).not.toThrow();
@@ -11,9 +49,8 @@ describe("map configs", () => {
     }
   });
 
-  it("generates all 50 waves with spawns on every map", () => {
+  it("generates all configured waves with spawns on every map", () => {
     for (const map of MAPS) {
-      expect(map.totalWaves).toBe(50);
       for (let n = 1; n <= map.totalWaves; n++) {
         const plan = generateWave(map, n, 7);
         expect(plan.spawns.length).toBeGreaterThan(0);

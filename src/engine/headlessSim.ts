@@ -29,26 +29,24 @@ function samplePath(game: GameSession, spacing = TILE / 2): { x: number; y: numb
   return out;
 }
 
-// Pick the empty, placeable tile that covers the most path with the species'
-// base range. Models a player deploying where a tower does the most work.
+// Pick the empty, compatible habitat pad that covers the most path with the
+// species' base range. Models a player deploying where a tower does the most work.
 function bestTile(game: GameSession, uid: string, speciesId: string, pathPts: { x: number; y: number }[]) {
   const species = getSpecies(speciesId);
   const r = species.base.range * TILE;
   const r2 = r * r;
   let best: { col: number; row: number; score: number } | null = null;
-  for (let row = 0; row < game.map.rows; row++) {
-    for (let col = 0; col < game.map.cols; col++) {
-      if (!game.canPlace(uid, col, row).ok) continue;
-      const cx = (col + 0.5) * TILE;
-      const cy = (row + 0.5) * TILE;
-      let score = 0;
-      for (const p of pathPts) {
-        if ((p.x - cx) ** 2 + (p.y - cy) ** 2 <= r2) score++;
-      }
-      // Slight bonus for favored terrain.
-      if (game.map.terrain[row]?.[col] === species.favoredTerrain) score *= 1.1;
-      if (score > 0 && (!best || score > best.score)) best = { col, row, score };
+  for (const pad of game.map.deploymentPads) {
+    const { col, row } = pad;
+    if (!game.canPlace(uid, col, row).ok) continue;
+    const cx = (col + 0.5) * TILE;
+    const cy = (row + 0.5) * TILE;
+    let score = 0;
+    for (const p of pathPts) {
+      if ((p.x - cx) ** 2 + (p.y - cy) ** 2 <= r2) score++;
     }
+    if (pad.terrain === species.favoredTerrain) score *= 1.1;
+    if (score > 0 && (!best || score > best.score)) best = { col, row, score };
   }
   return best;
 }

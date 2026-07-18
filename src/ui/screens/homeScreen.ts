@@ -1,5 +1,5 @@
-import type { SaveGame } from "../../types";
-import { MAPS } from "../../data/maps";
+import type { MapConfig, SaveGame, Terrain } from "../../types";
+import { getMap, MAPS } from "../../data/maps";
 import { isMapUnlocked, unlockedSlots, nextSlotHint } from "../../meta/progression";
 import { ACHIEVEMENTS } from "../../meta/achievements";
 
@@ -7,6 +7,30 @@ export type HomeAction =
   | { type: "play"; mapId: string }
   | { type: "shop" }
   | { type: "collection" };
+
+export interface RouteCardView {
+  unlocked: boolean;
+  bestLabel: string;
+  lockLabel: string | null;
+  habitats: Terrain[];
+  milestones: { wave: 25 | 50 | 75 | 100; cleared: boolean }[];
+}
+
+const ROUTE_MILESTONES = [25, 50, 75, 100] as const;
+
+export function routeCardView(map: MapConfig, save: SaveGame): RouteCardView {
+  const best = save.bestWaveByMap[map.id] ?? 0;
+  const requirement = map.unlockRequirement;
+  return {
+    unlocked: isMapUnlocked(save, map),
+    bestLabel: `Best: ${best}/${map.totalWaves}`,
+    lockLabel: requirement
+      ? `Reach wave ${requirement.wave} on ${getMap(requirement.mapId).name}`
+      : null,
+    habitats: [...new Set(map.deploymentPads.map((pad) => pad.terrain))],
+    milestones: ROUTE_MILESTONES.map((wave) => ({ wave, cleared: best >= wave })),
+  };
+}
 
 // Hub screen: shows currency, deploy slots, map select, and nav to shop/box.
 export function showHome(
@@ -53,21 +77,40 @@ export function showHome(
     `;
     const grid = wrap.querySelector<HTMLElement>(".map-grid")!;
     for (const map of MAPS) {
-      const unlocked = isMapUnlocked(save, map);
-      const best = save.bestWaveByMap[map.id] ?? 0;
-      const card = document.createElement("div");
-      card.className = "map-card" + (unlocked ? "" : " locked");
+      const view = routeCardView(map, save);
+      const card = document.createElement("article");
+      card.className = "map-card" + (view.unlocked ? "" : " locked");
       card.innerHTML = `
-        <b>${map.name}</b>
-        <span class="muted">${map.description}</span>
-        <span class="best">Best: wave ${best}/${map.totalWaves}</span>
+        <div class="route-preview palette-${map.theme.palette}" aria-hidden="true">
+          <span class="preview-path"></span>
+          ${map.deploymentPads
+            .slice(0, 8)
+            .map(
+              (pad) =>
+                `<i class="preview-pad habitat-${pad.terrain}" style="--pad-x:${pad.col};--pad-y:${pad.row}"></i>`,
+            )
+            .join("")}
+        </div>
+        <div class="route-card-head"><b>${map.name}</b><span class="best">${view.bestLabel}</span></div>
+        <span class="route-description">${map.description}</span>
+        <div class="habitat-chips" aria-label="Available habitats">
+          ${view.habitats.map((terrain) => `<span class="habitat-chip ${terrain}">${terrain}</span>`).join("")}
+        </div>
+        <div class="route-milestones" aria-label="Route milestones">
+          ${view.milestones
+            .map(
+              ({ wave, cleared }) =>
+                `<span class="milestone ${cleared ? "cleared" : ""}" title="Wave ${wave}">${cleared ? "★" : "◇"}${wave}</span>`,
+            )
+            .join("")}
+        </div>
         ${
-          unlocked
-            ? `<button class="primary play-btn">Play</button>`
-            : `<span class="lock-note">🔒 Reach wave ${map.unlockRequirement?.wave} on the previous route</span>`
+          view.unlocked
+            ? `<button class="primary play-btn">Configure team</button>`
+            : `<span class="lock-note">🔒 ${view.lockLabel}</span>`
         }
       `;
-      if (unlocked) {
+      if (view.unlocked) {
         card.querySelector<HTMLButtonElement>(".play-btn")!.addEventListener("click", () =>
           resolve({ type: "play", mapId: map.id }),
         );

@@ -8,7 +8,7 @@ export const BOARD_HEIGHT = ROWS * TILE;
 // Run rules
 export const STARTING_LIVES = 15;
 export const STARTING_GOLD = 360;
-export const WAVES_PER_MAP = 50;
+export const WAVES_PER_MAP = 100;
 
 // Meta currency
 export const STARTER_POKECOINS = 500;

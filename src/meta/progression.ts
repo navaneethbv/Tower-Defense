@@ -7,7 +7,7 @@ export function unlockedSlots(save: SaveGame): number {
   const bestAnywhere = Math.max(0, ...Object.values(best));
   const mapsClearedTo40 = Object.values(best).filter((w) => w >= 40).length;
   const clearedAnyMap = Object.values(best).some((w) => w >= 50);
-  const clearedFinal = (best["indigo_plateau"] ?? 0) >= 50;
+  const clearedFinal = (best["indigo_plateau"] ?? 0) >= 100;
 
   let slots = 6;
   if (bestAnywhere >= 40) slots = 7;

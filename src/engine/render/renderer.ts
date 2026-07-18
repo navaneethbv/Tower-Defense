@@ -1,13 +1,20 @@
 import type { GameSession } from "../game";
 import type { Tower } from "../tower";
+import type { Terrain } from "../../types";
 import { TILE } from "../../data/constants";
 import { getSprite, isReady } from "./spriteCache";
+import { drawMapLayers, getMapAtlas, padVisualState } from "./mapTiles";
 
 const TERRAIN_COLORS: Record<string, string> = {
-  grass: "#14351f",
-  water: "#0e2f4d",
-  mountain: "#3a3320",
+  grass: "#79bd68",
+  water: "#4f91bd",
+  mountain: "#736f68",
 };
+
+export interface BoardInteraction {
+  allowedTerrain: Terrain[] | null;
+  hovered: { col: number; row: number } | null;
+}
 
 // Draws the whole battlefield each frame. Pure view: reads GameSession, mutates nothing.
 export function drawBoard(
@@ -15,41 +22,77 @@ export function drawBoard(
   game: GameSession,
   selected: Tower | null,
   showEffects = true,
+  interaction: BoardInteraction = { allowedTerrain: null, hovered: null },
 ): void {
   const { map, path } = game;
   ctx.clearRect(0, 0, map.cols * TILE, map.rows * TILE);
 
-  // Terrain
-  for (let r = 0; r < map.rows; r++) {
-    for (let c = 0; c < map.cols; c++) {
-      ctx.fillStyle = TERRAIN_COLORS[map.terrain[r]![c]!] ?? "#14351f";
-      ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
+  const atlas = getMapAtlas();
+  if (atlas) {
+    drawMapLayers(ctx, map, atlas);
+  } else {
+    for (let r = 0; r < map.rows; r++) {
+      for (let c = 0; c < map.cols; c++) {
+        ctx.fillStyle = TERRAIN_COLORS[map.terrain[r]![c]!] ?? "#79bd68";
+        ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
+      }
     }
-  }
-  // Grid
-  ctx.strokeStyle = "rgba(255,255,255,0.05)";
-  ctx.lineWidth = 1;
-  for (let c = 0; c <= map.cols; c++) {
-    ctx.beginPath();
-    ctx.moveTo(c * TILE, 0);
-    ctx.lineTo(c * TILE, map.rows * TILE);
-    ctx.stroke();
-  }
-  for (let r = 0; r <= map.rows; r++) {
-    ctx.beginPath();
-    ctx.moveTo(0, r * TILE);
-    ctx.lineTo(map.cols * TILE, r * TILE);
-    ctx.stroke();
   }
 
   // Path
-  ctx.strokeStyle = "#c2a86b";
+  ctx.strokeStyle = "#8e7548";
+  ctx.lineWidth = TILE * 0.86;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "square";
+  ctx.beginPath();
+  path.points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+  ctx.stroke();
+  ctx.strokeStyle = "#d7bd72";
   ctx.lineWidth = TILE * 0.7;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
   ctx.beginPath();
   path.points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
   ctx.stroke();
+
+  for (const pad of map.deploymentPads) {
+    const state = padVisualState({
+      occupied: Boolean(game.towerAt(pad.col, pad.row)),
+      selectedTerrain: interaction.allowedTerrain,
+      padTerrain: pad.terrain,
+    });
+    const x = pad.col * TILE;
+    const y = pad.row * TILE;
+    const colors: Record<typeof state, string> = {
+      idle: "rgba(238,248,201,0.72)",
+      compatible: "#eef8c9",
+      incompatible: "#c95f58",
+      occupied: "#182536",
+    };
+    ctx.fillStyle =
+      pad.terrain === "water"
+        ? "rgba(130,168,108,0.9)"
+        : pad.terrain === "mountain"
+          ? "rgba(145,139,128,0.9)"
+          : "rgba(143,210,124,0.88)";
+    ctx.fillRect(x + 7, y + 7, TILE - 14, TILE - 14);
+    ctx.strokeStyle = colors[state];
+    ctx.lineWidth = state === "compatible" ? 4 : 2;
+    ctx.strokeRect(x + 6, y + 6, TILE - 12, TILE - 12);
+    if (state === "incompatible") {
+      ctx.beginPath();
+      ctx.moveTo(x + 14, y + 14);
+      ctx.lineTo(x + TILE - 14, y + TILE - 14);
+      ctx.moveTo(x + TILE - 14, y + 14);
+      ctx.lineTo(x + 14, y + TILE - 14);
+      ctx.stroke();
+    }
+    if (interaction.hovered?.col === pad.col && interaction.hovered.row === pad.row) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x + 2, y + 2, TILE - 4, TILE - 4);
+    }
+  }
 
   // Range ring for selected tower
   if (selected) {

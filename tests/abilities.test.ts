@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getEnemy } from "../src/data/enemies";
 import { getMap } from "../src/data/maps";
+import { getSpecies } from "../src/data/species";
 import { Enemy } from "../src/engine/enemy";
 import { GameSession } from "../src/engine/game";
 import { Tower } from "../src/engine/tower";
@@ -176,21 +177,25 @@ describe("game session helper methods", () => {
     let gameOverWon: boolean | null = null;
 
     const member = { uid: "uid", speciesId: "charmander", ivs: IVS, level: 1, xp: 0, hatchedAt: 0 };
-    const game = new GameSession(getMap("verdant_route"), [member], 1, {
+    const map = getMap("verdant_route");
+    const game = new GameSession(map, [member], 1, {
       onChange: () => { changed = true; },
       onWaveCleared: (w) => { waveClearedVal = w; },
       onGameOver: (won, _w) => { gameOverWon = won; }
     });
 
     // trigger onChange
-    game.placeTower("uid", 1, 1);
+    const pad = map.deploymentPads.find((candidate) =>
+      getSpecies("charmander").allowedTerrain.includes(candidate.terrain),
+    )!;
+    game.placeTower("uid", pad.col, pad.row);
     expect(changed).toBe(true);
 
     // trigger onWaveCleared and onGameOver (won)
     game.phase = "wave";
-    game.waveNumber = 50;
+    game.waveNumber = map.totalWaves;
     game.update(0.1);
-    expect(waveClearedVal).toBe(50);
+    expect(waveClearedVal).toBe(map.totalWaves);
     expect(gameOverWon).toBe(true);
 
     // trigger onGameOver (lost)
@@ -202,4 +207,3 @@ describe("game session helper methods", () => {
     expect(gameOverWon).toBe(false);
   });
 });
-

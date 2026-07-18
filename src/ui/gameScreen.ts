@@ -37,6 +37,7 @@ export function runGame(
   return new Promise((resolve) => {
     let selectedTower: Tower | null = null;
     let deployUid: string | null = null;
+    let hoveredTile: { col: number; row: number } | null = null;
     let autoWaveDelay = 0.75;
 
     const game = new GameSession(map, team, runSeed, {
@@ -104,7 +105,11 @@ export function runGame(
         if (autoWave.start) startWave();
       },
       () => {
-        drawBoard(ctx, game, selectedTower, settings.particles);
+        const deploying = deployUid ? team.find((member) => member.uid === deployUid) : undefined;
+        drawBoard(ctx, game, selectedTower, settings.particles, {
+          allowedTerrain: deploying ? getSpecies(deploying.speciesId).allowedTerrain : null,
+          hovered: hoveredTile,
+        });
         renderAbilityState();
       },
     );
@@ -115,8 +120,25 @@ export function runGame(
     const onKeyDown = (event: KeyboardEvent): void => {
       const target = event.target;
       if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) return;
-      if (event.key.toLowerCase() !== "a" || !selectedTower?.species.ability) return;
-      activateSelectedAbility();
+      const key = event.key.toLowerCase();
+      if ((key === "q" || key === "e") && deployUid) {
+        const available = map.deploymentPads.filter((pad) => game.canPlace(deployUid!, pad.col, pad.row).ok);
+        if (available.length === 0) return;
+        const current = hoveredTile
+          ? available.findIndex((pad) => pad.col === hoveredTile?.col && pad.row === hoveredTile?.row)
+          : -1;
+        const direction = key === "e" ? 1 : -1;
+        const next = available[(current + direction + available.length) % available.length]!;
+        hoveredTile = { col: next.col, row: next.row };
+        hint.textContent = `${next.terrain} habitat pad. Press Enter to deploy.`;
+        hint.classList.remove("bad");
+        return;
+      }
+      if (event.key === "Enter" && deployUid && hoveredTile) {
+        tryPlace(hoveredTile.col, hoveredTile.row);
+        return;
+      }
+      if (key === "a" && selectedTower?.species.ability) activateSelectedAbility();
     };
     window.addEventListener("keydown", onKeyDown);
 
@@ -141,17 +163,7 @@ export function runGame(
       const row = Math.floor(((ev.clientY - rect.top) * (canvas.height / rect.height)) / TILE);
       const existing = game.towerAt(col, row);
       if (deployUid) {
-        const res = game.placeTower(deployUid, col, row);
-        if (res.ok) {
-          deployUid = null;
-          selectedTower = res.tower;
-          playSound("deploy", settings.muted);
-        } else {
-          hint.textContent = res.reason;
-          hint.classList.add("bad");
-        }
-        renderTeam();
-        renderTower();
+        tryPlace(col, row);
       } else if (existing) {
         selectedTower = existing;
         deployUid = null;
@@ -161,6 +173,40 @@ export function runGame(
         renderTower();
       }
     });
+
+    canvas.addEventListener("mousemove", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const col = Math.floor(((event.clientX - rect.left) * (canvas.width / rect.width)) / TILE);
+      const row = Math.floor(((event.clientY - rect.top) * (canvas.height / rect.height)) / TILE);
+      hoveredTile = { col, row };
+      const pad = game.padAt(col, row);
+      if (deployUid && pad) {
+        const result = game.canPlace(deployUid, col, row);
+        hint.textContent = result.ok ? `${pad.terrain} habitat pad. Click to deploy.` : result.reason;
+        hint.classList.toggle("bad", !result.ok);
+      }
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      hoveredTile = null;
+    });
+
+    function tryPlace(col: number, row: number): void {
+      if (!deployUid) return;
+      const res = game.placeTower(deployUid, col, row);
+      if (res.ok) {
+        deployUid = null;
+        selectedTower = res.tower;
+        hint.textContent = `${res.tower.species.name} deployed.`;
+        hint.classList.remove("bad");
+        playSound("deploy", settings.muted);
+      } else {
+        hint.textContent = res.reason;
+        hint.classList.add("bad");
+      }
+      renderTeam();
+      renderTower();
+    }
 
     function renderHud(): void {
       hudLives.textContent = String(game.lives);
@@ -192,7 +238,9 @@ export function runGame(
           deployUid = deployUid === member.uid ? null : member.uid;
           selectedTower = null;
           hint.classList.remove("bad");
-          hint.textContent = deployUid ? "Click a valid tile to deploy." : "Select a Pokémon to deploy.";
+          hint.textContent = deployUid
+            ? "Choose a glowing habitat pad. Use Q/E and Enter for keyboard placement."
+            : "Select a Pokémon to deploy.";
           renderTeam();
           renderTower();
         });
