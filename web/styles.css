@@ -968,3 +968,77 @@ select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* Achievement & Toast Styles */
+.achievement-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+}
+.achievement-item.unlocked {
+  border-color: rgba(251, 191, 36, 0.25);
+  background: rgba(251, 191, 36, 0.05);
+}
+.achievement-item .ach-text h4 {
+  font-weight: 700;
+  color: #f3f4f6;
+  font-size: 0.85rem;
+}
+.achievement-item .ach-text p {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-top: 0.15rem;
+}
+.achievement-item .ach-status {
+  font-size: 1.1rem;
+}
+.achievement-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(17, 24, 39, 0.95);
+  border: 2px solid #fbbf24;
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.achievement-toast.hidden {
+  display: none !important;
+}
+.toast-trophy {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.3));
+}
+.toast-text-box {
+  display: flex;
+  flex-direction: column;
+}
+.toast-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #fbbf24;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.toast-desc {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 0.15rem;
+}
+@keyframes toastSlideIn {
+  from { transform: translateX(120px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

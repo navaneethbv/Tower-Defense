@@ -44,7 +44,12 @@
             <div id="menuTeamList" class="menu-team-list">
               <!-- Dynamically populated -->
             </div>
-            <button id="goToPokedexBtn" class="primary-btn pulse-anim">Manage Team & Pokédex</button>
+            <button id="goToPokedexBtn" class="primary-btn pulse-anim" style="margin-bottom: 1.5rem;">Manage Team & Pokédex</button>
+
+            <h2>Trainer Achievements</h2>
+            <div id="achievementsGrid" class="achievements-grid glass-panel" style="padding: 1.25rem; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; border: 1px solid rgba(255,255,255,0.06); background: rgba(17,24,39,0.3);">
+              <!-- Dynamically populated -->
+            </div>
           </div>
         </main>
       </section>
@@ -204,6 +209,15 @@
             <button id="modalExitBtn" class="primary-btn">Back to Routes</button>
             <button id="modalRetryBtn" class="secondary-btn">Retry Route</button>
           </div>
+        </div>
+      </div>
+
+      <!-- ACHIEVEMENT TOAST TOAST -->
+      <div id="achievementToast" class="achievement-toast hidden">
+        <span class="toast-trophy">🏆</span>
+        <div class="toast-text-box">
+          <span class="toast-title">Achievement Unlocked!</span>
+          <span id="toastAchievementName" class="toast-desc">Perfect Defense</span>
         </div>
       </div>
 

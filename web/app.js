@@ -8,7 +8,8 @@ import {
   enemies,
   buildWave,
   towerUpgradeCost,
-  DIFFICULTY_MODIFIERS
+  DIFFICULTY_MODIFIERS,
+  getTypeEffectiveness
 } from "./data.js";
 
 // DOM references
@@ -27,6 +28,7 @@ const dom = {
   menuTeamList: document.getElementById("menuTeamList"),
   goToPokedexBtn: document.getElementById("goToPokedexBtn"),
   routeDifficulty: document.getElementById("routeDifficulty"),
+  achievementsGrid: document.getElementById("achievementsGrid"),
   
   // Pokédex DOM
   pokedexBackBtn: document.getElementById("pokedexBackBtn"),
@@ -67,20 +69,35 @@ const dom = {
   unlockContainer: document.getElementById("unlockContainer"),
   unlockedPokemonShowcase: document.getElementById("unlockedPokemonShowcase"),
   modalExitBtn: document.getElementById("modalExitBtn"),
-  modalRetryBtn: document.getElementById("modalRetryBtn")
+  modalRetryBtn: document.getElementById("modalRetryBtn"),
+  
+  // Achievement Toast elements
+  achievementToast: document.getElementById("achievementToast"),
+  toastAchievementName: document.getElementById("toastAchievementName")
 };
 
 // Global Profile (saved to localStorage)
 let profile = {
   stars: 0,
-  unlockedPokemon: ["bulbasaur", "charmander", "squirtle", "pikachu", "geodude", "oddish", "pidgey"],
-  activeTeam: ["bulbasaur", "charmander", "squirtle", "pikachu", "geodude", "oddish"],
+  unlockedPokemon: ["bulbasaur", "charmander", "squirtle", "pikachu", "geodude", "oddish", "pidgey", "eevee"],
+  activeTeam: ["bulbasaur", "charmander", "squirtle", "pikachu", "geodude", "eevee"],
   starsEarned: {
     route_1_1: 0,
     route_1_2: 0,
-    route_1_3: 0
-  }
+    route_1_3: 0,
+    route_1_4: 0
+  },
+  achievements: []
 };
+
+// Achievements Database
+const ACHIEVEMENTS_REGISTRY = [
+  { id: "starter_synergy", name: "Starter Synergy", desc: "Deploy Bulbasaur, Charmander, & Squirtle in the same match." },
+  { id: "evolution_master", name: "Evolution Master", desc: "Successfully trigger any evolution." },
+  { id: "perfect_defense", name: "Perfect Defense", desc: "Clear any route with 20 Hearts remaining." },
+  { id: "chaos_survivor", name: "Chaos Conqueror", desc: "Clear any route on Chaos Mode." },
+  { id: "legendary_bane", name: "Legendary Bane", desc: "Defeat Mewtwo (Victory Mountain Boss)." }
+];
 
 // In-match Game State
 const state = {
@@ -108,7 +125,6 @@ const state = {
   pathSet: new Set(),
   pathPixels: [],
   
-  // New features QoL state
   hoverTile: { x: -1, y: -1 },
   difficultyMode: "normal",
   muted: false,
@@ -226,12 +242,13 @@ function loadProfile() {
     try {
       const loaded = JSON.parse(data);
       profile = { ...profile, ...loaded };
+      if (!profile.achievements) profile.achievements = [];
+      if (!profile.unlockedPokemon.includes("eevee")) profile.unlockedPokemon.push("eevee");
     } catch (e) {
       console.error("Failed parsing profile from storage", e);
     }
   }
   
-  // Recalculate unlocks based on stars
   updateProfileUnlocks();
   saveProfile();
 }
@@ -244,12 +261,41 @@ function updateProfileUnlocks() {
   const totalStars = Object.values(profile.starsEarned).reduce((a, b) => a + b, 0);
   profile.stars = totalStars;
   
-  // Star thresholds for unlocking Machop & Gastly
   if (totalStars >= 5 && !profile.unlockedPokemon.includes("machop")) {
     profile.unlockedPokemon.push("machop");
   }
+  if (totalStars >= 8 && !profile.unlockedPokemon.includes("snorlax")) {
+    profile.unlockedPokemon.push("snorlax");
+  }
   if (totalStars >= 12 && !profile.unlockedPokemon.includes("gastly")) {
     profile.unlockedPokemon.push("gastly");
+  }
+  if (totalStars >= 14 && !profile.unlockedPokemon.includes("mew")) {
+    profile.unlockedPokemon.push("mew");
+  }
+}
+
+// ACHIEVEMENTS TOASTS & TRIGGERS
+function unlockAchievement(id) {
+  if (profile.achievements.includes(id)) return;
+  profile.achievements.push(id);
+  saveProfile();
+  
+  const ach = ACHIEVEMENTS_REGISTRY.find(a => a.id === id);
+  if (!ach) return;
+  
+  // Trigger UI Toast Notification
+  dom.toastAchievementName.textContent = ach.name;
+  dom.achievementToast.classList.remove("hidden");
+  
+  playSound("evolve");
+  
+  setTimeout(() => {
+    dom.achievementToast.classList.add("hidden");
+  }, 4000);
+  
+  if (!dom.mainMenuScreen.classList.contains("hidden")) {
+    renderMenu();
   }
 }
 
@@ -327,6 +373,22 @@ function renderMenu() {
     }
     dom.menuTeamList.appendChild(slot);
   }
+  
+  // Populate Achievements Grid
+  dom.achievementsGrid.innerHTML = "";
+  ACHIEVEMENTS_REGISTRY.forEach((ach) => {
+    const unlocked = profile.achievements.includes(ach.id);
+    const card = document.createElement("div");
+    card.className = `achievement-item ${unlocked ? "unlocked" : ""}`;
+    card.innerHTML = `
+      <div class="ach-text">
+        <h4>${ach.name}</h4>
+        <p>${ach.desc}</p>
+      </div>
+      <span class="ach-status">${unlocked ? "🏆" : "🔒"}</span>
+    `;
+    dom.achievementsGrid.appendChild(card);
+  });
 }
 
 // POKEDEX RENDERING
@@ -380,7 +442,9 @@ function renderPokedexDetails(speciesId) {
   if (!isUnlocked) {
     let unlockReq = "";
     if (speciesId === "machop") unlockReq = "Reach 5 Total Stars to unlock Machop!";
+    if (speciesId === "snorlax") unlockReq = "Reach 8 Total Stars to unlock Snorlax!";
     if (speciesId === "gastly") unlockReq = "Reach 12 Total Stars to unlock Gastly!";
+    if (speciesId === "mew") unlockReq = "Reach 14 Total Stars to unlock Mew!";
     
     dom.pokedexDetailsPane.innerHTML = `
       <div style="text-align: center; color: #9ca3af; padding: 2rem;">
@@ -506,10 +570,7 @@ function startMatch(routeData) {
   state.pathSet = new Set(routeData.path.map(([x, y]) => `${x},${y}`));
   state.pathPixels = routeData.path.map(([x, y]) => ({ x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 }));
   
-  // Reset hover tile
   state.hoverTile = { x: -1, y: -1 };
-  
-  // Set progress bar width to zero
   dom.waveProgressBar.style.width = "0%";
   
   updateGameHUD();
@@ -662,8 +723,21 @@ function placeTower(x, y) {
   updateStatus(`Deployed ${spec.name} on ${terrainType}.`);
   playSound("hit");
   
+  // Trigger Achievement check: Starter Synergy
+  checkStarterSynergy();
+  
   updateGameButtons();
   updateGameHUD();
+}
+
+function checkStarterSynergy() {
+  const containsBulb = state.placed.some(t => ["bulbasaur", "ivysaur", "venusaur"].includes(t.speciesId));
+  const containsCharm = state.placed.some(t => ["charmander", "charmeleon", "charizard"].includes(t.speciesId));
+  const containsSquirt = state.placed.some(t => ["squirtle", "wartortle", "blastoise"].includes(t.speciesId));
+  
+  if (containsBulb && containsCharm && containsSquirt) {
+    unlockAchievement("starter_synergy");
+  }
 }
 
 function selectTower(x, y) {
@@ -697,12 +771,21 @@ function upgradeSelectedTower() {
   let evolved = false;
   const originalSpec = pokemonSpecies[tower.speciesId];
   if (originalSpec.evolutions && originalSpec.evolutions.length > 0) {
-    if (tower.level === 5) {
-      tower.speciesId = originalSpec.evolutions[0];
-      evolved = true;
-    } else if (tower.level === 10 && originalSpec.evolutions.length > 1) {
-      tower.speciesId = originalSpec.evolutions[1];
-      evolved = true;
+    if (tower.speciesId === "eevee") {
+      if (tower.level === 5) {
+        // Eevee branching evolution randomly
+        const branchOptions = ["vaporeon", "jolteon", "flareon"];
+        tower.speciesId = branchOptions[Math.floor(Math.random() * branchOptions.length)];
+        evolved = true;
+      }
+    } else {
+      if (tower.level === 5) {
+        tower.speciesId = originalSpec.evolutions[0];
+        evolved = true;
+      } else if (tower.level === 10 && originalSpec.evolutions.length > 1) {
+        tower.speciesId = originalSpec.evolutions[1];
+        evolved = true;
+      }
     }
   }
   
@@ -712,6 +795,9 @@ function upgradeSelectedTower() {
     spawnEvolveParticles(tower.x * TILE + TILE/2, tower.y * TILE + TILE/2);
     playSound("evolve");
     spawnFloatingText(tower.x * TILE + TILE/2, tower.y * TILE, "EVOLVED!", "#4ade80", 18);
+    
+    // Unlock achievement: Evolution Master
+    unlockAchievement("evolution_master");
   } else {
     updateStatus(`${pokemonSpecies[tower.speciesId].name} upgraded to Lv.${tower.level}.`);
     playSound("hit");
@@ -764,31 +850,28 @@ function recruitRandom() {
   updateGameHUD();
 }
 
-// START WAVE (difficulty & randomizer integration)
+// START WAVE
 function startWave() {
   if (state.runningWave || state.gameOver) return;
   state.runningWave = true;
   state.elapsedWave = 0;
   
-  // Chaos randomizer wave build vs normal build
   if (state.difficultyMode === "chaos") {
     state.spawnQueue = [];
     const size = 6 + state.wave * 3;
     
-    // Choose pool of enemies based on unlocked collection
     const activeEnemyTypes = ["rattata", "zubat"];
     if (profile.unlockedPokemon.includes("machop")) activeEnemyTypes.push("machop");
     if (profile.unlockedPokemon.includes("geodude")) activeEnemyTypes.push("geodude");
     if (profile.unlockedPokemon.includes("gastly")) activeEnemyTypes.push("gastly");
     
-    // Boss insertions
     if (state.wave >= 5) activeEnemyTypes.push("onix");
     if (state.wave >= 10) activeEnemyTypes.push("gyarados");
     if (state.wave >= 15) activeEnemyTypes.push("mewtwo");
+    if (state.wave >= 20) activeEnemyTypes.push("dragonite");
     
     for (let i = 0; i < size; i++) {
       const type = activeEnemyTypes[Math.floor(Math.random() * activeEnemyTypes.length)];
-      // Slightly randomized spawn delays to build pressure
       const delay = i * (0.5 + Math.random() * 0.5);
       state.spawnQueue.push({ type, delay });
     }
@@ -910,6 +993,12 @@ function updateEnemies(dt) {
       enemy.alive = false;
       state.gold += enemy.reward;
       spawnFloatingText(enemy.x, enemy.y - 10, `+${enemy.reward}g`, "#fcd34d", 15);
+      
+      // Trigger Achievement check: Legendary Bane
+      if (enemy.type === "mewtwo") {
+        unlockAchievement("legendary_bane");
+      }
+      
       updateGameHUD();
       continue;
     }
@@ -954,13 +1043,25 @@ function updateEnemies(dt) {
   state.enemies = state.enemies.filter((enemy) => enemy.alive);
 }
 
-// SPONS EFFECT TRIGGER ON HIT
+// SPONS EFFECT TRIGGER ON HIT (Typing calculations integration)
 function applyDamageAndStatus(projectile) {
   const target = projectile.targetEnemy;
   if (!target || !target.alive) return;
   
   const spec = enemies[target.type];
-  let baseDamage = projectile.damage;
+  
+  // Element typing multipliers math
+  const typeEff = getTypeEffectiveness(projectile.pokemonType, spec.types);
+  let baseDamage = projectile.damage * typeEff;
+  
+  // Floating text feedback for typing multiplier
+  if (typeEff > 1.0) {
+    spawnFloatingText(target.x, target.y - 30, "SUPER EFFECTIVE!", "#34d399", 10);
+  } else if (typeEff === 0.0) {
+    spawnFloatingText(target.x, target.y - 30, "IMMUNE!", "#ef4444", 10);
+  } else if (typeEff < 1.0) {
+    spawnFloatingText(target.x, target.y - 30, "not effective...", "#9ca3af", 9);
+  }
   
   if (projectile.isFavored) {
     baseDamage *= 1.25;
@@ -993,23 +1094,30 @@ function applyDamageAndStatus(projectile) {
     activeArmor *= 0.5;
   }
   
-  const finalDamage = Math.max(1, Math.round(baseDamage - activeArmor));
+  // If immune, damage is zero
+  const finalDamage = typeEff === 0.0 ? 0 : Math.max(1, Math.round(baseDamage - activeArmor));
   target.hp -= finalDamage;
   
-  if (projectile.splashRadius > 0) {
+  if (projectile.splashRadius > 0 && typeEff > 0) {
     const splashPx = projectile.splashRadius * TILE;
     state.enemies.forEach((other) => {
       if (other !== target && other.alive && distance(target, other) <= splashPx) {
-        let splashDamage = finalDamage * 0.5;
+        // Calculate splash element multiplier
         const otherSpec = enemies[other.type];
+        const otherEff = getTypeEffectiveness(projectile.pokemonType, otherSpec.types);
+        
+        let splashDamage = finalDamage * 0.5 * otherEff;
         let otherArmor = otherSpec.armor ?? 0;
         if (projectile.level >= 10) {
           otherArmor = 0;
         }
-        const splashFinal = Math.max(1, Math.round(splashDamage - otherArmor));
+        
+        const splashFinal = otherEff === 0.0 ? 0 : Math.max(1, Math.round(splashDamage - otherArmor));
         other.hp -= splashFinal;
         
-        applyStatusEffects(other, projectile);
+        if (otherEff > 0) {
+          applyStatusEffects(other, projectile);
+        }
         
         if (other.hp <= 0 && other.alive) {
           other.alive = false;
@@ -1020,7 +1128,10 @@ function applyDamageAndStatus(projectile) {
     });
   }
   
-  applyStatusEffects(target, projectile);
+  if (typeEff > 0.0) {
+    applyStatusEffects(target, projectile);
+  }
+  
   spawnHitParticles(projectile.x, projectile.y, projectile.color);
   playSound("hit");
   
@@ -1029,29 +1140,50 @@ function applyDamageAndStatus(projectile) {
   const txt = isCrit ? `CRIT! -${finalDamage}` : `-${finalDamage}`;
   spawnFloatingText(target.x, target.y - 15, txt, textColor, size);
   
-  if (projectile.pokemonType === "spark" && projectile.level >= 5) {
-    let hits = 0;
-    const rangePx = 2.0 * TILE;
-    state.enemies.forEach((other) => {
-      if (other !== target && other.alive && hits < 2 && distance(target, other) <= rangePx) {
-        other.hp -= Math.max(1, Math.round(finalDamage * 0.7));
-        applyStatusEffects(other, projectile);
-        spawnLightningArc(target.x, target.y, other.x, other.y);
-        
-        hits++;
-        if (other.hp <= 0 && other.alive) {
-          other.alive = false;
-          state.gold += other.reward;
-          spawnFloatingText(other.x, other.y, `+${other.reward}g`, "#fcd34d", 14);
+  // Chain jump attacks
+  if (typeEff > 0) {
+    let maxJumps = 0;
+    let chainRatio = 1.0;
+    if (projectile.pokemonType === "spark" && projectile.level >= 5) {
+      maxJumps = 2;
+      chainRatio = 0.7;
+    } else if (projectile.pokemonName === "Mew") {
+      maxJumps = 4;
+      chainRatio = 0.8;
+    }
+    
+    if (maxJumps > 0) {
+      let hits = 0;
+      const rangePx = 3.0 * TILE;
+      state.enemies.forEach((other) => {
+        if (other !== target && other.alive && hits < maxJumps && distance(target, other) <= rangePx) {
+          const otherSpec = enemies[other.type];
+          const otherEff = getTypeEffectiveness(projectile.pokemonType, otherSpec.types);
+          
+          if (otherEff > 0) {
+            other.hp -= Math.max(1, Math.round(finalDamage * chainRatio * otherEff));
+            applyStatusEffects(other, projectile);
+            spawnLightningArc(target.x, target.y, other.x, other.y);
+            hits++;
+          }
+          if (other.hp <= 0 && other.alive) {
+            other.alive = false;
+            state.gold += other.reward;
+            spawnFloatingText(other.x, other.y, `+${other.reward}g`, "#fcd34d", 14);
+          }
         }
-      }
-    });
+      });
+    }
   }
   
   if (target.hp <= 0 && target.alive) {
     target.alive = false;
     state.gold += target.reward;
     spawnFloatingText(target.x, target.y - 10, `+${target.reward}g`, "#fcd34d", 15);
+    
+    if (target.type === "mewtwo") {
+      unlockAchievement("legendary_bane");
+    }
   }
   
   updateGameHUD();
@@ -1080,7 +1212,7 @@ function applyStatusEffects(target, proj) {
     if (Math.random() < 0.25) spawnFloatingText(target.x, target.y - 25, "BURNED", "#f87171", 11);
   }
   else if (t === "bubble" || t === "hydro_pump") {
-    if (proj.level >= 10) {
+    if (proj.level >= 10 || proj.pokemonName === "Vaporeon") {
       target.statusEffects.armorBreak = { duration: 4.0 };
       if (Math.random() < 0.2) spawnFloatingText(target.x, target.y - 25, "ARMOR BREAK", "#60a5fa", 11);
     }
@@ -1096,7 +1228,10 @@ function applyStatusEffects(target, proj) {
   }
   else if (t === "rock") {
     if (!isBoss) {
-      const dur = proj.level >= 10 ? 0.9 : (proj.level >= 5 ? 0.7 : 0.5);
+      let dur = proj.level >= 10 ? 0.9 : (proj.level >= 5 ? 0.7 : 0.5);
+      if (proj.pokemonName === "Snorlax") {
+        dur = 1.2;
+      }
       target.statusEffects.stun = { duration: dur };
       if (Math.random() < 0.3) spawnFloatingText(target.x, target.y - 25, "STUNNED", "#a8a29e", 11);
     }
@@ -1127,15 +1262,12 @@ function updateWaveState(dt) {
     const { type } = state.spawnQueue.shift();
     state.waveSpawnsCount++;
     
-    // Update progress bar
     const ratio = Math.min(100, (state.waveSpawnsCount / state.waveSpawnsTotal) * 100);
     dom.waveProgressBar.style.width = `${ratio}%`;
     
-    // Retrieve coefficients based on difficulty selector
     const mods = DIFFICULTY_MODIFIERS[state.difficultyMode] || { hpMult: 1.0, speedMult: 1.0, rewardMult: 1.0 };
     const base = enemies[type];
     
-    // Apply difficulty modifiers!
     const hpScaling = Math.round((base.hp + Math.floor((state.wave - 1) * 8)) * mods.hpMult);
     state.enemies.push({
       type,
@@ -1177,6 +1309,7 @@ function spawnProjectile(x, y, target, spec, level, isFavored) {
   if (spec.projectileType === "hydro_pump") splash = 1.4;
   if (spec.projectileType === "fireball") splash = 1.0;
   if (spec.projectileType === "fist" && level >= 10) splash = 0.8;
+  if (spec.name === "Snorlax") splash = 1.2;
   
   state.projectiles.push({
     x,
@@ -1189,7 +1322,8 @@ function spawnProjectile(x, y, target, spec, level, isFavored) {
     damage: spec.damage * (1 + (level - 1) * 0.22),
     level,
     splashRadius: splash,
-    isFavored
+    isFavored,
+    pokemonName: spec.name
   });
 }
 
@@ -1309,6 +1443,7 @@ function spawnFloatingText(x, y, text, color, size = 14) {
   });
 }
 
+// UPDATE FLOATING TEXTS
 function updateFloatingTexts(dt) {
   for (const ft of state.floatingTexts) {
     ft.life += dt;
@@ -1317,7 +1452,7 @@ function updateFloatingTexts(dt) {
   state.floatingTexts = state.floatingTexts.filter(ft => ft.life < ft.maxLife);
 }
 
-// END GAME RESULTS
+// END GAME RESULTS (achievements triggers)
 function endGame(victory) {
   state.gameOver = true;
   state.runningWave = false;
@@ -1334,6 +1469,16 @@ function endGame(victory) {
       saveProfile();
     }
     
+    // Unlock achievements: Perfect Defense
+    if (state.hearts === 20) {
+      unlockAchievement("perfect_defense");
+    }
+    
+    // Unlock achievements: Chaos Conqueror
+    if (state.difficultyMode === "chaos") {
+      unlockAchievement("chaos_survivor");
+    }
+    
     dom.modalTitle.textContent = "Victory!";
     dom.modalTitle.style.color = "#34d399";
     dom.modalMessage.textContent = `You successfully cleared all waves of ${state.route.name}!`;
@@ -1347,14 +1492,22 @@ function endGame(victory) {
     
     const totalStars = Object.values(profile.starsEarned).reduce((a, b) => a + b, 0);
     const hasMachopNow = totalStars >= 5;
+    const hasSnorlaxNow = totalStars >= 8;
     const hasGastlyNow = totalStars >= 12;
+    const hasMewNow = totalStars >= 14;
     
     const unlockedMachopJustNow = hasMachopNow && !profile.unlockedPokemon.includes("machop");
+    const unlockedSnorlaxJustNow = hasSnorlaxNow && !profile.unlockedPokemon.includes("snorlax");
     const unlockedGastlyJustNow = hasGastlyNow && !profile.unlockedPokemon.includes("gastly");
+    const unlockedMewJustNow = hasMewNow && !profile.unlockedPokemon.includes("mew");
     
-    if (unlockedMachopJustNow || unlockedGastlyJustNow) {
+    if (unlockedMachopJustNow || unlockedSnorlaxJustNow || unlockedGastlyJustNow || unlockedMewJustNow) {
       dom.unlockContainer.classList.remove("hidden");
-      const pokeId = unlockedGastlyJustNow ? "gastly" : "machop";
+      let pokeId = "machop";
+      if (unlockedSnorlaxJustNow) pokeId = "snorlax";
+      else if (unlockedGastlyJustNow) pokeId = "gastly";
+      else if (unlockedMewJustNow) pokeId = "mew";
+      
       const spec = pokemonSpecies[pokeId];
       
       dom.unlockedPokemonShowcase.innerHTML = `
@@ -1404,7 +1557,6 @@ function drawBoard() {
       ctx.fillStyle = color;
       ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
       
-      // Toggleable Grid Line rendering overlay
       if (state.showGrid) {
         ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
         ctx.lineWidth = 1.0;
@@ -1480,19 +1632,16 @@ function drawBoard() {
     const terrainType = tileTerrain(hy);
     const isFavored = spec.favoredTerrain === terrainType;
     
-    // Highlight hover cell
     ctx.fillStyle = legal ? (isFavored ? "rgba(16, 185, 129, 0.3)" : "rgba(96, 165, 250, 0.25)") : "rgba(239, 68, 68, 0.3)";
     ctx.fillRect(hx * TILE, hy * TILE, TILE, TILE);
     ctx.strokeStyle = legal ? (isFavored ? "#10b981" : "#60a5fa") : "#ef4444";
     ctx.lineWidth = 2;
     ctx.strokeRect(hx * TILE, hy * TILE, TILE, TILE);
     
-    // Draw ghost preview sprite
     ctx.globalAlpha = 0.45;
     ctx.drawImage(sprite(spec.sprite), hx * TILE + 6, hy * TILE + 6, TILE - 12, TILE - 12);
     ctx.globalAlpha = 1.0;
     
-    // Draw range preview circle
     const rangeMult = isFavored ? 1.25 : 1.0;
     const rangePx = spec.range * TILE * rangeMult;
     ctx.beginPath();
