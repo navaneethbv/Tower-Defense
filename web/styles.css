@@ -1042,3 +1042,30 @@ select:focus {
   from { transform: translateX(120px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* --- AUTO-WAVE TOGGLE BUTTON --- */
+.auto-wave-btn {
+  padding: 0.55rem 0.75rem;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  color: #9ca3af;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+.auto-wave-btn:hover {
+  background: rgba(30, 41, 59, 0.9);
+  color: #e5e7eb;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.auto-wave-btn.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(52, 211, 153, 0.15));
+  border-color: #10b981;
+  color: #34d399;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+

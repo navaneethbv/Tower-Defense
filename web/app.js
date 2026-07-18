@@ -58,6 +58,7 @@ const dom = {
   // Shop & Controls
   recruitBtn: document.getElementById("recruitBtn"),
   startWaveBtn: document.getElementById("startWaveBtn"),
+  autoWaveBtn: document.getElementById("autoWaveBtn"),
   resetBtn: document.getElementById("resetBtn"),
   gameExitBtn: document.getElementById("gameExitBtn"),
   
@@ -130,7 +131,9 @@ const state = {
   muted: false,
   showGrid: false,
   waveSpawnsTotal: 0,
-  waveSpawnsCount: 0
+  waveSpawnsCount: 0,
+  autoWave: false,
+  autoWaveCountdown: 0
 };
 
 // Asset cache
@@ -571,7 +574,12 @@ function startMatch(routeData) {
   state.pathPixels = routeData.path.map(([x, y]) => ({ x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 }));
   
   state.hoverTile = { x: -1, y: -1 };
+  state.autoWaveCountdown = 0;
   dom.waveProgressBar.style.width = "0%";
+  
+  // Reset auto-wave button UI to match state
+  dom.autoWaveBtn.textContent = state.autoWave ? "⏩ Auto ON" : "⏩ Auto";
+  dom.autoWaveBtn.classList.toggle("active", state.autoWave);
   
   updateGameHUD();
   updateGameButtons();
@@ -1296,8 +1304,23 @@ function updateWaveState(dt) {
     if (state.wave > state.route.wavesCount) {
       endGame(true);
     } else {
+      // Trigger auto-wave countdown if enabled
+      if (state.autoWave) {
+        state.autoWaveCountdown = 3.0;
+      }
       updateGameHUD();
     }
+  }
+}
+
+// AUTO-WAVE COUNTDOWN TICK
+function updateAutoWave(dt) {
+  if (!state.autoWave || state.runningWave || state.gameOver || state.autoWaveCountdown <= 0) return;
+  
+  state.autoWaveCountdown -= dt;
+  if (state.autoWaveCountdown <= 0) {
+    state.autoWaveCountdown = 0;
+    startWave();
   }
 }
 
@@ -1777,6 +1800,35 @@ function drawBoard() {
     ctx.fillText(ft.text, ft.x, ft.y);
     ctx.globalAlpha = 1.0;
   });
+  
+  // 8. Draw Auto-Wave countdown overlay
+  if (state.autoWave && state.autoWaveCountdown > 0 && !state.runningWave && !state.gameOver) {
+    const countVal = Math.ceil(state.autoWaveCountdown);
+    
+    // Dim overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.fillRect(0, 0, board.width, board.height);
+    
+    // Countdown number with pulse effect
+    const pulse = 1 + 0.15 * Math.sin(performance.now() * 0.008);
+    const fontSize = Math.round(72 * pulse);
+    ctx.font = `bold ${fontSize}px Montserrat`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    
+    // Glow
+    ctx.shadowColor = "#34d399";
+    ctx.shadowBlur = 25;
+    ctx.fillStyle = "#34d399";
+    ctx.fillText(countVal, board.width / 2, board.height / 2 - 20);
+    ctx.shadowBlur = 0;
+    
+    // Label text
+    ctx.font = "bold 16px Outfit";
+    ctx.fillStyle = "#9ca3af";
+    ctx.fillText("NEXT WAVE IN", board.width / 2, board.height / 2 + 35);
+    ctx.textBaseline = "alphabetic";
+  }
 }
 
 // EVENT HANDLERS
@@ -1845,6 +1897,21 @@ dom.gridToggleBtn.addEventListener("click", () => {
   dom.gridToggleBtn.classList.toggle("active", state.showGrid);
 });
 
+// Auto-wave toggle
+dom.autoWaveBtn.addEventListener("click", () => {
+  state.autoWave = !state.autoWave;
+  dom.autoWaveBtn.textContent = state.autoWave ? "⏩ Auto ON" : "⏩ Auto";
+  dom.autoWaveBtn.classList.toggle("active", state.autoWave);
+  
+  if (state.autoWave && !state.runningWave && !state.gameOver && state.wave <= state.route.wavesCount) {
+    state.autoWaveCountdown = 3.0;
+    updateStatus("Auto-Wave enabled! Next wave starting in 3s...");
+  } else if (!state.autoWave) {
+    state.autoWaveCountdown = 0;
+    updateStatus("Auto-Wave disabled.");
+  }
+});
+
 // Mouse coordinates on board for placement hover range previews
 board.addEventListener("mousemove", (event) => {
   if (dom.gameScreen.classList.contains("hidden") || state.gameOver) return;
@@ -1896,6 +1963,7 @@ function gameLoop(now) {
   last = now;
   
   if (!dom.gameScreen.classList.contains("hidden") && !state.gameOver) {
+    updateAutoWave(dt);
     updateWaveState(dt);
     updateEnemies(dt);
     updateTowers(dt);
