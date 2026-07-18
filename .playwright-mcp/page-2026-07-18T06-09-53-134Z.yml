@@ -1,0 +1,40 @@
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]: ❤️ 15
+    - generic [ref=e7]: 🪙 250
+    - generic [ref=e8]: 🌊 Wave 0/50
+    - generic [ref=e9]:
+      - text: Speed
+      - combobox "Speed" [ref=e10]:
+        - option "1×" [selected]
+        - option "2×"
+        - option "3×"
+    - button "Start Wave 1" [ref=e11] [cursor=pointer]
+  - complementary [ref=e13]:
+    - heading "Team" [level=3] [ref=e14]
+    - generic [ref=e15]:
+      - button "Charmander Charmander 🪙80" [ref=e16] [cursor=pointer]:
+        - img "Charmander" [ref=e17]
+        - generic [ref=e18]: Charmander
+        - generic [ref=e19]: 🪙80
+      - button "Squirtle Squirtle 🪙80" [ref=e20] [cursor=pointer]:
+        - img "Squirtle" [ref=e21]
+        - generic [ref=e22]: Squirtle
+        - generic [ref=e23]: 🪙80
+      - button "Bulbasaur Bulbasaur 🪙80" [ref=e24] [cursor=pointer]:
+        - img "Bulbasaur" [ref=e25]
+        - generic [ref=e26]: Bulbasaur
+        - generic [ref=e27]: 🪙80
+      - button "Pikachu Pikachu 🪙90" [ref=e28] [cursor=pointer]:
+        - img "Pikachu" [ref=e29]
+        - generic [ref=e30]: Pikachu
+        - generic [ref=e31]: 🪙90
+      - button "Pidgey Pidgey 🪙70" [ref=e32] [cursor=pointer]:
+        - img "Pidgey" [ref=e33]
+        - generic [ref=e34]: Pidgey
+        - generic [ref=e35]: 🪙70
+      - button "Geodude Geodude 🪙80" [ref=e36] [cursor=pointer]:
+        - img "Geodude" [ref=e37]
+        - generic [ref=e38]: Geodude
+        - generic [ref=e39]: 🪙80
+    - paragraph [ref=e40]: Select a Pokémon, then click a tile to deploy.

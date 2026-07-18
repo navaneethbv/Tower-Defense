@@ -1,0 +1,18 @@
+- generic [ref=f4e33]:
+  - generic [ref=f4e34]:
+    - heading "Verdant Route — Team" [level=1] [ref=f4e35]
+    - button "← Back" [ref=f4e36] [cursor=pointer]
+  - paragraph [ref=f4e37]: Pick up to 6 Pokémon (1/6 chosen). Tap to add or remove.
+  - generic [ref=f4e38]:
+    - img "Charmander" [ref=f4e40]
+    - generic [ref=f4e41]: +
+    - generic [ref=f4e42]: +
+    - generic [ref=f4e43]: +
+    - generic [ref=f4e44]: +
+    - generic [ref=f4e45]: +
+  - heading "Your Collection (1)" [level=2] [ref=f4e46]
+  - button "Charmander Charmander Lv 1 · IV 18%" [ref=f4e48] [cursor=pointer]:
+    - img "Charmander" [ref=f4e49]
+    - generic [ref=f4e50]: Charmander
+    - generic [ref=f4e51]: Lv 1 · IV 18%
+  - button "Start Run" [ref=f4e53] [cursor=pointer]

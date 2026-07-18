@@ -1,0 +1,30 @@
+- generic [ref=f3e27]:
+  - generic [ref=f3e28]:
+    - heading "Pokémon Route Defense" [level=1] [ref=f3e29]
+    - generic [ref=f3e30]: 🪙 500 PokéCoins
+  - generic [ref=f3e31]:
+    - button "🥚 Egg Shop" [ref=f3e32] [cursor=pointer]
+    - button "📦 Collection & Team" [ref=f3e33] [cursor=pointer]
+    - generic [ref=f3e34]: "Deploy slots: 6 — Reach wave 40 on any map to unlock a 7th slot."
+  - heading "Routes" [level=2] [ref=f3e35]
+  - generic [ref=f3e36]:
+    - generic [ref=f3e37]:
+      - generic [ref=f3e38]: Verdant Route
+      - generic [ref=f3e39]: Rolling grassland with a mountain ridge and a river channel.
+      - generic [ref=f3e40]: "Best: wave 0/50"
+      - button "Play" [ref=f3e41] [cursor=pointer]
+    - generic [ref=f3e42]:
+      - generic [ref=f3e43]: River Crossing
+      - generic [ref=f3e44]: Wide waterways split the field; bring water and electric types.
+      - generic [ref=f3e45]: "Best: wave 0/50"
+      - generic [ref=f3e46]: 🔒 Reach wave 20 on the previous route
+    - generic [ref=f3e47]:
+      - generic [ref=f3e48]: Granite Cave
+      - generic [ref=f3e49]: Armored foes grind through a rocky labyrinth.
+      - generic [ref=f3e50]: "Best: wave 0/50"
+      - generic [ref=f3e51]: 🔒 Reach wave 20 on the previous route
+    - generic [ref=f3e52]:
+      - generic [ref=f3e53]: Indigo Plateau
+      - generic [ref=f3e54]: The final gauntlet. Every archetype, every boss.
+      - generic [ref=f3e55]: "Best: wave 0/50"
+      - generic [ref=f3e56]: 🔒 Reach wave 30 on the previous route
