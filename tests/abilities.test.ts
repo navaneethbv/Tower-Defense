@@ -206,4 +206,31 @@ describe("game session helper methods", () => {
     game2.update(0.1);
     expect(gameOverWon).toBe(false);
   });
+
+  it("covers other GameSession state branches (abilities/upgrades/wave phase)", () => {
+    const { game, tower } = setup("pikachu");
+    
+    // 1. activateAbility on non-deployed tower
+    const nonDeployed = new Tower("other-uid", "pikachu", IVS, 1, 1, false);
+    expect(game.activateAbility(nonDeployed)).toEqual({ ok: false, reason: "Tower is not deployed" });
+
+    // 2. canUpgrade / upgradeTower returning false when lacking gold
+    game.gold = 0;
+    expect(game.canUpgrade(tower)).toBe(false);
+    expect(game.upgradeTower(tower)).toBe(false);
+
+    // 3. startWave returning false when already in wave phase
+    game.phase = "wave";
+    expect(game.startWave()).toBe(false);
+
+    // 4. update early return when game is won or lost
+    game.phase = "won";
+    const initialGold = game.gold;
+    game.update(1.0);
+    expect(game.gold).toBe(initialGold);
+
+    game.phase = "lost";
+    game.update(1.0);
+    expect(game.gold).toBe(initialGold);
+  });
 });

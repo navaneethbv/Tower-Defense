@@ -131,6 +131,23 @@ describe("save system", () => {
     expect(loadSave().milestoneCapturesByMap.verdant_route).toEqual({ 25: true, 50: true });
   });
 
+  it("loads version 3 milestone captures directly without modifying them", () => {
+    localStorage.setItem(
+      "ptd.save",
+      JSON.stringify({
+        version: 3,
+        milestoneCapturesByMap: {
+          verdant_route: {
+            "25": true,
+            "75": true
+          }
+        }
+      })
+    );
+    const loaded = loadSave();
+    expect(loaded.milestoneCapturesByMap.verdant_route).toEqual({ 25: true, 75: true });
+  });
+
   it("grants starter coins exactly once via chooseStarter", () => {
     const s = freshSave();
     chooseStarter(s, "uid-1", "charmander");

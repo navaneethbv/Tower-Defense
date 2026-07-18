@@ -2,10 +2,20 @@ import { describe, it, expect } from "vitest";
 import { getMap, MAPS } from "../src/data/maps";
 import { getEnemy } from "../src/data/enemies";
 import { generateWave } from "../src/waves/generator";
+import { buildTerrain } from "../src/data/maps/terrain";
 
 describe("map configs", () => {
   it("rejects unknown route ids", () => {
     expect(() => getMap("missing_route")).toThrow("Unknown map id: missing_route");
+  });
+
+  it("builds terrain grids with bands correctly", () => {
+    const grid = buildTerrain(5, 4, { waterRows: [1], mountainRows: [2] });
+    expect(grid).toHaveLength(4);
+    expect(grid[0]).toEqual(["grass", "grass", "grass", "grass", "grass"]);
+    expect(grid[1]).toEqual(["water", "water", "water", "water", "water"]);
+    expect(grid[2]).toEqual(["mountain", "mountain", "mountain", "mountain", "mountain"]);
+    expect(grid[3]).toEqual(["grass", "grass", "grass", "grass", "grass"]);
   });
 
   it("defines nine authored 100-wave routes with safe habitat pads", () => {
@@ -81,5 +91,12 @@ describe("map configs", () => {
       expect(map.terrain.length).toBe(map.rows);
       for (const row of map.terrain) expect(row.length).toBe(map.cols);
     }
+  });
+
+  it("builds terrain with default bands fallback when they are omitted", () => {
+    const grid = buildTerrain(2, 2, {});
+    expect(grid).toHaveLength(2);
+    expect(grid[0]).toEqual(["grass", "grass"]);
+    expect(grid[1]).toEqual(["grass", "grass"]);
   });
 });

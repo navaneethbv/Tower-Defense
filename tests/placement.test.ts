@@ -68,4 +68,59 @@ describe("authored deployment pads", () => {
       new Set<Terrain>(["grass", "water", "mountain"]),
     );
   });
+
+  it("enforces team membership, bounds, state presence, and financial limits", () => {
+    const map = getMap("verdant_route");
+    const member = owned("starter", "charmander");
+    const game = new GameSession(map, [member], 7);
+    const pad = map.deploymentPads.find((candidate) => candidate.terrain === "grass")!;
+
+    // 1. Not on team
+    expect(game.canPlace("non-existent-uid", pad.col, pad.row)).toEqual({
+      ok: false,
+      reason: "Not on team",
+    });
+
+    // 2. Out of bounds
+    expect(game.canPlace("starter", -1, 0)).toEqual({
+      ok: false,
+      reason: "Out of bounds",
+    });
+    expect(game.canPlace("starter", map.cols, 0)).toEqual({
+      ok: false,
+      reason: "Out of bounds",
+    });
+    expect(game.canPlace("starter", 0, -1)).toEqual({
+      ok: false,
+      reason: "Out of bounds",
+    });
+    expect(game.canPlace("starter", 0, map.rows)).toEqual({
+      ok: false,
+      reason: "Out of bounds",
+    });
+
+    // 3. Insufficient gold
+    game.gold = 0;
+    expect(game.canPlace("starter", pad.col, pad.row)).toEqual({
+      ok: false,
+      reason: "Not enough gold",
+    });
+
+    // Restore gold to place
+    game.gold = 1000;
+    expect(game.placeTower("starter", pad.col, pad.row).ok).toBe(true);
+
+    // 4. Already deployed
+    expect(game.canPlace("starter", pad.col, pad.row)).toEqual({
+      ok: false,
+      reason: "Already deployed",
+    });
+
+    // 5. placeTower fails early when canPlace check fails
+    const second = owned("second", "bulbasaur");
+    const game2 = new GameSession(map, [second], 1);
+    game2.gold = 0; // cannot place
+    const check = game2.placeTower("second", pad.col, pad.row);
+    expect(check.ok).toBe(false);
+  });
 });

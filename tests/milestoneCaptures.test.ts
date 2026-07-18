@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { getMap } from "../src/data/maps";
 import { freshSave } from "../src/meta/save";
 import { applyMilestoneCaptures } from "../src/meta/milestoneCaptures";
@@ -47,5 +47,37 @@ describe("milestone captures", () => {
         capture.pokemon.speciesId,
       );
     }
+  });
+
+  it("throws on module load if a milestone override reclassifies a special species", async () => {
+    vi.doMock("../src/waves/milestonePoolOverrides", () => ({
+      rareIncludes: ["mewtwo"], // Mewtwo is legendary
+      rareExcludes: [],
+      powerIncludes: [],
+      powerExcludes: [],
+    }));
+    vi.resetModules();
+    await expect(import("../src/waves/milestones")).rejects.toThrow(
+      "Milestone pool override cannot reclassify special species: mewtwo"
+    );
+    // Cleanup mock to not affect other tests
+    vi.doMock("../src/waves/milestonePoolOverrides", () => ({
+      rareIncludes: ["lapras", "snorlax", "lucario"],
+      rareExcludes: ["chansey", "blissey", "smeargle"],
+      powerIncludes: [
+        "dragonite",
+        "tyranitar",
+        "salamence",
+        "metagross",
+        "garchomp",
+        "hydreigon",
+        "goodra",
+        "kommo-o",
+        "dragapult",
+        "baxcalibur",
+      ],
+      powerExcludes: [],
+    }));
+    vi.resetModules();
   });
 });
