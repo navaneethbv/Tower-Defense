@@ -54,6 +54,9 @@ const dom = {
   selectedTower: document.getElementById("selectedTower"),
   upgradeBtn: document.getElementById("upgradeBtn"),
   sellBtn: document.getElementById("sellBtn"),
+  abilityRow: document.getElementById("abilityRow"),
+  abilityBtn: document.getElementById("abilityBtn"),
+  abilityCooldownLabel: document.getElementById("abilityCooldownLabel"),
   
   // Shop & Controls
   recruitBtn: document.getElementById("recruitBtn"),
@@ -637,6 +640,7 @@ function updateSelectedTowerHUD() {
     dom.selectedTower.innerHTML = `<div class="tower-details-placeholder">None selected</div>`;
     dom.upgradeBtn.disabled = true;
     dom.sellBtn.disabled = true;
+    dom.abilityRow.classList.add("hidden");
     return;
   }
   
@@ -672,6 +676,25 @@ function updateSelectedTowerHUD() {
   const invested = Array.from({ length: tower.level - 1 }, (_, i) => towerUpgradeCost(i + 1)).reduce((a, b) => a + b, 0);
   const refund = Math.round((baseCost + invested) * 0.65);
   dom.sellBtn.textContent = `Sell (+${refund}g)`;
+  
+  // Ability UI
+  if (spec.ability) {
+    dom.abilityRow.classList.remove("hidden");
+    const isReady = tower.abilityCooldown <= 0;
+    dom.abilityBtn.disabled = !isReady || state.gameOver;
+    dom.abilityBtn.textContent = `⚡ ${spec.ability.name}`;
+    dom.abilityBtn.classList.toggle("ready", isReady);
+    
+    if (isReady) {
+      dom.abilityCooldownLabel.textContent = "READY!";
+      dom.abilityCooldownLabel.style.color = "#a855f7";
+    } else {
+      dom.abilityCooldownLabel.textContent = `${Math.ceil(tower.abilityCooldown)}s`;
+      dom.abilityCooldownLabel.style.color = "#9ca3af";
+    }
+  } else {
+    dom.abilityRow.classList.add("hidden");
+  }
 }
 
 function updateStatus(msg, isErr = false) {
@@ -722,7 +745,8 @@ function placeTower(x, y) {
     level: 1,
     cooldown: 0,
     targetMode: dom.targetMode.value,
-    isFavored
+    isFavored,
+    abilityCooldown: 0
   });
   
   state.firstPlacementFree = false;
@@ -831,6 +855,171 @@ function sellSelectedTower() {
   playSound("leak");
   
   updateGameHUD();
+}
+
+// TOWER ABILITY SYSTEM
+function activateAbility(towerIndex) {
+  if (towerIndex === null) return;
+  const tower = state.placed[towerIndex];
+  if (!tower) return;
+  
+  const spec = pokemonSpecies[tower.speciesId];
+  if (!spec.ability) return;
+  if (tower.abilityCooldown > 0) {
+    updateStatus(`${spec.ability.name} on cooldown! ${Math.ceil(tower.abilityCooldown)}s remaining.`, true);
+    return;
+  }
+  
+  const towerPx = { x: tower.x * TILE + TILE / 2, y: tower.y * TILE + TILE / 2 };
+  const effect = spec.ability.effect;
+  
+  // Launch dramatic ability particles
+  spawnAbilityParticles(towerPx.x, towerPx.y, spec.projectileColor);
+  playSound("evolve");
+  
+  if (effect === "solar_beam") {
+    // 300% damage to all enemies in range
+    const rangePx = spec.range * TILE * 1.5;
+    const dmg = spec.damage * 3.0 * (1 + (tower.level - 1) * 0.22);
+    state.enemies.forEach(enemy => {
+      if (enemy.alive && distance(towerPx, enemy) <= rangePx) {
+        enemy.hp -= Math.round(dmg);
+        spawnFloatingText(enemy.x, enemy.y - 20, `SOLAR BEAM!`, "#22c55e", 14);
+        if (enemy.hp <= 0 && enemy.alive) {
+          enemy.alive = false;
+          state.gold += enemy.reward;
+          spawnFloatingText(enemy.x, enemy.y, `+${enemy.reward}g`, "#fcd34d", 14);
+        }
+      }
+    });
+    spawnFloatingText(towerPx.x, towerPx.y - 30, "☀️ SOLAR BEAM!", "#22c55e", 18);
+  }
+  else if (effect === "inferno") {
+    // Burns all enemies in 3-tile radius for 10 DPS, 5s
+    const rangePx = 3 * TILE;
+    state.enemies.forEach(enemy => {
+      if (enemy.alive && distance(towerPx, enemy) <= rangePx) {
+        if (!enemy.statusEffects) enemy.statusEffects = {};
+        enemy.statusEffects.burn = { dps: 10.0, duration: 5.0 };
+        spawnFloatingText(enemy.x, enemy.y - 20, "INFERNO!", "#ef4444", 12);
+      }
+    });
+    spawnFloatingText(towerPx.x, towerPx.y - 30, "🔥 INFERNO!", "#ef4444", 18);
+  }
+  else if (effect === "surf") {
+    // Slows ALL enemies by 60% for 3s
+    state.enemies.forEach(enemy => {
+      if (enemy.alive) {
+        if (!enemy.statusEffects) enemy.statusEffects = {};
+        enemy.statusEffects.slow = { amount: 0.6, duration: 3.0 };
+      }
+    });
+    spawnFloatingText(towerPx.x, towerPx.y - 30, "🌊 SURF!", "#2563eb", 18);
+  }
+  else if (effect === "thunder") {
+    // Chain lightning hits up to 8 enemies
+    const dmg = spec.damage * 2.5 * (1 + (tower.level - 1) * 0.22);
+    let hits = 0;
+    let lastHit = towerPx;
+    const hitEnemies = new Set();
+    
+    const sortedEnemies = [...state.enemies].filter(e => e.alive).sort((a, b) => distance(towerPx, a) - distance(towerPx, b));
+    
+    for (const enemy of sortedEnemies) {
+      if (hits >= 8) break;
+      if (hitEnemies.has(enemy)) continue;
+      if (distance(lastHit, enemy) > 4 * TILE) continue;
+      
+      enemy.hp -= Math.round(dmg);
+      if (!enemy.statusEffects) enemy.statusEffects = {};
+      enemy.statusEffects.stun = { duration: 0.5 };
+      spawnLightningArc(lastHit.x, lastHit.y, enemy.x, enemy.y);
+      
+      if (enemy.hp <= 0 && enemy.alive) {
+        enemy.alive = false;
+        state.gold += enemy.reward;
+        spawnFloatingText(enemy.x, enemy.y, `+${enemy.reward}g`, "#fcd34d", 14);
+      }
+      
+      hitEnemies.add(enemy);
+      lastHit = enemy;
+      hits++;
+    }
+    spawnFloatingText(towerPx.x, towerPx.y - 30, "⚡ THUNDER!", "#eab308", 18);
+  }
+  else if (effect === "earthquake") {
+    // Stuns ALL enemies for 2s
+    state.enemies.forEach(enemy => {
+      if (enemy.alive) {
+        if (!enemy.statusEffects) enemy.statusEffects = {};
+        enemy.statusEffects.stun = { duration: 2.0 };
+        spawnFloatingText(enemy.x, enemy.y - 20, "QUAKE!", "#78716c", 12);
+      }
+    });
+    spawnFloatingText(towerPx.x, towerPx.y - 30, "🪨 EARTHQUAKE!", "#78716c", 18);
+  }
+  else if (effect === "dynamic_punch") {
+    // Single target nuke: 500% damage to nearest enemy
+    const dmg = spec.damage * 5.0 * (1 + (tower.level - 1) * 0.22);
+    const target = chooseTarget(towerPx, state.enemies.filter(e => e.alive), "closest");
+    if (target) {
+      target.hp -= Math.round(dmg);
+      spawnFloatingText(target.x, target.y - 20, `DYNAMIC PUNCH! -${Math.round(dmg)}`, "#ef4444", 16);
+      spawnHitParticles(target.x, target.y, "#ef4444");
+      
+      if (target.hp <= 0 && target.alive) {
+        target.alive = false;
+        state.gold += target.reward;
+        spawnFloatingText(target.x, target.y, `+${target.reward}g`, "#fcd34d", 14);
+      }
+    }
+    spawnFloatingText(towerPx.x, towerPx.y - 30, "👊 DYNAMIC PUNCH!", "#ef4444", 18);
+  }
+  else if (effect === "shadow_barrage") {
+    // Fires 5 rapid shadow balls at closest enemies
+    const alive = state.enemies.filter(e => e.alive);
+    for (let i = 0; i < Math.min(5, alive.length); i++) {
+      const target = alive[i % alive.length];
+      spawnProjectile(towerPx.x, towerPx.y, target, spec, tower.level, tower.isFavored);
+    }
+    spawnFloatingText(towerPx.x, towerPx.y - 30, "👻 SHADOW BARRAGE!", "#a855f7", 18);
+  }
+  else if (effect === "hurricane") {
+    // Blows back all enemies 2 tiles along the path
+    state.enemies.forEach(enemy => {
+      if (enemy.alive) {
+        const pushBack = Math.max(0, enemy.pathIndex - 4);
+        enemy.pathIndex = pushBack;
+        enemy.x = state.pathPixels[pushBack].x;
+        enemy.y = state.pathPixels[pushBack].y;
+        if (!enemy.statusEffects) enemy.statusEffects = {};
+        enemy.statusEffects.slow = { amount: 0.3, duration: 2.0 };
+      }
+    });
+    spawnFloatingText(towerPx.x, towerPx.y - 30, "🌪️ HURRICANE!", "#cbd5e1", 18);
+  }
+  
+  tower.abilityCooldown = spec.ability.cooldown;
+  updateStatus(`${spec.name} used ${spec.ability.name}!`);
+  updateGameHUD();
+}
+
+// Dramatic ability particle burst
+function spawnAbilityParticles(x, y, color) {
+  for (let i = 0; i < 40; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 80 + Math.random() * 160;
+    state.particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      color,
+      size: 3 + Math.random() * 5,
+      life: 0,
+      maxLife: 0.5 + Math.random() * 0.5
+    });
+  }
 }
 
 // IN-RUN RECRUIT SHOP

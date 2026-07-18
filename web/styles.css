@@ -1069,3 +1069,53 @@ select:focus {
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+/* --- ABILITY BUTTON --- */
+.ability-row {
+  align-items: center;
+  gap: 0.5rem;
+}
+.ability-row.hidden {
+  display: none !important;
+}
+.ability-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 0.5rem;
+  color: #d8b4fe;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.ability-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.5), rgba(139, 92, 246, 0.35));
+  border-color: #a855f7;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.3);
+  color: #f3e8ff;
+}
+.ability-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+.ability-btn.ready {
+  animation: abilityPulse 1.5s ease-in-out infinite;
+  border-color: #a855f7;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+}
+@keyframes abilityPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.15); }
+  50% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+}
+.ability-cd-label {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+

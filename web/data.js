@@ -104,7 +104,8 @@ export const pokemonSpecies = {
     name: "Venusaur", cost: 320, damage: 38, cooldown: 0.6, range: 3.5, role: "control",
     allowedTerrain: ["FIELD", "GRASS"], favoredTerrain: "GRASS", sprite: sprite(3),
     evolutions: [], description: "Razor Leaves slow by 50% and poison for 4 DPS (3s).",
-    projectileColor: "#22c55e", projectileType: "razor_leaf", types: ["grass", "poison"]
+    projectileColor: "#22c55e", projectileType: "razor_leaf", types: ["grass", "poison"],
+    ability: { name: "Solar Beam", desc: "300% damage line shot", cooldown: 20, effect: "solar_beam" }
   },
 
   // Charmander Line
@@ -124,7 +125,8 @@ export const pokemonSpecies = {
     name: "Charizard", cost: 350, damage: 50, cooldown: 0.6, range: 3.2, role: "dps",
     allowedTerrain: ["FIELD", "MOUNTAIN"], favoredTerrain: "MOUNTAIN", sprite: sprite(6),
     evolutions: [], description: "Fires fireballs that inflict 8.0 DPS Burn and splash (1.0 tile).",
-    projectileColor: "#ef4444", projectileType: "fireball", types: ["fire", "flying"]
+    projectileColor: "#ef4444", projectileType: "fireball", types: ["fire", "flying"],
+    ability: { name: "Inferno", desc: "Burns all enemies in 3-tile radius (10 DPS, 5s)", cooldown: 25, effect: "inferno" }
   },
 
   // Squirtle Line
@@ -144,7 +146,8 @@ export const pokemonSpecies = {
     name: "Blastoise", cost: 330, damage: 34, cooldown: 0.45, range: 3.4, role: "balanced",
     allowedTerrain: ["FIELD", "WATER"], favoredTerrain: "WATER", sprite: sprite(9),
     evolutions: [], description: "Hydro Pumps splash (1.4 tiles) and Break enemy armor (4s).",
-    projectileColor: "#2563eb", projectileType: "hydro_pump", types: ["water"]
+    projectileColor: "#2563eb", projectileType: "hydro_pump", types: ["water"],
+    ability: { name: "Surf", desc: "Slows ALL enemies by 60% for 3s", cooldown: 30, effect: "surf" }
   },
 
   // Pikachu Line
@@ -158,7 +161,8 @@ export const pokemonSpecies = {
     name: "Raichu", cost: 240, damage: 14, cooldown: 0.3, range: 3.2, role: "control",
     allowedTerrain: ["FIELD", "GRASS"], favoredTerrain: "GRASS", sprite: sprite(26),
     evolutions: [], description: "Thunderbolts jump to hit 3 targets, slowing each.",
-    projectileColor: "#eab308", projectileType: "spark", types: ["electric"]
+    projectileColor: "#eab308", projectileType: "spark", types: ["electric"],
+    ability: { name: "Thunder", desc: "Chain lightning hits up to 8 enemies", cooldown: 18, effect: "thunder" }
   },
 
   // Geodude Line
@@ -178,7 +182,8 @@ export const pokemonSpecies = {
     name: "Golem", cost: 400, damage: 85, cooldown: 1.0, range: 2.5, role: "tank_killer",
     allowedTerrain: ["FIELD", "MOUNTAIN"], favoredTerrain: "MOUNTAIN", sprite: sprite(76),
     evolutions: [], description: "Massive boulders Stun for 0.9s and ignore 50% armor.",
-    projectileColor: "#57534e", projectileType: "rock", types: ["rock", "ground"]
+    projectileColor: "#57534e", projectileType: "rock", types: ["rock", "ground"],
+    ability: { name: "Earthquake", desc: "Stuns ALL enemies for 2s", cooldown: 22, effect: "earthquake" }
   },
 
   // Oddish Line
@@ -218,7 +223,8 @@ export const pokemonSpecies = {
     name: "Pidgeot", cost: 310, damage: 32, cooldown: 0.4, range: 3.6, role: "dps",
     allowedTerrain: ["FIELD", "GRASS", "WATER", "MOUNTAIN"], favoredTerrain: "FIELD", sprite: sprite(18),
     evolutions: [], description: "Hurricane gusts. +25% Crit chance (2.0x damage).",
-    projectileColor: "#cbd5e1", projectileType: "gust", types: ["normal", "flying"]
+    projectileColor: "#cbd5e1", projectileType: "gust", types: ["normal", "flying"],
+    ability: { name: "Hurricane", desc: "Blows back all enemies 2 tiles", cooldown: 25, effect: "hurricane" }
   },
 
   // Machop Line
@@ -238,7 +244,8 @@ export const pokemonSpecies = {
     name: "Machamp", cost: 390, damage: 60, cooldown: 0.7, range: 2.6, role: "dps",
     allowedTerrain: ["FIELD", "MOUNTAIN"], favoredTerrain: "FIELD", sprite: sprite(68),
     evolutions: [], description: "Four-arm punches. Deals splash damage and stuns (0.4s).",
-    projectileColor: "#ef4444", projectileType: "fist", types: ["fighting"]
+    projectileColor: "#ef4444", projectileType: "fist", types: ["fighting"],
+    ability: { name: "Dynamic Punch", desc: "Single target nuke (500% damage)", cooldown: 15, effect: "dynamic_punch" }
   },
 
   // Gastly Line
@@ -258,7 +265,8 @@ export const pokemonSpecies = {
     name: "Gengar", cost: 410, damage: 45, cooldown: 0.5, range: 3.5, role: "dot",
     allowedTerrain: ["FIELD", "GRASS", "MOUNTAIN"], favoredTerrain: "GRASS", sprite: sprite(94),
     evolutions: [], description: "Shadow balls Curse targets (12.0 DPS DoT, -50% armor).",
-    projectileColor: "#a855f7", projectileType: "ghost", types: ["ghost", "poison"]
+    projectileColor: "#a855f7", projectileType: "ghost", types: ["ghost", "poison"],
+    ability: { name: "Shadow Ball Barrage", desc: "Fires 5 rapid shadow balls", cooldown: 20, effect: "shadow_barrage" }
   },
 
   // Eevee Line (Branching evolution)
