@@ -3,66 +3,211 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pokémon Route Defense Prototype</title>
+    <title>Pokémon Route Defense — Advanced Vertical Slice</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="layout">
-      <section class="panel">
-        <h1>Pokémon Route Defense</h1>
-        <div class="stats">
-          <p>Route: <span id="routeName">Route 1-1</span></p>
-          <p>Wave: <span id="wave">1</span></p>
-          <p>Hearts: <span id="hearts">20</span></p>
-          <p>Gold: <span id="gold">300</span></p>
-          <p>Stars Earned: <span id="stars">0</span></p>
-        </div>
+    <div id="app" class="app-container">
+      
+      <!-- MAIN MENU SCREEN -->
+      <section id="mainMenuScreen" class="screen active">
+        <header class="menu-header">
+          <h1 class="logo-text">Pokémon Route Defense</h1>
+          <p class="subtitle">Defend the routes of Kanto using strategic placement and evolutions!</p>
+          <div class="global-stats-chip">
+            Total Stars: <span id="globalStars" class="stars-val">0</span> ⭐
+          </div>
+        </header>
 
-        <h2>Team</h2>
-        <div id="teamButtons" class="button-grid"></div>
+        <main class="menu-main">
+          <div class="menu-left">
+            <h2>Select Route</h2>
+            <div class="select-group" style="margin-bottom: 1.25rem; max-width: 280px;">
+              <label for="routeDifficulty" style="font-weight: 600; color: #9ca3af; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Game Mode Modifier</label>
+              <select id="routeDifficulty" style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(255,255,255,0.08); margin-top: 0.35rem;">
+                <option value="normal">Normal (Standard Waves)</option>
+                <option value="hard">Hard (+35% HP, +15% Speed)</option>
+                <option value="chaos">Chaos Randomizer Mode 🌪️</option>
+              </select>
+            </div>
+            <div id="routesGrid" class="routes-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
 
-        <h2>Placement Targeting</h2>
-        <label for="targetMode">New tower target mode</label>
-        <select id="targetMode">
-          <option value="first">First</option>
-          <option value="last">Last</option>
-          <option value="strongest">Strongest</option>
-          <option value="weakest">Weakest</option>
-          <option value="fastest">Fastest</option>
-          <option value="slowest">Slowest</option>
-          <option value="closest">Closest</option>
-        </select>
-
-        <h2>Selected Tower</h2>
-        <p id="selectedTower">None selected</p>
-        <div class="row">
-          <button id="upgradeBtn">Upgrade (+1 level)</button>
-          <button id="sellBtn">Sell tower</button>
-        </div>
-
-        <h2>Shop</h2>
-        <button id="recruitBtn">Recruit Random Pokémon (120g)</button>
-        <p id="shopHint">Tip: first 2 recruits are role-biased.</p>
-
-        <h2>Controls</h2>
-        <ul>
-          <li>Select a Pokémon and click an empty tile to place.</li>
-          <li>Click a placed tower to inspect/upgrade/sell.</li>
-          <li>Press Start Wave (or Space) to send next wave.</li>
-          <li>Press U to upgrade selected tower.</li>
-        </ul>
-
-        <div class="row">
-          <button id="startWaveBtn">Start Wave</button>
-          <button id="resetBtn">Reset Run</button>
-        </div>
-        <p id="status"></p>
+          <div class="menu-right">
+            <h2>Active Team (6 slots)</h2>
+            <div id="menuTeamList" class="menu-team-list">
+              <!-- Dynamically populated -->
+            </div>
+            <button id="goToPokedexBtn" class="primary-btn pulse-anim">Manage Team & Pokédex</button>
+          </div>
+        </main>
       </section>
 
-      <section class="board-wrap">
-        <canvas id="board" width="864" height="576"></canvas>
+      <!-- POKEDEX SCREEN -->
+      <section id="pokedexScreen" class="screen hidden">
+        <header class="pokedex-header">
+          <button id="pokedexBackBtn" class="back-btn">← Back to Menu</button>
+          <h2>Kanto Pokédex & Team Builder</h2>
+        </header>
+
+        <main class="pokedex-main">
+          <div class="pokedex-list-pane">
+            <h3>All Pokémon</h3>
+            <div id="pokedexGrid" class="pokedex-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div id="pokedexDetailsPane" class="pokedex-details-pane glass-panel">
+            <div id="pokedexDetailsContent">
+              <!-- Selected pokemon info -->
+              <p class="select-hint">Select a Pokémon to view details and add to your active team.</p>
+            </div>
+          </div>
+        </main>
       </section>
-    </main>
+
+      <!-- GAME SCREEN -->
+      <section id="gameScreen" class="screen hidden">
+        <main class="layout">
+          <!-- Game Sidebar Panel -->
+          <section class="panel glass-panel">
+            <div class="panel-header">
+              <button id="gameExitBtn" class="exit-btn">← Quit</button>
+              <h2 id="hudRouteName">Route 1-1</h2>
+              <div class="header-toggles" style="margin-left: auto; display: flex; gap: 0.35rem;">
+                <button id="gridToggleBtn" class="exit-btn" style="padding: 0.35rem; font-size: 0.75rem; white-space: nowrap; width: auto;">🌐 Grid</button>
+                <button id="muteToggleBtn" class="exit-btn" style="padding: 0.35rem; font-size: 0.75rem; white-space: nowrap; width: auto;">🔊 Sound</button>
+              </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+              <div class="stat-card red">
+                <span class="stat-label">Hearts</span>
+                <span id="hearts" class="stat-value">20</span>
+              </div>
+              <div class="stat-card gold">
+                <span class="stat-label">Gold</span>
+                <span id="gold" class="stat-value">300</span>
+              </div>
+              <div class="stat-card blue">
+                <span class="stat-label">Wave</span>
+                <span id="wave" class="stat-value">1</span><span id="hudMaxWaves" class="wave-max">/10</span>
+              </div>
+              <div class="stat-card green">
+                <span class="stat-label">Stars</span>
+                <span id="stars" class="stat-value">0</span>
+              </div>
+            </div>
+
+            <!-- Spawning Progress tracker -->
+            <div class="wave-progress-box" style="margin-top: 0.25rem;">
+              <span class="stat-label" style="font-size: 0.65rem;">Wave Spawns Deployed</span>
+              <div class="progress-bar-bg" style="background: rgba(0,0,0,0.3); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 0.25rem; border: 1px solid rgba(255,255,255,0.05);">
+                <div id="waveProgressBar" style="background: var(--accent); width: 0%; height: 100%; transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+              </div>
+            </div>
+
+            <div class="panel-section">
+              <h3>Deploy Pokémon</h3>
+              <div id="teamButtons" class="button-grid">
+                <!-- Spawns active team members -->
+              </div>
+            </div>
+
+            <div class="panel-section row">
+              <div class="select-group">
+                <label for="targetMode">Target Mode</label>
+                <select id="targetMode">
+                  <option value="first">First</option>
+                  <option value="last">Last</option>
+                  <option value="strongest">Strongest</option>
+                  <option value="weakest">Weakest</option>
+                  <option value="fastest">Fastest</option>
+                  <option value="slowest">Slowest</option>
+                  <option value="closest">Closest</option>
+                </select>
+              </div>
+              <div class="select-group">
+                <label for="gameSpeed">Speed</label>
+                <select id="gameSpeed">
+                  <option value="1">1.0x (Normal)</option>
+                  <option value="1.5">1.5x (Fast)</option>
+                  <option value="2.5">2.5x (Very Fast)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Selected Tower Details -->
+            <div class="panel-section selected-tower-box">
+              <h3>Selected Pokémon</h3>
+              <div id="selectedTower" class="tower-details-placeholder">None selected</div>
+              <div class="row button-row" style="margin-top: 0.5rem;">
+                <button id="upgradeBtn" class="upgrade-btn" disabled>Upgrade</button>
+                <button id="sellBtn" class="sell-btn" disabled>Sell</button>
+              </div>
+            </div>
+
+            <!-- Recruitment Shop -->
+            <div class="panel-section shop-box">
+              <h3>In-run Shop</h3>
+              <button id="recruitBtn" class="recruit-btn">Recruit Egg (120g)</button>
+              <p id="shopHint" class="shop-hint">Tip: adds a random Pokémon from your active team list.</p>
+            </div>
+
+            <!-- Wave controls -->
+            <div class="panel-section controls-box">
+              <div class="row">
+                <button id="startWaveBtn" class="start-btn pulse-anim">Start Wave</button>
+                <button id="resetBtn" class="reset-btn">Restart</button>
+              </div>
+              <p id="status" class="status-msg">Place your starter, then press Start Wave.</p>
+            </div>
+          </section>
+
+          <!-- Board Canvas Area -->
+          <section class="board-wrap">
+            <div class="canvas-container">
+              <canvas id="board" width="864" height="576"></canvas>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <!-- GAME OVER MODAL OVERLAY -->
+      <div id="gameOverModal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+          <h2 id="modalTitle">Victory!</h2>
+          <p id="modalMessage">You successfully defended the route.</p>
+          
+          <div class="modal-stats">
+            <div class="modal-stat">
+              <span>Stars Earned</span>
+              <span id="modalStars" class="val-stars">⭐⭐⭐</span>
+            </div>
+            <div id="unlockContainer" class="modal-stat hidden">
+              <span class="unlock-label">Unlocked Pokémon!</span>
+              <div id="unlockedPokemonShowcase" class="unlock-showcase">
+                <!-- Dynamically shows unlocked Pokemon name/sprite -->
+              </div>
+            </div>
+          </div>
+
+          <div class="row modal-buttons">
+            <button id="modalExitBtn" class="primary-btn">Back to Routes</button>
+            <button id="modalRetryBtn" class="secondary-btn">Retry Route</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
 
     <script type="module" src="./app.js"></script>
   </body>
