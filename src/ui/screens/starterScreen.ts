@@ -1,5 +1,6 @@
 import type { SaveGame } from "../../types";
-import { getSpecies, STARTER_IDS } from "../../data/species";
+import { getSpecies } from "../../data/species";
+import { STARTER_IDS } from "../../data/starters";
 import { spriteUrl, STARTER_POKECOINS } from "../../data/constants";
 import { makeOwned } from "../../meta/ivs";
 import { chooseStarter } from "../../meta/save";

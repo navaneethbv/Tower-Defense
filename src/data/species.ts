@@ -181,6 +181,3 @@ export function isBaseSpecies(s: SpeciesDef): boolean {
 export function baseSpeciesByRarity(rarity: SpeciesDef["rarity"]): SpeciesDef[] {
   return SPECIES.filter((s) => isBaseSpecies(s) && s.rarity === rarity);
 }
-
-// Starter choices offered on first launch.
-export const STARTER_IDS = ["bulbasaur", "charmander", "squirtle", "pikachu"];
