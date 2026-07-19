@@ -2,6 +2,26 @@ import { describe, expect, it } from "vitest";
 import { loadAuthoredMap } from "../src/data/maps/tiled";
 import type { TiledRouteSource, RouteRuntimeConfig } from "../src/data/maps/authored/types";
 
+// The failure cases below deliberately corrupt a valid fixture to exercise the
+// loader's validation, which means writing values the strict source types
+// forbid. Layers are re-read through this permissive shape instead of `any`.
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+type LooseLayer = { [key: string]: JsonValue } & {
+  objects: { [key: string]: JsonValue }[];
+};
+
+function looseLayer(source: TiledRouteSource, name: string): LooseLayer {
+  return source.layers.find((layer) => layer.name === name) as unknown as LooseLayer;
+}
+
 const mockConfig: RouteRuntimeConfig = {
   id: "test_route",
   name: "Test Route",
@@ -113,14 +133,14 @@ describe("loadAuthoredMap", () => {
 
   it("throws if ground layer has invalid dimensions", () => {
     const source = createValidSource();
-    const ground = source.layers.find((l) => l.name === "ground") as any;
+    const ground = looseLayer(source, "ground");
     ground.width = 3;
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: invalid ground dimensions");
   });
 
   it("throws if ground layer data length is invalid", () => {
     const source = createValidSource();
-    const ground = source.layers.find((l) => l.name === "ground") as any;
+    const ground = looseLayer(source, "ground");
     ground.data = [1, 2, 3];
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: invalid ground layer length");
   });
@@ -133,51 +153,51 @@ describe("loadAuthoredMap", () => {
 
   it("throws if path layer has no polyline", () => {
     const source = createValidSource();
-    const pathLayer = source.layers.find((l) => l.name === "path") as any;
-    pathLayer.objects[0].polyline = undefined;
+    const pathLayer = looseLayer(source, "path");
+    pathLayer.objects[0]!.polyline = undefined;
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: path layer has no polyline");
   });
 
   it("throws if habitat tile data is invalid", () => {
     const source = createValidSource();
-    const habitat = source.layers.find((l) => l.name === "habitat") as any;
+    const habitat = looseLayer(source, "habitat");
     habitat.data = [99, 2, 3, 1];
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: invalid habitat tile at 0,0");
   });
 
   it("throws if pad name/id is missing", () => {
     const source = createValidSource();
-    const pads = source.layers.find((l) => l.name === "pads") as any;
-    pads.objects[0].name = undefined;
+    const pads = looseLayer(source, "pads");
+    pads.objects[0]!.name = undefined;
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: pad is missing an id");
   });
 
   it("throws if duplicate pad id exists", () => {
     const source = createValidSource();
-    const pads = source.layers.find((l) => l.name === "pads") as any;
-    pads.objects[1].name = "pad-1";
+    const pads = looseLayer(source, "pads");
+    pads.objects[1]!.name = "pad-1";
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: duplicate pad pad-1");
   });
 
   it("throws if pad is outside the board", () => {
     const source = createValidSource();
-    const pads = source.layers.find((l) => l.name === "pads") as any;
-    pads.objects[0].x = 96; // 96 / 48 = 2 (col 2 is out of bounds for width 2)
+    const pads = looseLayer(source, "pads");
+    pads.objects[0]!.x = 96; // 96 / 48 = 2 (col 2 is out of bounds for width 2)
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: pad pad-1 is outside the board");
   });
 
   it("throws if pad terrain mismatch with habitat layer", () => {
     const source = createValidSource();
-    const pads = source.layers.find((l) => l.name === "pads") as any;
+    const pads = looseLayer(source, "pads");
     // pad-1 is at (0,0) which is grass, let's change pad terrain to water
-    pads.objects[0].properties[0].value = "water";
+    (pads.objects[0]!.properties as { value: string }[])[0]!.value = "water";
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: pad pad-1 does not match habitat layer");
   });
 
   it("throws if pad is missing a valid terrain property", () => {
     const source = createValidSource();
-    const pads = source.layers.find((l) => l.name === "pads") as any;
-    pads.objects[0].properties = undefined;
+    const pads = looseLayer(source, "pads");
+    pads.objects[0]!.properties = undefined;
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow("test_route: pad is missing a valid terrain property");
   });
 });
