@@ -14,6 +14,12 @@ Play the production build at [tower-defense-navy.vercel.app](https://tower-defen
 - Local Pokemon sprites for deterministic loading and offline-friendly production builds.
 - Egg purchasing, rarity pools, hatching, IVs, a persistent collection, and team loadouts.
 - In-run deployment, targeting modes, upgrades, evolution, selling, statuses, and active abilities.
+- Free mid-wave redeployment: a deployed Pokemon keeps its level, XP, evolution, targeting, and investment, and pays only a 5-second cooldown during which it cannot attack or use its ability.
+- Twenty-eight starter choices grouped by generation: the traditional Grass, Fire, and Water trio from Generations 1 through 9, plus Pikachu.
+- Eleven status effects: burn, poison, toxic, paralysis, freeze, sleep, confusion, slow, stun, armor break, and curse.
+- Status specialists trade roughly 20 percent direct damage for stronger status chance, duration, and magnitude, derived across the full roster from canonical types and stats.
+- Bosses and milestone enemies remain susceptible to every status, but freeze, sleep, stun, and paralysis interruptions last half as long against them and toxic growth uses a lower cap, so control never becomes permanent.
+- All status timing is deterministic for a fixed run seed, including paralysis and confusion interruptions, so runs replay identically.
 - Persistent speed, auto-wave, audio mute, and battle-effect preferences.
 - Seven progress achievements, route records, milestone captures, milestone egg drops, collection XP, and Pokecoin rewards.
 - Rare encounters appear at wave 25, powerful encounters at wave 50, mythical encounters at wave 75, and legendary encounters at wave 100.
@@ -67,7 +73,10 @@ npx vitest run tests/balance.test.ts
 
 - Select a team member, then click a legal terrain tile to deploy it.
 - Press `Q` or `E` to cycle legal deployment pads, then press `Enter` to deploy the selected Pokemon.
-- Select a deployed tower to change targeting, upgrade it, sell it, or inspect its active ability.
+- Select a deployed tower to change targeting, upgrade it, sell it, redeploy it, or inspect its active ability.
+- Press `Redeploy` on a selected tower to move it, including during an active wave.
+- While moving, click a highlighted pad, or press `Q` and `E` to cycle destinations and `Enter` to confirm.
+- Press `Escape`, or select the moving tower again, to cancel a redeployment.
 - Press `A` to activate the selected tower's ready ability.
 - Use the topbar to start a wave, set 1x to 3x simulation speed, or enable auto-wave.
 - Configure sound, battle effects, and the default auto-wave state from the home screen.

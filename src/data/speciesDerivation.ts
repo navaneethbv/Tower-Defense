@@ -56,6 +56,12 @@ const TYPE_COLOR: Record<TypeName, string> = {
   fairy: "#f9a8d4",
 };
 
+// "aoe" is the only role starting with a vowel, so descriptions would otherwise
+// read "a aoe tower".
+function article(role: Role): string {
+  return /^[aeiou]/.test(role) ? "an" : "a";
+}
+
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value));
 }
@@ -269,7 +275,7 @@ export function deriveSpecies(
           }))
         : undefined,
     onHitStatus: starter?.onHitStatus ?? deriveStatusKit(attackType, combatProfile),
-    description: `${record.name} uses ${attackType}-type attacks as a ${role.replace("_", " ")} tower.`,
+    description: `${record.name} uses ${attackType}-type attacks as ${article(role)} ${role.replace("_", " ")} tower.`,
   };
 }
 

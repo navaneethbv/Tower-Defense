@@ -50,9 +50,17 @@ PokeAPI supplies Pokemon data and battle sprites, but it does not supply the com
 
 ## Balance notes
 
-A lone starter averages wave 12.2 on Verdant Route across the fixed balance seeds.
+A lone starter averages wave 14.8 on Verdant Route across the fixed balance seeds.
 Broader and more developed teams progress farther.
 A developed six-member team reaches at least wave 35 on every route across the fixed balance seeds.
+A six-member status-specialist team also reaches at least wave 35 on every route across the fixed balance seeds.
+
+Status specialists take a 20 percent direct-damage cut through `SPECIALIST_DAMAGE_MULTIPLIER` in `src/data/speciesDerivation.ts`.
+Tuning settled on `0.80` rather than `0.75` because a specialist team could not hold Ember Caldera at the deeper cut.
+
+Two structural constraints shape any status-specialist team and are worth knowing before retuning.
+Water-typed Pokemon attack as water, and water has no status kit, so only poison/water, ice/water, and fire/water duals can hold a water pad at all; there are eight such specialists in the entire roster.
+Shadow Marsh's spectral enemies are only hittable by ghost, psychic, or super-effective attacks, so a specialist team needs three spectral-capable attackers there rather than two.
 A type-diverse team of ten max-IV, level-20 final-stage Pokemon clears all 100 waves on every route across the fixed test seeds.
 The act pressure term in `src/waves/scaling.ts` keeps early waves approachable while preserving meaningful pressure across the full route.
 Persistent collection levels grant up to a 100 percent in-run damage bonus.
@@ -77,3 +85,19 @@ The `main` branch is protected by required pull requests, Lint, Test, and Build 
 
 The gameplay work is split into stage commits and pushed after every completed stage.
 The current stage adds full-route balance validation, production browser verification, documentation, and deployment.
+
+## Redeployment, starters, and status specialists
+
+The suite is 186 tests across 25 files.
+Coverage is 99.88 percent statements, 97.82 percent branches, 100 percent functions, and 99.88 percent lines, all above the 95 percent thresholds.
+
+Stage 1 shipped state-preserving redeployment in `a4ce7fc` and `f825df9`.
+Stage 2 shipped the generation-grouped starter picker in `a615657` and `7ae3399`.
+Stage 3 shipped the status engine, roster profiles, presentation, and balance in `8700c1b`, `49e64db`, `3ac4cfb`, `cac7113`, and `93629de`.
+A preceding fix in `dfcd5b4` cleared nine pre-existing `no-explicit-any` lint errors in `tests/tiled.test.ts` that were already failing the `Quality` workflow's Lint job before this work began.
+
+Browser verification ran at 1440 by 900 and 390 by 844 on Chrome.
+It covered mid-wave redeployment by mouse and by `Q`, `E`, and `Enter`, `Escape` cancellation, the 5-second cooldown veil and attack and ability lockout, all nine starter generation tabs with keyboard navigation, Generation 9 starter selection on a fresh profile, the two-column mobile starter grid, status chips on live enemies, and the selected-tower status description.
+The browser console reported no warnings or errors from the application.
+
+Pikachu is deliberately offered as a Generation 1 starter even though Pichu evolves into it, so `tests/starters.test.ts` records it as the single allowed exception to the base-stage invariant.

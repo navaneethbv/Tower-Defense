@@ -32,7 +32,7 @@ export function starterCardView(speciesId: string): StarterCardView {
     name: species.name,
     sprite: spriteUrl(species.dex),
     types: species.types.join(" / "),
-    role: titleCase(species.role.replace("_", " ")),
+    role: species.role === "aoe" ? "AoE" : titleCase(species.role.replace("_", " ")),
     habitats: species.allowedTerrain.join(" / "),
     // Purely a direct-damage rating. Status identity is reported separately, so
     // this must not imply a status specialty a species may not have.
