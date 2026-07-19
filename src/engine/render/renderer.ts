@@ -4,6 +4,7 @@ import type { Terrain } from "../../types";
 import { TILE } from "../../data/constants";
 import { getSprite, isReady } from "./spriteCache";
 import { drawMapLayers, getMapAtlas, padVisualState } from "./mapTiles";
+import { STATUS_PRESENTATION } from "../../ui/statusPresentation";
 
 const TERRAIN_COLORS: Record<string, string> = {
   grass: "#79bd68",
@@ -130,6 +131,26 @@ export function drawBoard(
       ctx.beginPath();
       ctx.arc(e.pos.x, e.pos.y, size / 2, 0, Math.PI * 2);
       ctx.stroke();
+    }
+    // Status chips sit above the health bar, capped so a heavily statused enemy
+    // never buries its own sprite.
+    const active = e.status.active().slice(0, 5);
+    if (active.length > 0) {
+      const chip = 13;
+      const totalWidth = active.length * chip + (active.length - 1) * 2;
+      let x = e.pos.x - totalWidth / 2;
+      const y = e.pos.y - size / 2 - 21;
+      ctx.font = "bold 9px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for (const effect of active) {
+        const presentation = STATUS_PRESENTATION[effect.kind];
+        ctx.fillStyle = presentation.color;
+        ctx.fillRect(x, y, chip, chip);
+        ctx.fillStyle = "#0f172a";
+        ctx.fillText(presentation.icon, x + chip / 2, y + chip / 2 + 0.5);
+        x += chip + 2;
+      }
     }
   }
 

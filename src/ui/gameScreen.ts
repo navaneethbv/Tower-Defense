@@ -14,6 +14,7 @@ import { drawBoard } from "../engine/render/renderer";
 import type { Tower } from "../engine/tower";
 import { advanceAutoWaveTimer } from "../engine/autoWave";
 import { cycleRedeploymentPad, redeploymentPads } from "./redeployment";
+import { statusSummary } from "./statusPresentation";
 import { playSound } from "./audio";
 import { generateWave } from "../waves/generator";
 
@@ -416,6 +417,7 @@ export function runGame(
           <span>RNG ${(t.rangePx() / TILE).toFixed(1)}</span>
           <span>CD ${t.cooldown().toFixed(2)}s</span>
         </div>
+        ${t.species.onHitStatus ? `<div class="tower-status">${statusSummary(t.species.onHitStatus)}</div>` : ""}
         <div class="tower-redeploy" id="redeploy-state">${
           t.redeployCooldownLeft > 0
             ? `Redeploy in ${t.redeployCooldownLeft.toFixed(1)}s`

@@ -2,6 +2,7 @@ import type { SaveGame } from "../../types";
 import { getSpecies } from "../../data/species";
 import { STARTER_GROUPS } from "../../data/starters";
 import { spriteUrl, STARTER_POKECOINS } from "../../data/constants";
+import { STATUS_PRESENTATION } from "../statusPresentation";
 import { makeOwned } from "../../meta/ivs";
 import { chooseStarter } from "../../meta/save";
 
@@ -36,9 +37,7 @@ export function starterCardView(speciesId: string): StarterCardView {
     // Purely a direct-damage rating. Status identity is reported separately, so
     // this must not imply a status specialty a species may not have.
     damage: dps >= 24 ? "High direct damage" : dps >= 14 ? "Balanced direct damage" : "Low direct damage",
-    status: species.onHitStatus
-      ? titleCase(species.onHitStatus.kind.replace("armorBreak", "armor break"))
-      : "No status effect",
+    status: species.onHitStatus ? STATUS_PRESENTATION[species.onHitStatus.kind].label : "No status effect",
     description: species.description,
   };
 }
