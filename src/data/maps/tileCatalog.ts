@@ -1,15 +1,18 @@
-export const MAP_ATLAS_COLUMNS = 12;
-export const MAP_ATLAS_ROWS = 12;
+// The route atlas is an 8x8 grid of authored 48px pixel-art tiles.
+export const MAP_ATLAS_COLUMNS = 8;
+export const MAP_ATLAS_ROWS = 8;
 export const MAP_ATLAS_TILE_COUNT = MAP_ATLAS_COLUMNS * MAP_ATLAS_ROWS;
 
-// Biome path families occupy tiles 65 through 118; the remaining bands hold
-// landmark pieces (119-126) and the three deployment-pad families (127-144).
-export const PATH_TILE_IDS = new Set<number>(
-  Array.from({ length: 54 }, (_, index) => 65 + index),
-);
+// Trodden dirt and its grass-edged variants; routes lay corridors from these.
+export const PATH_TILE_IDS = new Set<number>([2, 10, 15, 18, 26, 42, 50, 58]);
 
-export const PAD_TILE_IDS = new Set<number>([
-  127, 128, 129, 130, 131, 132,
-  133, 134, 135, 136, 137, 138,
-  139, 140, 141, 142, 143, 144,
-]);
+// Pad bases sit flush with their habitat and let drawPadState supply the
+// deployment ring. River and boulder tiles carry baked dark banks, so using
+// them here punched dark holes through ponds and cliffs.
+export const PAD_TILE_IDS = new Set<number>([3, 20, 29, 30, 46, 59]);
+
+export const PAD_TILE_BY_TERRAIN = {
+  grass: 29,
+  water: 3,
+  mountain: 20,
+} as const;

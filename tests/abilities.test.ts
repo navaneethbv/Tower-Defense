@@ -90,12 +90,26 @@ describe("active abilities", () => {
   it("executes aoe_push ability", () => {
     const { game, tower } = setup("pidgeot");
     const enemy = addEnemy(game, tower.pos.x + 48, tower.pos.y);
-    enemy.distance = 432;
-    enemy.pos = game.path.positionAt(432);
+    // The push is measured along the route, so the enemy has to sit on the
+    // path within range of the tower at tile (1,1). Derive that distance from
+    // the map instead of hard-coding it, so re-authoring a route cannot
+    // silently move the enemy out of range and void the assertion.
+    let anchor = 0;
+    let closest = Infinity;
+    for (let d = 48; d < game.path.length; d += 8) {
+      const point = game.path.positionAt(d);
+      const gap = Math.hypot(point.x - tower.pos.x, point.y - tower.pos.y);
+      if (gap < closest) {
+        closest = gap;
+        anchor = d;
+      }
+    }
+    enemy.distance = anchor;
+    enemy.pos = game.path.positionAt(anchor);
 
     const result = game.activateAbility(tower);
     expect(result.ok).toBe(true);
-    expect(enemy.distance).toBe(384);
+    expect(enemy.distance).toBe(anchor - 48);
   });
 
   it("executes aoe_stun ability", () => {

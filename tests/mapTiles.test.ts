@@ -3,10 +3,10 @@ import type { MapConfig } from "../src/types";
 import { drawMapLayers, padVisualState, tileSourceRect } from "../src/engine/render/mapTiles";
 
 describe("map tile rendering helpers", () => {
-  it("maps one-based tile IDs into the twelve-column atlas", () => {
+  it("maps one-based tile IDs into the eight-column atlas", () => {
     expect(tileSourceRect(1)).toEqual({ x: 0, y: 0, width: 48, height: 48 });
-    expect(tileSourceRect(13)).toEqual({ x: 0, y: 48, width: 48, height: 48 });
-    expect(tileSourceRect(144)).toEqual({ x: 528, y: 528, width: 48, height: 48 });
+    expect(tileSourceRect(9)).toEqual({ x: 0, y: 48, width: 48, height: 48 });
+    expect(tileSourceRect(64)).toEqual({ x: 336, y: 336, width: 48, height: 48 });
   });
 
   it("draws ground, authored path, decor, and pad base in order", () => {
@@ -19,16 +19,16 @@ describe("map tile rendering helpers", () => {
       cols: 1,
       rows: 1,
       tiles: [1],
-      pathTiles: [65],
-      decor: [{ tile: 101, col: 0, row: 0 }],
-      deploymentPads: [{ id: "grass-1", col: 0, row: 0, terrain: "grass", tile: 127 }],
-      theme: { palette: "verdant", groundTile: 1, pathTile: 65 },
+      pathTiles: [2],
+      decor: [{ tile: 13, col: 0, row: 0 }],
+      deploymentPads: [{ id: "grass-1", col: 0, row: 0, terrain: "grass", tile: 29 }],
+      theme: { palette: "verdant", groundTile: 1, pathTile: 2 },
     } as MapConfig;
 
     drawMapLayers(ctx, map, {} as HTMLImageElement);
 
     expect(ctx.imageSmoothingEnabled).toBe(false);
-    expect(draws).toEqual([1, 5, 5, 7]);
+    expect(draws).toEqual([1, 2, 5, 5]);
   });
 
   it("prioritizes occupied and compatibility pad states", () => {

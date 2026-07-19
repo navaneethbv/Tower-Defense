@@ -38,7 +38,7 @@ export function getMapAtlas(): HTMLImageElement | undefined {
   if (typeof Image === "undefined") return undefined;
   if (!atlas) {
     atlas = new Image();
-    atlas.src = "/maps/route-tileset.svg";
+    atlas.src = "/maps/route-tileset.png";
   }
   return atlas.complete && atlas.naturalWidth > 0 ? atlas : undefined;
 }
