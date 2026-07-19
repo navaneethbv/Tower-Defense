@@ -62,6 +62,9 @@ describe("map configs", () => {
     ["verdant_route", "research-outpost", [1, 2, 13, 17, 25, 30, 33, 36], 8, 6, 50.5, 12],
     ["river_crossing", "river-islands", [1, 2, 3, 13, 17, 25, 27, 59], 6, 4, 36, 14],
     ["granite_cave", "crystal-chambers", [3, 4, 11, 12, 20, 21, 32, 40], 8, 6, 50, 12],
+    ["ember_caldera", "caldera-core", [4, 5, 11, 20, 21, 22, 23, 32], 8, 6, 45, 12],
+    ["frostbound_lake", "frozen-lake", [1, 2, 6, 12, 16, 24, 46, 59], 6, 4, 30, 14],
+    ["shadow_marsh", "drowned-grove", [1, 2, 3, 7, 17, 41, 49, 59], 8, 6, 35, 13],
   ] as const)("gives %s a dense balanced authored identity", (
     mapId,
     dominantId,
