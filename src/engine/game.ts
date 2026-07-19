@@ -118,8 +118,8 @@ export class GameSession {
     const species = getSpecies(member.speciesId);
     const favored = this.padAt(col, row)!.terrain === species.favoredTerrain;
     // Persistent collection progress is the main endgame power curve.
-    const persistentBonus = Math.min(1, (member.level - 1) * 0.05);
-    const tower = new Tower(member.uid, member.speciesId, member.ivs, col, row, favored, persistentBonus);
+    const persistentBonus = Math.min(1.5, (member.level - 1) * 0.05);
+    const tower = new Tower(member.uid, member.speciesId, member.ivs, col, row, favored, persistentBonus, member.level);
     this.towers.push(tower);
     this.placedUids.add(uid);
     this.gold -= species.base.cost;
@@ -193,12 +193,12 @@ export class GameSession {
   // Gold can buy only a few levels per tower, so dumping a whole run's gold into
   // one tower hits a wall fast. Deploying more pokemon is the efficient spend,
   // this is what makes hatching a bigger team the real path to going further.
-  static readonly MAX_GOLD_LEVELS = 4;
+  static readonly MAX_GOLD_LEVELS = 99;
 
   // In-run upgrade: gold buys tower levels. Cost climbs with levels already
   // bought so a single tower can't be cheaply maxed.
   upgradeCost(tower: Tower): number {
-    return Math.round(45 * Math.pow(1.55, tower.goldLevels));
+    return Math.round(35 + tower.goldLevels * 15);
   }
 
   canUpgrade(tower: Tower): boolean {

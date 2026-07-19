@@ -3,10 +3,10 @@ import { getSpecies } from "../data/species";
 
 // Persistent per-level bonus is capped so veterans matter without breaking
 // in-run balance. Level here is the collection level, not the in-run tower level.
-export const MAX_PERSISTENT_LEVEL = 20;
+export const MAX_PERSISTENT_LEVEL = 100;
 
 export function persistentDamageBonus(pokemon: OwnedPokemon): number {
-  return Math.min(0.2, (pokemon.level - 1) * 0.01);
+  return Math.min(1.5, (pokemon.level - 1) * 0.05);
 }
 
 export function xpToPersistentLevel(level: number): number {

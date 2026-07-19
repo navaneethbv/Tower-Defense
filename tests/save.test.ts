@@ -217,24 +217,26 @@ describe("progression", () => {
 });
 
 describe("persistent leveling", () => {
-  it("levels up a collection member from run XP and caps at 20", () => {
+  it("levels up a collection member from run XP and caps at 100", () => {
     const p = { uid: "x", speciesId: "charmander", ivs: { damage: 0, range: 0, attackSpeed: 0 }, level: 1, xp: 0, hatchedAt: 0 };
     grantRunXp(p, 30);
     expect(p.level).toBe(2);
     grantRunXp(p, 100000);
-    expect(p.level).toBe(20);
+    expect(p.level).toBe(100);
     // call again to hit early return branch
     grantRunXp(p, 10);
-    expect(p.level).toBe(20);
+    expect(p.level).toBe(100);
   });
 
   it("calculates persistent damage bonus correctly", () => {
     const p = { uid: "x", speciesId: "charmander", ivs: { damage: 0, range: 0, attackSpeed: 0 }, level: 1, xp: 0, hatchedAt: 0 };
-    expect(persistentDamageBonus(p)).toBe(0.0);
+    expect(persistentDamageBonus(p)).toBeCloseTo(0.0);
     p.level = 11;
-    expect(persistentDamageBonus(p)).toBe(0.1);
-    p.level = 30; // above cap
-    expect(persistentDamageBonus(p)).toBe(0.2);
+    expect(persistentDamageBonus(p)).toBeCloseTo(0.5);
+    p.level = 30;
+    expect(persistentDamageBonus(p)).toBeCloseTo(1.45);
+    p.level = 100;
+    expect(persistentDamageBonus(p)).toBeCloseTo(1.5);
   });
 
   it("formats display name", () => {

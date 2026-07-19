@@ -3,7 +3,7 @@ import { getSpecies, selectEvolution } from "../data/species";
 import { TILE, RANGE_SCALE } from "../data/constants";
 import type { Point } from "./path";
 
-const MAX_LEVEL = 15;
+const MAX_LEVEL = 100;
 
 export function xpToNext(level: number): number {
   return 6 + level * 4;
@@ -38,6 +38,7 @@ export class Tower {
     row: number,
     favored: boolean,
     persistentDamageBonus = 0,
+    startingLevel = 1,
   ) {
     this.species = getSpecies(speciesId);
     this.ownerUid = ownerUid;
@@ -47,6 +48,7 @@ export class Tower {
     this.col = col;
     this.row = row;
     this.pos = { x: (col + 0.5) * TILE, y: (row + 0.5) * TILE };
+    this.level = startingLevel;
     this.totalInvested = this.species.base.cost;
   }
 
@@ -58,13 +60,10 @@ export class Tower {
     this.favored = favored;
   }
 
-  private levelFactor(exp: number): number {
-    return Math.pow(exp, this.level - 1);
-  }
 
   damage(): number {
     const b = this.species.base.damage;
-    const lvl = 1 + (this.level - 1) * 0.22;
+    const lvl = Math.pow(this.level, 0.48);
     const iv = 1 + this.ivs.damage / 100;
     const fav = this.favored ? 1.25 : 1;
     return b * lvl * iv * fav * (1 + this.persistentDamageBonus);
@@ -72,7 +71,7 @@ export class Tower {
 
   rangePx(): number {
     const b = this.species.base.range;
-    const lvl = 1 + (this.level - 1) * 0.08;
+    const lvl = Math.pow(this.level, 0.25);
     const iv = 1 + this.ivs.range / 100;
     const fav = this.favored ? 1.25 : 1;
     return b * lvl * iv * fav * TILE * RANGE_SCALE;
@@ -81,7 +80,7 @@ export class Tower {
   cooldown(): number {
     const b = this.species.base.cooldown;
     const iv = 1 + this.ivs.attackSpeed / 100;
-    return (b * this.levelFactor(0.97)) / iv;
+    return (b * Math.pow(0.97, Math.pow(this.level - 1, 0.7))) / iv;
   }
 
   atMaxLevel(): boolean {
@@ -104,18 +103,7 @@ export class Tower {
   // Grant XP; returns true if the tower evolved this grant.
   gainXp(amount: number): boolean {
     this.runXp += amount;
-    if (this.level >= MAX_LEVEL) return false;
-    this.xp += amount;
-    let evolved = false;
-    while (this.level < MAX_LEVEL && this.xp >= xpToNext(this.level)) {
-      this.xp -= xpToNext(this.level);
-      this.level++;
-      const evo = selectEvolution(this.species, this.ownerUid);
-      if (evo && this.level >= evo.atLevel) {
-        this.species = getSpecies(evo.speciesId);
-        evolved = true;
-      }
-    }
-    return evolved;
+    // Level up via money only. Not kills.
+    return false;
   }
 }
