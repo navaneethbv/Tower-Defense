@@ -1,11 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { padVisualState, tileSourceRect } from "../src/engine/render/mapTiles";
+import type { MapConfig } from "../src/types";
+import { drawMapLayers, padVisualState, tileSourceRect } from "../src/engine/render/mapTiles";
 
 describe("map tile rendering helpers", () => {
   it("maps one-based tile IDs into the twelve-column atlas", () => {
     expect(tileSourceRect(1)).toEqual({ x: 0, y: 0, width: 48, height: 48 });
     expect(tileSourceRect(13)).toEqual({ x: 0, y: 48, width: 48, height: 48 });
     expect(tileSourceRect(144)).toEqual({ x: 528, y: 528, width: 48, height: 48 });
+  });
+
+  it("draws ground, authored path, decor, and pad base in order", () => {
+    const draws: number[] = [];
+    const ctx = {
+      imageSmoothingEnabled: true,
+      drawImage: (_image: unknown, sx: number) => draws.push(sx / 48 + 1),
+    } as unknown as CanvasRenderingContext2D;
+    const map = {
+      cols: 1,
+      rows: 1,
+      tiles: [1],
+      pathTiles: [65],
+      decor: [{ tile: 101, col: 0, row: 0 }],
+      deploymentPads: [{ id: "grass-1", col: 0, row: 0, terrain: "grass", tile: 127 }],
+      theme: { palette: "verdant", groundTile: 1, pathTile: 65 },
+    } as MapConfig;
+
+    drawMapLayers(ctx, map, {} as HTMLImageElement);
+
+    expect(ctx.imageSmoothingEnabled).toBe(false);
+    expect(draws).toEqual([1, 5, 5, 7]);
   });
 
   it("prioritizes occupied and compatibility pad states", () => {

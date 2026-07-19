@@ -3,7 +3,7 @@ import type { Tower } from "../tower";
 import type { Terrain } from "../../types";
 import { TILE } from "../../data/constants";
 import { getSprite, isReady } from "./spriteCache";
-import { drawMapLayers, getMapAtlas, padVisualState } from "./mapTiles";
+import { drawMapLayers, drawPadState, getMapAtlas, padVisualState } from "./mapTiles";
 import { STATUS_PRESENTATION } from "../../ui/statusPresentation";
 
 const TERRAIN_COLORS: Record<string, string> = {
@@ -25,7 +25,7 @@ export function drawBoard(
   showEffects = true,
   interaction: BoardInteraction = { allowedTerrain: null, hovered: null },
 ): void {
-  const { map, path } = game;
+  const { map } = game;
   ctx.clearRect(0, 0, map.cols * TILE, map.rows * TILE);
 
   const atlas = getMapAtlas();
@@ -40,59 +40,18 @@ export function drawBoard(
     }
   }
 
-  // Path
-  ctx.strokeStyle = "#8e7548";
-  ctx.lineWidth = TILE * 0.86;
-  ctx.lineJoin = "round";
-  ctx.lineCap = "square";
-  ctx.beginPath();
-  path.points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-  ctx.stroke();
-  ctx.strokeStyle = "#d7bd72";
-  ctx.lineWidth = TILE * 0.7;
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  path.points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-  ctx.stroke();
-
   for (const pad of map.deploymentPads) {
     const state = padVisualState({
       occupied: Boolean(game.towerAt(pad.col, pad.row)),
       selectedTerrain: interaction.allowedTerrain,
       padTerrain: pad.terrain,
     });
-    const x = pad.col * TILE;
-    const y = pad.row * TILE;
-    const colors: Record<typeof state, string> = {
-      idle: "rgba(238,248,201,0.72)",
-      compatible: "#eef8c9",
-      incompatible: "#c95f58",
-      occupied: "#182536",
-    };
-    ctx.fillStyle =
-      pad.terrain === "water"
-        ? "rgba(130,168,108,0.9)"
-        : pad.terrain === "mountain"
-          ? "rgba(145,139,128,0.9)"
-          : "rgba(143,210,124,0.88)";
-    ctx.fillRect(x + 7, y + 7, TILE - 14, TILE - 14);
-    ctx.strokeStyle = colors[state];
-    ctx.lineWidth = state === "compatible" ? 4 : 2;
-    ctx.strokeRect(x + 6, y + 6, TILE - 12, TILE - 12);
-    if (state === "incompatible") {
-      ctx.beginPath();
-      ctx.moveTo(x + 14, y + 14);
-      ctx.lineTo(x + TILE - 14, y + TILE - 14);
-      ctx.moveTo(x + TILE - 14, y + 14);
-      ctx.lineTo(x + 14, y + TILE - 14);
-      ctx.stroke();
-    }
-    if (interaction.hovered?.col === pad.col && interaction.hovered.row === pad.row) {
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x + 2, y + 2, TILE - 4, TILE - 4);
-    }
+    drawPadState(
+      ctx,
+      pad,
+      state,
+      interaction.hovered?.col === pad.col && interaction.hovered.row === pad.row,
+    );
   }
 
   // Range ring for selected tower
