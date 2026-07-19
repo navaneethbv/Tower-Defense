@@ -65,6 +65,9 @@ describe("map configs", () => {
     ["ember_caldera", "caldera-core", [4, 5, 11, 20, 21, 22, 23, 32], 8, 6, 45, 12],
     ["frostbound_lake", "frozen-lake", [1, 2, 6, 12, 16, 24, 46, 59], 6, 4, 30, 14],
     ["shadow_marsh", "drowned-grove", [1, 2, 3, 7, 17, 41, 49, 59], 8, 6, 35, 13],
+    ["skygarden_ruins", "floating-courtyard", [1, 4, 11, 14, 17, 25, 31, 49], 8, 6, 40, 14],
+    ["ancient_sanctuary", "temple-court", [1, 3, 4, 14, 17, 25, 31, 49], 8, 6, 48, 14],
+    ["indigo_plateau", "champion-arena", [1, 3, 4, 17, 20, 21, 25, 31], 8, 6, 71, 14],
   ] as const)("gives %s a dense balanced authored identity", (
     mapId,
     dominantId,
