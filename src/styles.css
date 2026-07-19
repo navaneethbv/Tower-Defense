@@ -209,6 +209,40 @@ button.ability-btn:hover:not(:disabled) {
   background: #3730a3;
 }
 
+button.redeploy-btn {
+  background: #0c4a6e;
+  border-color: #38bdf8;
+  color: #e0f2fe;
+  font-weight: 600;
+}
+
+button.redeploy-btn:hover:not(:disabled) {
+  border-color: #7dd3fc;
+  background: #075985;
+}
+
+button.redeploy-btn.active {
+  background: #0369a1;
+  border-color: #bae6fd;
+  color: #f0f9ff;
+}
+
+button.redeploy-btn:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+}
+
+.tower-redeploy {
+  margin: 6px 0 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tower-redeploy.cooling {
+  color: #7dd3fc;
+  font-weight: 600;
+}
+
 .sidebar {
   width: 260px;
   background: var(--panel);

@@ -162,6 +162,16 @@ export function drawBoard(
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(`${t.level}`, t.col * TILE + 9, t.row * TILE + 7);
+    // Redeployment lockout: veil the pad and count the remaining seconds down.
+    if (t.redeployCooldownLeft > 0) {
+      ctx.fillStyle = "rgba(15,23,42,0.62)";
+      ctx.fillRect(t.col * TILE + 3, t.row * TILE + 3, TILE - 6, TILE - 6);
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "bold 12px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(t.redeployCooldownLeft.toFixed(1), t.pos.x, t.pos.y);
+    }
   }
 
   if (showEffects) {
