@@ -89,13 +89,13 @@ describe("active abilities", () => {
 
   it("executes aoe_push ability", () => {
     const { game, tower } = setup("pidgeot");
-    const enemy = addEnemy(game, tower.pos.x + 20, tower.pos.y);
-    enemy.distance = 100;
-    enemy.pos = game.path.positionAt(100);
+    const enemy = addEnemy(game, tower.pos.x + 48, tower.pos.y);
+    enemy.distance = 432;
+    enemy.pos = game.path.positionAt(432);
 
     const result = game.activateAbility(tower);
     expect(result.ok).toBe(true);
-    expect(enemy.distance).toBe(52); // Math.max(0, 100 - 48)
+    expect(enemy.distance).toBe(384);
   });
 
   it("executes aoe_stun ability", () => {
