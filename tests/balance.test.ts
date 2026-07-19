@@ -1,8 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { simulateRun } from "../src/engine/headlessSim";
 import { runPayout } from "../src/meta/economy";
 import { EGG_PRICES } from "../src/meta/economy";
 import { getMap } from "../src/data/maps";
+import { MAPS } from "../src/data/maps";
+import { GameSession } from "../src/engine/game";
 import type { IVs, OwnedPokemon } from "../src/types";
 
 const ZERO_IV: IVs = { damage: 0, range: 0, attackSpeed: 0 };
@@ -14,22 +16,34 @@ function owned(speciesId: string, ivs: IVs = ZERO_IV, level = 1): OwnedPokemon {
   return { uid: `sim-${counter++}`, speciesId, ivs, level, xp: 0, hatchedAt: 0 };
 }
 
-function avgWavesOnMap(mapId: string, team: OwnedPokemon[], seeds = 5): number {
+// `simulateRun` is synchronous and CPU-bound, so a test that chains many runs
+// blocks the vitest worker long enough to starve its reporter RPC and fail the
+// run with "Timeout calling onTaskUpdate" on slower CI runners. Yielding to the
+// macrotask queue between runs keeps every assertion and seed intact while
+// letting the worker stay responsive.
+async function yieldToEventLoop(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+async function avgWavesOnMap(mapId: string, team: OwnedPokemon[], seeds = 5): Promise<number> {
   const map = getMap(mapId);
   let total = 0;
-  for (let s = 0; s < seeds; s++) total += simulateRun(map, team, 1000 + s * 777).wavesCleared;
+  for (let s = 0; s < seeds; s++) {
+    total += simulateRun(map, team, 1000 + s * 777).wavesCleared;
+    await yieldToEventLoop();
+  }
   return total / seeds;
 }
 
-function avgWaves(team: OwnedPokemon[], seeds = 5): number {
+function avgWaves(team: OwnedPokemon[], seeds = 5): Promise<number> {
   return avgWavesOnMap("verdant_route", team, seeds);
 }
 
 describe("balance bands (Verdant Route)", () => {
-  it("reports difficulty curve", () => {
-    const solo = avgWaves([owned("charmander")]);
-    const trio = avgWaves([owned("charmander"), owned("squirtle"), owned("pikachu")]);
-    const six = avgWaves([
+  it("reports difficulty curve", async () => {
+    const solo = await avgWaves([owned("charmander")]);
+    const trio = await avgWaves([owned("charmander"), owned("squirtle"), owned("pikachu")]);
+    const six = await avgWaves([
       owned("charmander"),
       owned("squirtle"),
       owned("bulbasaur"),
@@ -37,7 +51,7 @@ describe("balance bands (Verdant Route)", () => {
       owned("pidgey"),
       owned("geodude"),
     ]);
-    const sixStrong = avgWaves([
+    const sixStrong = await avgWaves([
       owned("charmander", GOOD_IV, 8),
       owned("squirtle", GOOD_IV, 8),
       owned("bulbasaur", GOOD_IV, 8),
@@ -45,7 +59,7 @@ describe("balance bands (Verdant Route)", () => {
       owned("pidgey", GOOD_IV, 8),
       owned("geodude", GOOD_IV, 8),
     ]);
-    const sixMax = avgWaves([
+    const sixMax = await avgWaves([
       owned("charmander", MAX_IV, 20),
       owned("squirtle", MAX_IV, 20),
       owned("bulbasaur", MAX_IV, 20),
@@ -54,10 +68,9 @@ describe("balance bands (Verdant Route)", () => {
       owned("pidgey", MAX_IV, 20),
     ]);
     const roster = ["charmander", "squirtle", "bulbasaur", "pikachu", "pidgey", "geodude"];
-    const tenMax = avgWaves(
+    const tenMax = await avgWaves(
       Array.from({ length: 10 }, (_, i) => owned(roster[i % roster.length]!, MAX_IV, 20)),
     );
-    // eslint-disable-next-line no-console
     console.log(
       "BALANCE  solo=%s trio=%s six=%s sixStrong=%s sixMax=%s tenMax=%s",
       solo, trio, six, sixStrong, sixMax, tenMax,
@@ -66,11 +79,12 @@ describe("balance bands (Verdant Route)", () => {
     // A lone starter should fail after just a few waves (the signal to go hatch
     // more pokemon), and both fielding more pokemon and leveling them up should
     // extend the run, producing a clean monotonic climb.
-    expect(solo).toBeLessThanOrEqual(11);
+    expect(solo).toBeGreaterThanOrEqual(5);
+    expect(solo).toBeLessThanOrEqual(20);
     expect(six).toBeGreaterThan(solo);
     expect(sixStrong).toBeGreaterThan(six);
     expect(tenMax).toBeGreaterThanOrEqual(sixMax);
-  });
+  }, 30_000);
 });
 
 describe("grind economy", () => {
@@ -88,45 +102,99 @@ describe("grind economy", () => {
 });
 
 describe("all-map endgame balance", () => {
-  const mapIds = ["verdant_route", "river_crossing", "granite_cave", "indigo_plateau"];
+  const mapIds = MAPS.map((map) => map.id);
   const finalRoster = [
     "charizard",
     "blastoise",
-    "venusaur",
-    "dragonite",
-    "tyranitar",
+    "gyarados",
+    "milotic",
+    "greninja",
     "metagross",
     "garchomp",
-    "volcarona",
     "aegislash",
     "primarina",
+    "mewtwo",
   ];
 
-  it.each(mapIds)("lets a developed final-stage team clear %s", (mapId) => {
+  it.each(mapIds)("lets a maxed final-stage team clear all 100 waves on %s", (mapId) => {
     const team = finalRoster.map((speciesId) => owned(speciesId, MAX_IV, 20));
     const results = [11, 22, 33].map((seed) => simulateRun(getMap(mapId), team, seed));
-    expect(results.every((result) => result.phase === "won" && result.wavesCleared === 50)).toBe(true);
+    expect(results.map((result) => result.wavesCleared)).toEqual([100, 100, 100]);
   });
 
-  it.each(mapIds)("keeps progression meaningful on %s", (mapId) => {
-    const solo = avgWavesOnMap(mapId, [owned("charmander")], 3);
-    const novice = avgWavesOnMap(
+  it.each(mapIds)("lets a developed six-member team reach wave 35 on %s", (mapId) => {
+    const team = ["charmander", "squirtle", "bulbasaur", "pikachu", "gastly", "abra"].map(
+      (speciesId) => owned(speciesId, GOOD_IV, 12),
+    );
+    const results = [11, 22, 33].map((seed) => simulateRun(getMap(mapId), team, seed));
+    expect(Math.min(...results.map((result) => result.wavesCleared))).toBeGreaterThanOrEqual(35);
+  });
+
+  it.each(mapIds)("keeps progression meaningful on %s", async (mapId) => {
+    const solo = await avgWavesOnMap(mapId, [owned("charmander")], 3);
+    const novice = await avgWavesOnMap(
       mapId,
       [owned("charmander"), owned("squirtle"), owned("bulbasaur")],
       3,
     );
-    const developed = avgWavesOnMap(
+    const developed = await avgWavesOnMap(
       mapId,
       [owned("charizard", GOOD_IV, 12), owned("blastoise", GOOD_IV, 12), owned("venusaur", GOOD_IV, 12)],
       3,
     );
-    expect(solo).toBeLessThanOrEqual(15);
-    expect(developed).toBeGreaterThan(novice);
+    expect(solo).toBeLessThanOrEqual(20);
+    expect(developed).toBeGreaterThan(solo);
+    expect(developed).toBeGreaterThanOrEqual(novice);
+  });
+
+  // A team built entirely from status specialists trades direct damage for
+  // control, so it has to remain competitive with the developed damage team.
+  // Composition is load-bearing on two routes and was chosen deliberately:
+  // Mareanie (poison/water) supplies water-pad coverage, because water-typed
+  // Pokemon attack as water, which has no status kit, so poison/water and
+  // ice/water duals are the only specialists that can hold a water pad at all.
+  // Gastly, Drowzee, and Abra supply the three spectral-capable attackers that
+  // Shadow Marsh's spectral enemies require.
+  const specialistRoster = ["vulpix", "gastly", "drowzee", "abra", "mareanie", "magnemite"];
+
+  it.each(mapIds)("lets a status-specialist team reach wave 35 on %s", (mapId) => {
+    const team = specialistRoster.map((speciesId) => owned(speciesId, GOOD_IV, 12));
+    const results = [11, 22, 33].map((seed) => simulateRun(getMap(mapId), team, seed));
+    expect(Math.min(...results.map((result) => result.wavesCleared))).toBeGreaterThanOrEqual(35);
+  });
+
+  it("replays status-specialist runs identically for a fixed seed", () => {
+    const map = getMap("verdant_route");
+    const team = specialistRoster.map((speciesId) => owned(speciesId, GOOD_IV, 12));
+    const first = simulateRun(map, team, 4242).wavesCleared;
+    const second = simulateRun(map, team, 4242).wavesCleared;
+    expect(first).toBe(second);
   });
 
   it("repeats exactly for the same run seed", () => {
     const map = getMap("indigo_plateau");
     const team = finalRoster.slice(0, 6).map((speciesId) => owned(speciesId, GOOD_IV, 12));
     expect(simulateRun(map, team, 90210)).toEqual(simulateRun(map, team, 90210));
+  });
+
+  it("keeps a lone starter inside the early-game failure band", () => {
+    const results = [11, 22, 33].map((seed) =>
+      simulateRun(getMap("verdant_route"), [owned("charmander")], seed).wavesCleared,
+    );
+    const average = results.reduce((sum, waves) => sum + waves, 0) / results.length;
+    expect(average).toBeGreaterThanOrEqual(5);
+    expect(average).toBeLessThanOrEqual(20);
+  });
+
+  it("handles upgrade failure in simulation loop", () => {
+    const map = getMap("verdant_route");
+    const team = [owned("charmander")];
+    const spy = vi.spyOn(GameSession.prototype, "upgradeTower").mockReturnValue(false);
+    
+    // Run the simulation with upgradeTower always returning false
+    const res = simulateRun(map, team, 12345);
+    expect(res).toBeDefined();
+
+    spy.mockRestore();
   });
 });

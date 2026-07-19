@@ -35,6 +35,10 @@ body {
   padding: 16px;
 }
 
+#app:has(.meta-screen) {
+  align-items: flex-start;
+}
+
 .boot {
   text-align: center;
 }
@@ -79,9 +83,46 @@ canvas {
 }
 
 .board-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.milestone-banner {
+  position: absolute;
+  z-index: 5;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 9px 14px;
+  border: 2px solid #fbbf24;
+  background: #182536;
+  color: #fef3c7;
+  box-shadow: 4px 4px 0 #08121d;
+  font-weight: 700;
+  text-align: center;
+}
+
+.milestone-banner[hidden] {
+  display: none;
+}
+
+.milestone-banner.tier-power,
+.capture-card.tier-power {
+  border-color: #fb923c;
+}
+
+.milestone-banner.tier-mythical,
+.capture-card.tier-mythical {
+  border-color: #c084fc;
+}
+
+.milestone-banner.tier-legendary,
+.capture-card.tier-legendary {
+  border-color: #f472b6;
 }
 
 .topbar {
@@ -166,6 +207,48 @@ button.ability-btn {
 button.ability-btn:hover:not(:disabled) {
   border-color: #c4b5fd;
   background: #3730a3;
+}
+
+button.redeploy-btn {
+  background: #0c4a6e;
+  border-color: #38bdf8;
+  color: #e0f2fe;
+  font-weight: 600;
+}
+
+button.redeploy-btn:hover:not(:disabled) {
+  border-color: #7dd3fc;
+  background: #075985;
+}
+
+button.redeploy-btn.active {
+  background: #0369a1;
+  border-color: #bae6fd;
+  color: #f0f9ff;
+}
+
+button.redeploy-btn:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+}
+
+.tower-status {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #bae6fd;
+  overflow-wrap: anywhere;
+}
+
+.tower-redeploy {
+  margin: 6px 0 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tower-redeploy.cooling {
+  color: #7dd3fc;
+  font-weight: 600;
 }
 
 .sidebar {
@@ -278,6 +361,57 @@ button.ability-btn:hover:not(:disabled) {
   text-align: center;
 }
 
+.capture-screen {
+  padding: 24px 0 40px;
+  text-align: center;
+}
+
+.capture-kicker,
+.capture-tier {
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.capture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 280px));
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.capture-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px;
+  border: 3px solid #60a5fa;
+  background: var(--panel);
+  box-shadow: 4px 4px 0 #08121d;
+}
+
+.capture-card img {
+  width: 112px;
+  height: 112px;
+  image-rendering: pixelated;
+}
+
+.capture-card h2 {
+  margin: 0;
+}
+
+.capture-card small {
+  color: var(--muted);
+}
+
+.capture-continue {
+  min-width: 220px;
+}
+
 /* --- Meta screens --- */
 .meta-screen {
   width: 100%;
@@ -384,9 +518,62 @@ button.ability-btn:hover:not(:disabled) {
 
 .starter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 16px;
+}
+
+/* Nine generations of starters stay reachable through a scrollable tab row. */
+.starter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.starter-tab {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.starter-tab:hover:not(.active) {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.starter-tab.active {
+  background: #0c4a6e;
+  border-color: var(--accent);
+  color: #e0f2fe;
+}
+
+.starter-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.starter-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.starter-details {
+  font-size: 0.78rem;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.starter-traits {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.35;
 }
 
 .starter-card,
@@ -416,17 +603,24 @@ button.ability-btn:hover:not(:disabled) {
 
 .map-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .map-card {
+  position: relative;
   align-items: flex-start;
   text-align: left;
+  overflow: hidden;
+  border: 3px solid #456171;
+  border-radius: 0;
+  padding: 10px;
+  box-shadow: 4px 4px 0 #08121d;
 }
 
 .map-card.locked {
-  opacity: 0.55;
+  filter: grayscale(0.75);
+  opacity: 0.62;
 }
 
 .map-card .best {
@@ -437,6 +631,143 @@ button.ability-btn:hover:not(:disabled) {
 .map-card .lock-note {
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+.route-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 18 / 8;
+  overflow: hidden;
+  border: 2px solid #0a1721;
+  background-color: #79bd68;
+  background-image:
+    linear-gradient(90deg, transparent 47%, rgba(24, 37, 54, 0.12) 48% 52%, transparent 53%),
+    radial-gradient(circle at 18% 28%, #4f8f5b 0 7%, transparent 8%),
+    radial-gradient(circle at 82% 72%, #4f91bd 0 13%, #3a759a 14% 17%, transparent 18%);
+  image-rendering: pixelated;
+}
+
+.palette-river,
+.palette-frost {
+  background-color: #78b98a;
+  background-image:
+    linear-gradient(115deg, transparent 0 38%, #4f91bd 39% 61%, transparent 62%),
+    linear-gradient(0deg, transparent 47%, #d7bd72 48% 54%, transparent 55%);
+}
+
+.palette-granite,
+.palette-ember {
+  background-color: #736f68;
+  background-image:
+    linear-gradient(90deg, transparent 0 28%, #d7bd72 29% 38%, transparent 39% 68%, #d7bd72 69% 78%, transparent 79%),
+    repeating-linear-gradient(0deg, rgba(24, 37, 54, 0.22) 0 2px, transparent 2px 12px);
+}
+
+.palette-shadow,
+.palette-ancient,
+.palette-champion {
+  background-color: #557b68;
+  background-image:
+    linear-gradient(90deg, transparent 0 43%, #d7bd72 44% 56%, transparent 57%),
+    radial-gradient(circle at 24% 70%, #4f91bd 0 12%, transparent 13%);
+}
+
+.palette-sky {
+  background-color: #91b9ce;
+  background-image:
+    linear-gradient(0deg, #6d8f83 0 24%, transparent 25%),
+    linear-gradient(90deg, transparent 0 44%, #d7bd72 45% 55%, transparent 56%);
+}
+
+.preview-path {
+  position: absolute;
+  inset: 43% -5% auto;
+  height: 16%;
+  background: #d7bd72;
+  border-block: 2px solid #9e7f45;
+}
+
+.preview-pad {
+  position: absolute;
+  left: calc(var(--pad-x) * 100% / 18);
+  top: calc(var(--pad-y) * 100% / 12);
+  width: 8px;
+  height: 8px;
+  border: 1px solid #eef8c9;
+  background: #8fd27c;
+  transform: translate(-50%, -50%);
+}
+
+.preview-pad.habitat-water {
+  background: #82a86c;
+  border-radius: 50%;
+}
+
+.preview-pad.habitat-mountain {
+  background: #918b80;
+}
+
+.route-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.route-card-head b {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.route-description {
+  min-height: 2.5em;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.habitat-chips,
+.route-milestones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.habitat-chip,
+.milestone {
+  border: 1px solid var(--border);
+  padding: 2px 5px;
+  font-size: 0.66rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.habitat-chip.grass {
+  color: #a7e38f;
+}
+
+.habitat-chip.water {
+  color: #8ed4ef;
+}
+
+.habitat-chip.mountain {
+  color: #d7c99c;
+}
+
+.milestone {
+  color: #78869b;
+}
+
+.milestone.cleared {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.map-card .play-btn {
+  width: 100%;
+  margin-top: auto;
+  border-radius: 0;
 }
 
 .slot-row {
@@ -619,6 +950,7 @@ button.ability-btn:hover:not(:disabled) {
   place-items: center;
   padding: 20px;
   background: rgba(2, 6, 23, 0.88);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 
@@ -673,6 +1005,35 @@ button.ability-btn:hover:not(:disabled) {
 
   .sidebar {
     order: 2;
+  }
+}
+
+@media (max-width: 1099px) {
+  .map-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 699px) {
+  .map-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Two starter columns keep sprite, types, and traits legible on phones. */
+@media (max-width: 639px) {
+  .starter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .starter-card {
+    padding: 12px 10px;
+  }
+
+  .starter-card img {
+    width: 88px;
+    height: 88px;
   }
 }
 

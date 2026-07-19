@@ -1,4 +1,10 @@
-import type { MapConfig, OwnedPokemon, TargetingMode } from "../types";
+import type {
+  DeploymentPad,
+  MapConfig,
+  OwnedPokemon,
+  StatusEventKind,
+  TargetingMode,
+} from "../types";
 import { getSpecies } from "../data/species";
 import { STARTING_GOLD, STARTING_LIVES } from "../data/constants";
 import { generateWave } from "../waves/generator";
@@ -34,6 +40,7 @@ export interface PlacementError {
   reason: string;
 }
 export type PlacementResult = { ok: true; tower: Tower } | PlacementError;
+export type ValidationResult = { ok: true } | PlacementError;
 
 // Owns all mutable run state and advances the simulation one dt at a time.
 export class GameSession {
@@ -55,6 +62,7 @@ export class GameSession {
 
   private spawner = new Spawner();
   private placedUids = new Set<string>();
+  private padsByTile: Map<string, DeploymentPad>;
   private events: GameEvents;
   private combatRng: Rng;
 
@@ -63,12 +71,12 @@ export class GameSession {
     this.path = new PathGeometry(map);
     this.team = team;
     this.runSeed = runSeed;
+    this.gold = Math.round(STARTING_GOLD * map.rewardMultiplier);
     this.events = events;
     this.combatRng = makeRng(runSeed ^ 0x9e3779b9);
-  }
-
-  private terrainAt(col: number, row: number) {
-    return this.map.terrain[row]?.[col] ?? "grass";
+    this.padsByTile = new Map(
+      map.deploymentPads.map((pad) => [tileKey(pad.col, pad.row), pad]),
+    );
   }
 
   isPlaced(uid: string): boolean {
@@ -79,18 +87,26 @@ export class GameSession {
     return this.towers.find((t) => t.col === col && t.row === row);
   }
 
+  padAt(col: number, row: number): DeploymentPad | undefined {
+    return this.padsByTile.get(tileKey(col, row));
+  }
+
   canPlace(uid: string, col: number, row: number): PlacementResult | PlacementError {
     if (this.placedUids.has(uid)) return { ok: false, reason: "Already deployed" };
     const member = this.team.find((m) => m.uid === uid);
     if (!member) return { ok: false, reason: "Not on team" };
     if (col < 0 || col >= this.map.cols || row < 0 || row >= this.map.rows)
       return { ok: false, reason: "Out of bounds" };
-    if (this.path.blockedTiles.has(tileKey(col, row))) return { ok: false, reason: "On the path" };
-    if (this.towerAt(col, row)) return { ok: false, reason: "Tile occupied" };
+    const pad = this.padAt(col, row);
+    if (!pad) return { ok: false, reason: "Only marked habitat pads can hold Pokémon" };
+    if (this.towerAt(col, row)) return { ok: false, reason: "Habitat pad occupied" };
     const species = getSpecies(member.speciesId);
-    const terrain = this.terrainAt(col, row);
-    if (!species.allowedTerrain.includes(terrain))
-      return { ok: false, reason: `${species.name} can't stand on ${terrain}` };
+    if (!species.allowedTerrain.includes(pad.terrain)) {
+      return {
+        ok: false,
+        reason: `${species.name} needs a ${species.allowedTerrain.join(" or ")} pad`,
+      };
+    }
     if (this.gold < species.base.cost) return { ok: false, reason: "Not enough gold" };
     return { ok: true, tower: null as unknown as Tower };
   }
@@ -100,13 +116,51 @@ export class GameSession {
     if (!check.ok) return check;
     const member = this.team.find((m) => m.uid === uid)!;
     const species = getSpecies(member.speciesId);
-    const favored = this.terrainAt(col, row) === species.favoredTerrain;
+    const favored = this.padAt(col, row)!.terrain === species.favoredTerrain;
     // Persistent collection progress is the main endgame power curve.
     const persistentBonus = Math.min(1, (member.level - 1) * 0.05);
     const tower = new Tower(member.uid, member.speciesId, member.ivs, col, row, favored, persistentBonus);
     this.towers.push(tower);
     this.placedUids.add(uid);
     this.gold -= species.base.cost;
+    this.emitChange();
+    return { ok: true, tower };
+  }
+
+  // Redeployment is free and keeps the tower object, so level, XP, evolution,
+  // targeting and investment all survive the move. Validation is deliberately
+  // separate from `canPlace`: moving must never re-check or re-charge cost.
+  static readonly REDEPLOY_COOLDOWN_SECONDS = 5;
+
+  canRedeploy(tower: Tower, col: number, row: number): ValidationResult {
+    if (!this.towers.includes(tower)) return { ok: false, reason: "Tower is not deployed" };
+    if (tower.redeployCooldownLeft > 0) {
+      return { ok: false, reason: `Redeploy ready in ${tower.redeployCooldownLeft.toFixed(1)}s` };
+    }
+    if (tower.col === col && tower.row === row) {
+      return { ok: false, reason: "Choose a different habitat pad" };
+    }
+    if (col < 0 || col >= this.map.cols || row < 0 || row >= this.map.rows) {
+      return { ok: false, reason: "Out of bounds" };
+    }
+    const pad = this.padAt(col, row);
+    if (!pad) return { ok: false, reason: "Only marked habitat pads can hold Pokémon" };
+    if (this.towerAt(col, row)) return { ok: false, reason: "Habitat pad occupied" };
+    if (!tower.species.allowedTerrain.includes(pad.terrain)) {
+      return {
+        ok: false,
+        reason: `${tower.species.name} needs a ${tower.species.allowedTerrain.join(" or ")} pad`,
+      };
+    }
+    return { ok: true };
+  }
+
+  redeployTower(tower: Tower, col: number, row: number): PlacementResult {
+    const check = this.canRedeploy(tower, col, row);
+    if (!check.ok) return check;
+    const pad = this.padAt(col, row)!;
+    tower.moveTo(col, row, pad.terrain === tower.species.favoredTerrain);
+    tower.redeployCooldownLeft = GameSession.REDEPLOY_COOLDOWN_SECONDS;
     this.emitChange();
     return { ok: true, tower };
   }
@@ -128,6 +182,7 @@ export class GameSession {
 
   activateAbility(tower: Tower): Omit<AbilityActivationResult & { ok: true }, "killed"> | Extract<AbilityActivationResult, { ok: false }> {
     if (!this.towers.includes(tower)) return { ok: false, reason: "Tower is not deployed" };
+    if (tower.redeployCooldownLeft > 0) return { ok: false, reason: "Pokemon is redeploying" };
     const result = executeAbility(tower, this.enemies, this.path);
     if (!result.ok) return result;
     for (const enemy of result.killed) this.onKill(enemy);
@@ -177,6 +232,21 @@ export class GameSession {
     this.floating.push({ x, y, text, color, life: 0.9 });
   }
 
+  private static readonly STATUS_EVENT_LABELS: Partial<
+    Record<StatusEventKind, { text: string; color: string }>
+  > = {
+    thaw: { text: "Thawed!", color: "#7dd3fc" },
+    wake: { text: "Woke up!", color: "#fde68a" },
+    confusion: { text: "Confused!", color: "#f0abfc" },
+  };
+
+  private showStatusEvents(enemy: Enemy): void {
+    for (const event of enemy.drainStatusEvents()) {
+      const label = GameSession.STATUS_EVENT_LABELS[event];
+      if (label) this.addFloating(enemy.pos.x, enemy.pos.y, label.text, label.color);
+    }
+  }
+
   update(dt: number): void {
     if (this.phase === "won" || this.phase === "lost") return;
 
@@ -187,18 +257,25 @@ export class GameSession {
 
     // Enemies
     for (const e of this.enemies) {
+      const aliveBefore = e.alive;
       e.update(dt, this.path);
+      this.showStatusEvents(e);
       if (e.reachedEnd) {
         this.lives -= e.heartDamage;
         this.addFloating(e.pos.x, e.pos.y, `-${e.heartDamage}`, "#f87171");
+      } else if (aliveBefore && !e.alive) {
+        // Killed by damage over time rather than a projectile, so the reward
+        // path has to run here or status kills would pay nothing.
+        this.onKill(e);
       }
     }
 
     // Towers fire
     for (const t of this.towers) {
+      t.redeployCooldownLeft = Math.max(0, t.redeployCooldownLeft - dt);
       t.abilityCooldownLeft = Math.max(0, t.abilityCooldownLeft - dt);
       t.cooldownLeft -= dt;
-      if (t.cooldownLeft > 0) continue;
+      if (t.redeployCooldownLeft > 0 || t.cooldownLeft > 0) continue;
       const target = chooseTarget(t.pos, t.rangePx(), this.enemies, t.targeting);
       if (!target) continue;
       const eff = getEffectiveness(t.species.attackType, target.def.types);
@@ -215,7 +292,12 @@ export class GameSession {
       if (!p.target.alive) continue;
       const res = resolveHit(p.target, p.attackType, p.damage);
       if (res.dealt > 0 && p.status && this.combatRng.next() < p.status.chance) {
-        p.target.status.apply(p.status.kind, p.status.duration, p.status.magnitude);
+        p.target.applyStatus(p.status);
+      }
+      // Wake and thaw resolve only after the triggering hit's damage lands.
+      if (res.dealt > 0) {
+        p.target.afterDirectHit(p.attackType);
+        this.showStatusEvents(p.target);
       }
       if (res.killed) this.onKill(p.target);
     }

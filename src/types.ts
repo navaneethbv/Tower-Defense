@@ -26,6 +26,10 @@ export type Rarity = "common" | "rare" | "legendary";
 
 export type Role = "dps" | "aoe" | "sniper" | "support" | "tank_killer" | "balanced";
 
+// How a species spends its power budget. `status` trades roughly 25% direct
+// damage for stronger status application.
+export type CombatProfile = "damage" | "balanced" | "status";
+
 export type TargetingMode =
   | "first"
   | "last"
@@ -35,7 +39,21 @@ export type TargetingMode =
   | "slowest"
   | "closest";
 
-export type StatusKind = "slow" | "poison" | "burn" | "stun" | "armorBreak" | "curse";
+export type StatusKind =
+  | "slow"
+  | "poison"
+  | "burn"
+  | "toxic"
+  | "paralysis"
+  | "freeze"
+  | "sleep"
+  | "confusion"
+  | "stun"
+  | "armorBreak"
+  | "curse";
+
+// Discrete things a status did this frame, surfaced for combat feedback.
+export type StatusEventKind = "toxic" | "confusion" | "thaw" | "wake" | "recover";
 
 export interface StatusApplication {
   kind: StatusKind;
@@ -77,6 +95,7 @@ export interface SpeciesDef {
   attackType: TypeName;
   role: Role;
   rarity: Rarity;
+  combatProfile: CombatProfile;
   base: { damage: number; cooldown: number; range: number; cost: number };
   allowedTerrain: Terrain[];
   favoredTerrain: Terrain;
@@ -136,6 +155,25 @@ export interface WaveGenParams {
   seedSalt: number;
 }
 
+export interface DeploymentPad {
+  id: string;
+  col: number;
+  row: number;
+  terrain: Terrain;
+}
+
+export interface MapTheme {
+  palette: string;
+  groundTile: number;
+  pathTile: number;
+}
+
+export interface MapDecor {
+  tile: number;
+  col: number;
+  row: number;
+}
+
 export interface MapConfig {
   id: string;
   name: string;
@@ -144,6 +182,10 @@ export interface MapConfig {
   rows: number;
   path: { x: number; y: number }[]; // waypoints in tile coordinates
   terrain: Terrain[][]; // [row][col]
+  theme: MapTheme;
+  tiles: number[];
+  decor: MapDecor[];
+  deploymentPads: DeploymentPad[];
   totalWaves: number;
   waveGen: WaveGenParams;
   unlockRequirement: { mapId: string; wave: number } | null;
@@ -165,11 +207,32 @@ export interface WaveSpawn {
   mods: EnemyStatMods;
 }
 
+export type MilestoneTier = "rare" | "power" | "mythical" | "legendary";
+
+export interface MilestoneEncounter {
+  wave: 25 | 50 | 75 | 100;
+  tier: MilestoneTier;
+  speciesId: string;
+}
+
+export type MilestoneCaptureRecord = Record<
+  string,
+  Partial<Record<25 | 50 | 75 | 100, boolean>>
+>;
+
+export interface CapturedPokemon {
+  pokemon: OwnedPokemon;
+  wave: 25 | 50 | 75 | 100;
+  tier: MilestoneTier;
+  guaranteed: boolean;
+}
+
 export interface WavePlan {
   waveNumber: number;
   isBoss: boolean;
   spawns: WaveSpawn[];
   goldReward: number;
+  milestone?: MilestoneEncounter;
 }
 
 export interface SaveGame {
@@ -183,6 +246,7 @@ export interface SaveGame {
   team: (string | null)[];
   bestWaveByMap: Record<string, number>;
   eggDropsClaimedByMap: Record<string, number>;
+  milestoneCapturesByMap: MilestoneCaptureRecord;
   settings: { speed: 1 | 2 | 3; muted: boolean; autoWave: boolean; particles: boolean };
   stats: {
     runs: number;

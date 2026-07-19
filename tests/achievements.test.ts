@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { syncAchievements, unlockedAchievements } from "../src/meta/achievements";
+import { ACHIEVEMENTS, syncAchievements, unlockedAchievements } from "../src/meta/achievements";
 import { freshSave } from "../src/meta/save";
 
 describe("achievements", () => {
+  it("reserves route clear achievements for wave 100", () => {
+    const save = freshSave();
+    save.bestWaveByMap = { verdant_route: 99, indigo_plateau: 99 };
+
+    const unlocked = unlockedAchievements(save).map((achievement) => achievement.id);
+    expect(unlocked).not.toContain("first_clear");
+    expect(unlocked).not.toContain("plateau_champion");
+    expect(ACHIEVEMENTS.find((achievement) => achievement.id === "first_clear")?.description).toBe(
+      "Clear all 100 waves of a map.",
+    );
+  });
+
   it("derives milestone badges from persistent progress", () => {
     const save = freshSave();
     save.stats.hatches = 1;
@@ -16,7 +28,7 @@ describe("achievements", () => {
       xp: 0,
       hatchedAt: 0,
     }));
-    save.bestWaveByMap = { verdant_route: 50, indigo_plateau: 50 };
+    save.bestWaveByMap = { verdant_route: 100, indigo_plateau: 100 };
 
     expect(unlockedAchievements(save).map((achievement) => achievement.id)).toEqual([
       "first_hatch",

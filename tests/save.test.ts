@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { freshSave, loadSave, saveSave, chooseStarter, CURRENT_VERSION } from "../src/meta/save";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { freshSave, loadSave, saveSave, chooseStarter, resetSave, CURRENT_VERSION } from "../src/meta/save";
 import { applyRunResult, milestoneBonus, runPayout } from "../src/meta/economy";
-import { unlockedSlots, isMapUnlocked } from "../src/meta/progression";
-import { grantRunXp } from "../src/meta/collection";
+import { unlockedSlots, isMapUnlocked, nextSlotHint } from "../src/meta/progression";
+import { grantRunXp, persistentDamageBonus, displayName, ivScore, getOwned, teamMembers } from "../src/meta/collection";
+import { applyCompletedRun } from "../src/meta/runResult";
 import { getMap } from "../src/data/maps";
 
 // jsdom-free localStorage shim for the node test environment.
@@ -93,6 +94,60 @@ describe("save system", () => {
     expect(loaded.achievements).toEqual([]);
   });
 
+  it("migrates completed version 2 milestones into claimed captures", () => {
+    const legacyEgg = { uid: "legacy-egg", rarity: "rare", source: "wave_drop", obtainedAt: 1 };
+    const legacyPokemon = {
+      uid: "legacy-pokemon",
+      speciesId: "charmander",
+      ivs: { damage: 1, range: 2, attackSpeed: 3 },
+      level: 4,
+      xp: 5,
+      hatchedAt: 6,
+    };
+    localStorage.setItem(
+      "ptd.save",
+      JSON.stringify({
+        version: 2,
+        bestWaveByMap: { verdant_route: 50 },
+        eggDropsClaimedByMap: { verdant_route: 50 },
+        eggs: [legacyEgg],
+        collection: [legacyPokemon],
+      }),
+    );
+
+    const loaded = loadSave();
+    expect(loaded.version).toBe(3);
+    expect(loaded.milestoneCapturesByMap.verdant_route).toEqual({ 25: true, 50: true });
+    expect(loaded.eggs).toEqual([legacyEgg]);
+    expect(loaded.collection).toEqual([legacyPokemon]);
+  });
+
+  it("infers claimed captures from old best waves without an egg marker", () => {
+    localStorage.setItem(
+      "ptd.save",
+      JSON.stringify({ version: 2, bestWaveByMap: { verdant_route: 50 } }),
+    );
+
+    expect(loadSave().milestoneCapturesByMap.verdant_route).toEqual({ 25: true, 50: true });
+  });
+
+  it("loads version 3 milestone captures directly without modifying them", () => {
+    localStorage.setItem(
+      "ptd.save",
+      JSON.stringify({
+        version: 3,
+        milestoneCapturesByMap: {
+          verdant_route: {
+            "25": true,
+            "75": true
+          }
+        }
+      })
+    );
+    const loaded = loadSave();
+    expect(loaded.milestoneCapturesByMap.verdant_route).toEqual({ 25: true, 75: true });
+  });
+
   it("grants starter coins exactly once via chooseStarter", () => {
     const s = freshSave();
     chooseStarter(s, "uid-1", "charmander");
@@ -129,6 +184,13 @@ describe("economy", () => {
     expect(s.bestWaveByMap[map.id]).toBe(12); // best unchanged
     expect(s.pokeCoins).toBeGreaterThan(before); // still earns coins
   });
+
+  it("registers victory when full waves are cleared", () => {
+    const s = freshSave();
+    const map = getMap("verdant_route");
+    applyRunResult(s, map, map.totalWaves, 10);
+    expect(s.stats.victories).toBe(1);
+  });
 });
 
 describe("progression", () => {
@@ -141,7 +203,7 @@ describe("progression", () => {
     expect(unlockedSlots(s)).toBe(8);
     s.bestWaveByMap = { verdant_route: 40, river_crossing: 40, granite_cave: 40 };
     expect(unlockedSlots(s)).toBe(9);
-    s.bestWaveByMap = { indigo_plateau: 50 };
+    s.bestWaveByMap = { indigo_plateau: 100 };
     expect(unlockedSlots(s)).toBe(10);
   });
 
@@ -149,7 +211,7 @@ describe("progression", () => {
     const s = freshSave();
     expect(isMapUnlocked(s, getMap("verdant_route"))).toBe(true);
     expect(isMapUnlocked(s, getMap("river_crossing"))).toBe(false);
-    s.bestWaveByMap = { verdant_route: 20 };
+    s.bestWaveByMap = { verdant_route: 25 };
     expect(isMapUnlocked(s, getMap("river_crossing"))).toBe(true);
   });
 });
@@ -161,5 +223,86 @@ describe("persistent leveling", () => {
     expect(p.level).toBe(2);
     grantRunXp(p, 100000);
     expect(p.level).toBe(20);
+    // call again to hit early return branch
+    grantRunXp(p, 10);
+    expect(p.level).toBe(20);
+  });
+
+  it("calculates persistent damage bonus correctly", () => {
+    const p = { uid: "x", speciesId: "charmander", ivs: { damage: 0, range: 0, attackSpeed: 0 }, level: 1, xp: 0, hatchedAt: 0 };
+    expect(persistentDamageBonus(p)).toBe(0.0);
+    p.level = 11;
+    expect(persistentDamageBonus(p)).toBe(0.1);
+    p.level = 30; // above cap
+    expect(persistentDamageBonus(p)).toBe(0.2);
+  });
+
+  it("formats display name", () => {
+    const p = { uid: "x", speciesId: "charmander", ivs: { damage: 0, range: 0, attackSpeed: 0 }, level: 1, xp: 0, hatchedAt: 0, nickname: "Charry" };
+    expect(displayName(p)).toBe("Charry");
+    const p2 = { uid: "y", speciesId: "charmander", ivs: { damage: 0, range: 0, attackSpeed: 0 }, level: 1, xp: 0, hatchedAt: 0 };
+    expect(displayName(p2)).toBe("Charmander");
+  });
+
+  it("calculates ivScore correctly", () => {
+    const p = { uid: "x", speciesId: "charmander", ivs: { damage: 15, range: 15, attackSpeed: 15 }, level: 1, xp: 0, hatchedAt: 0 };
+    expect(ivScore(p)).toBe(100);
+    p.ivs = { damage: 0, range: 0, attackSpeed: 0 };
+    expect(ivScore(p)).toBe(0);
+  });
+
+  it("returns correct progression nextSlotHint", () => {
+    const s = freshSave();
+    expect(nextSlotHint(s)).toBe("Reach wave 40 on any map to unlock a 7th slot.");
+    s.bestWaveByMap = { verdant_route: 40 };
+    expect(nextSlotHint(s)).toBe("Clear wave 50 on any map to unlock an 8th slot.");
+    s.bestWaveByMap = { verdant_route: 50 };
+    expect(nextSlotHint(s)).toBe("Reach wave 40 on 3 maps to unlock a 9th slot.");
+    s.bestWaveByMap = { verdant_route: 40, river_crossing: 40, granite_cave: 40 };
+    expect(nextSlotHint(s)).toBe("Clear the Indigo Plateau to unlock a 10th slot.");
+    s.bestWaveByMap = { indigo_plateau: 100 };
+    expect(nextSlotHint(s)).toBeNull();
+  });
+
+  it("processes applyCompletedRun with xp distribution and egg drops", () => {
+    const s = freshSave();
+    const p = { uid: "x", speciesId: "charmander", ivs: { damage: 15, range: 15, attackSpeed: 15 }, level: 1, xp: 0, hatchedAt: 0 };
+    s.collection.push(p);
+    s.team = ["x", null, null, null, null, null];
+
+    const map = getMap("verdant_route");
+    const res = applyCompletedRun(s, map, {
+      wavesCleared: 10,
+      bossKills: 1,
+      runXpByUid: { "x": 50, "nonexistent": 100 },
+      runSeed: 1,
+    });
+
+    expect(res.newBest).toBe(true);
+    expect(p.level).toBeGreaterThan(1);
+    expect(getOwned(s, "x")).toBe(p);
+    expect(teamMembers(s)).toEqual([p]);
+  });
+
+  it("resets save data correctly", () => {
+    const s = resetSave();
+    expect(s.pokeCoins).toBe(0);
+    expect(s.starterChosen).toBeNull();
+  });
+
+  it("handles storage write errors gracefully during saveSave", () => {
+    const spy = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
+    expect(() => saveSave(freshSave())).not.toThrow();
+    spy.mockRestore();
+  });
+
+  it("returns fresh save when stored value is not an object", () => {
+    localStorage.setItem("ptd.save", "null");
+    expect(loadSave().starterChosen).toBeNull();
+
+    localStorage.setItem("ptd.save", "123");
+    expect(loadSave().starterChosen).toBeNull();
   });
 });

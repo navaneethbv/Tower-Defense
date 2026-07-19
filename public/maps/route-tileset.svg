@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="384" viewBox="0 0 384 384" shape-rendering="crispEdges">
+  <defs>
+    <pattern id="grass" width="12" height="12" patternUnits="userSpaceOnUse">
+      <rect width="12" height="12" fill="#79bd68"/>
+      <path d="M2 9h2V7h2v2h2" fill="none" stroke="#4f8f5b" stroke-width="1"/>
+    </pattern>
+    <pattern id="water" width="16" height="12" patternUnits="userSpaceOnUse">
+      <rect width="16" height="12" fill="#4f91bd"/>
+      <path d="M0 4h5v-2h6v2h5M4 10h7V8h5" fill="none" stroke="#77b9d5" stroke-width="2"/>
+    </pattern>
+    <pattern id="stone" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#736f68"/>
+      <path d="M0 8h16M6 0v8M12 8v8" stroke="#5a5752" stroke-width="2"/>
+      <path d="M1 1h4M7 9h4" stroke="#918b80"/>
+    </pattern>
+  </defs>
+  <rect width="384" height="384" fill="#182536"/>
+  <g>
+    <rect x="0" y="0" width="48" height="48" fill="url(#grass)"/>
+    <rect x="48" y="0" width="48" height="48" fill="#d7bd72"/>
+    <path d="M48 8h48M48 40h48" stroke="#c19d58" stroke-width="4"/>
+    <rect x="96" y="0" width="48" height="48" fill="url(#water)"/>
+    <rect x="144" y="0" width="48" height="48" fill="url(#stone)"/>
+    <rect x="192" y="0" width="48" height="48" fill="#5a443d"/>
+    <path d="M194 12h12l5-7 8 14 7-8 12 14" fill="none" stroke="#e46a3a" stroke-width="5"/>
+    <rect x="240" y="0" width="48" height="48" fill="#c6e1e8"/>
+    <path d="M242 36l13-18 9 8 10-18 12 28" fill="#9bc6d5"/>
+    <rect x="288" y="0" width="48" height="48" fill="#557b68"/>
+    <path d="M288 14h48M294 34h36" stroke="#729783" stroke-width="3"/>
+    <rect x="336" y="0" width="48" height="48" fill="#91b9ce"/>
+    <path d="M336 30h48v18h-48z" fill="#6d8f83"/>
+  </g>
+  <g transform="translate(0 48)">
+    <rect x="0" y="0" width="48" height="48" fill="#8a8069"/>
+    <path d="M4 44V8h40v36M12 44V20h24v24" fill="none" stroke="#5f625e" stroke-width="5"/>
+    <rect x="48" y="0" width="48" height="48" fill="#b3a47c"/>
+    <path d="M48 24h48M72 0v48" stroke="#736f68" stroke-width="4"/>
+    <rect x="96" y="0" width="48" height="48" fill="#583d45"/>
+    <path d="M96 10h48M104 38h32" stroke="#80606b" stroke-width="4"/>
+    <rect x="144" y="0" width="48" height="48" fill="#d9edf2"/>
+    <path d="M144 18h48M152 38h34" stroke="#a9d3df" stroke-width="3"/>
+    <rect x="192" y="0" width="48" height="48" fill="#4f6f57"/>
+    <circle cx="216" cy="24" r="14" fill="#6e986c"/>
+    <rect x="240" y="0" width="48" height="48" fill="#6a635c"/>
+    <path d="M246 42l8-30h27l5 30" fill="#8e8174" stroke="#514d49" stroke-width="3"/>
+    <rect x="288" y="0" width="48" height="48" fill="#645963"/>
+    <path d="M288 20h48M300 4v40M324 4v40" stroke="#847184" stroke-width="3"/>
+    <rect x="336" y="0" width="48" height="48" fill="#394d61"/>
+    <path d="M340 44l8-24 8 10 8-20 16 34" fill="#637d8f"/>
+  </g>
+  <g transform="translate(0 96)">
+    <rect x="0" y="0" width="48" height="48" fill="#68aa5d"/>
+    <path d="M4 10h4v5h3v-4h4M29 31h4v5h3v-4h4" fill="none" stroke="#a5d47e" stroke-width="2"/>
+    <rect x="48" y="0" width="48" height="48" fill="#d7bd72"/>
+    <path d="M52 14h40M52 34h40" stroke="#e8d38d" stroke-width="3"/>
+    <rect x="96" y="0" width="48" height="48" fill="#3f82ad"/>
+    <path d="M100 12h18M122 30h18" stroke="#79c4df" stroke-width="3"/>
+    <rect x="144" y="0" width="48" height="48" fill="#605d58"/>
+    <path d="M150 8h36v32h-36z" fill="#7f7971"/>
+    <rect x="192" y="0" width="48" height="48" fill="#8d4b32"/>
+    <circle cx="216" cy="24" r="13" fill="#f18b3f"/>
+    <rect x="240" y="0" width="48" height="48" fill="#b9dce5"/>
+    <path d="M244 40l12-28 10 16 8-18 10 30" fill="#e1f1f3"/>
+    <rect x="288" y="0" width="48" height="48" fill="#456657"/>
+    <circle cx="302" cy="19" r="8" fill="#738f68"/><circle cx="323" cy="31" r="10" fill="#617f61"/>
+    <rect x="336" y="0" width="48" height="48" fill="#789fb4"/>
+    <path d="M340 40h40V12h-40z" fill="#a8c6c1"/>
+  </g>
+  <g transform="translate(0 144)">
+    <rect x="0" y="0" width="48" height="48" fill="url(#grass)"/>
+    <circle cx="12" cy="14" r="2" fill="#f06b75"/><circle cx="35" cy="32" r="2" fill="#f3d46a"/>
+    <rect x="48" y="0" width="48" height="48" fill="#d7bd72"/>
+    <path d="M48 0l48 48M96 0L48 48" stroke="#c19d58" stroke-width="5"/>
+    <rect x="96" y="0" width="48" height="48" fill="url(#water)"/>
+    <path d="M106 34h28l-6 8h-16z" fill="#8f7955"/>
+    <rect x="144" y="0" width="48" height="48" fill="url(#stone)"/>
+    <path d="M148 42l10-25 8 9 9-18 13 34" fill="#918b80"/>
+    <rect x="192" y="0" width="48" height="48" fill="#79bd68"/>
+    <path d="M198 40V12h36v28" fill="#5e965c"/>
+    <rect x="240" y="0" width="48" height="48" fill="#4f91bd"/>
+    <circle cx="264" cy="24" r="15" fill="#79bd68"/><path d="M264 9v15h15" fill="#4f91bd"/>
+    <rect x="288" y="0" width="48" height="48" fill="#736f68"/>
+    <path d="M296 40l5-28h22l5 28z" fill="#9a9184"/>
+    <rect x="336" y="0" width="48" height="48" fill="#182536"/>
+    <path d="M342 42V14h36v28M350 42V24h20v18" fill="#4f6f57" stroke="#91b9ce" stroke-width="2"/>
+  </g>
+  <g transform="translate(0 192)">
+    <rect x="0" y="0" width="48" height="48" fill="url(#grass)"/>
+    <path d="M8 48V22h6V10h20v12h6v26" fill="#526e42"/><circle cx="24" cy="13" r="12" fill="#4f8f5b"/>
+    <rect x="48" y="0" width="48" height="48" fill="url(#grass)"/>
+    <circle cx="65" cy="31" r="10" fill="#4f8f5b"/><circle cx="83" cy="25" r="12" fill="#6aa65e"/>
+    <rect x="96" y="0" width="48" height="48" fill="url(#grass)"/>
+    <circle cx="112" cy="24" r="3" fill="#e95e68"/><circle cx="128" cy="30" r="3" fill="#f2d95f"/>
+    <rect x="144" y="0" width="48" height="48" fill="url(#stone)"/>
+    <path d="M153 39l5-20 9-7 13 27z" fill="#9b9184"/>
+    <rect x="192" y="0" width="48" height="48" fill="#79bd68"/>
+    <path d="M196 18h40M202 8v30M216 8v30M230 8v30" stroke="#d2d0c2" stroke-width="4"/>
+    <rect x="240" y="0" width="48" height="48" fill="#d7bd72"/>
+    <path d="M262 44V15h5v29M256 15h18v9h-18z" fill="#826e54"/>
+    <rect x="288" y="0" width="48" height="48" fill="#79bd68"/>
+    <path d="M292 44V18l20-14 20 14v26" fill="#4f91bd" stroke="#182536" stroke-width="3"/>
+    <rect x="336" y="0" width="48" height="48" fill="#736f68"/>
+    <path d="M344 44V10h32v34M352 44V25h16v19" fill="#918b80" stroke="#514d49" stroke-width="3"/>
+  </g>
+  <g transform="translate(0 240)">
+    <rect x="0" y="0" width="48" height="48" fill="url(#grass)"/>
+    <rect x="7" y="7" width="34" height="34" fill="#8fd27c" stroke="#eef8c9" stroke-width="3"/>
+    <rect x="48" y="0" width="48" height="48" fill="url(#water)"/>
+    <circle cx="72" cy="24" r="17" fill="#82a86c" stroke="#d9e8a1" stroke-width="3"/>
+    <rect x="96" y="0" width="48" height="48" fill="url(#stone)"/>
+    <path d="M104 40l4-28h32l4 28z" fill="#918b80" stroke="#d7c99c" stroke-width="3"/>
+  </g>
+</svg>

@@ -3,6 +3,8 @@ import { getSpecies } from "../data/species";
 import { GameSession } from "./game";
 import type { Tower } from "./tower";
 import { TILE } from "../data/constants";
+import { getEnemy } from "../data/enemies";
+import { getEffectiveness } from "../data/typeChart";
 
 export interface SimResult {
   wavesCleared: number;
@@ -29,26 +31,24 @@ function samplePath(game: GameSession, spacing = TILE / 2): { x: number; y: numb
   return out;
 }
 
-// Pick the empty, placeable tile that covers the most path with the species'
-// base range. Models a player deploying where a tower does the most work.
+// Pick the empty, compatible habitat pad that covers the most path with the
+// species' base range. Models a player deploying where a tower does the most work.
 function bestTile(game: GameSession, uid: string, speciesId: string, pathPts: { x: number; y: number }[]) {
   const species = getSpecies(speciesId);
   const r = species.base.range * TILE;
   const r2 = r * r;
   let best: { col: number; row: number; score: number } | null = null;
-  for (let row = 0; row < game.map.rows; row++) {
-    for (let col = 0; col < game.map.cols; col++) {
-      if (!game.canPlace(uid, col, row).ok) continue;
-      const cx = (col + 0.5) * TILE;
-      const cy = (row + 0.5) * TILE;
-      let score = 0;
-      for (const p of pathPts) {
-        if ((p.x - cx) ** 2 + (p.y - cy) ** 2 <= r2) score++;
-      }
-      // Slight bonus for favored terrain.
-      if (game.map.terrain[row]?.[col] === species.favoredTerrain) score *= 1.1;
-      if (score > 0 && (!best || score > best.score)) best = { col, row, score };
+  for (const pad of game.map.deploymentPads) {
+    const { col, row } = pad;
+    if (!game.canPlace(uid, col, row).ok) continue;
+    const cx = (col + 0.5) * TILE;
+    const cy = (row + 0.5) * TILE;
+    let score = 0;
+    for (const p of pathPts) {
+      if ((p.x - cx) ** 2 + (p.y - cy) ** 2 <= r2) score++;
     }
+    if (pad.terrain === species.favoredTerrain) score *= 1.1;
+    if (score > 0 && (!best || score > best.score)) best = { col, row, score };
   }
   return best;
 }
@@ -61,13 +61,45 @@ export function simulateRun(map: MapConfig, team: OwnedPokemon[], runSeed: numbe
   const pathPts = samplePath(game);
   const dt = 1 / 30;
 
+  const routeFit = (speciesId: string): number => {
+    const species = getSpecies(speciesId);
+    const earlyEnemies = map.waveGen.enemyPool
+      .filter((entry) => entry.minWave <= 1)
+      .map((entry) => getEnemy(entry.enemyId));
+    return earlyEnemies.reduce((total, enemy) => {
+      const effectiveness = getEffectiveness(species.attackType, enemy.types);
+      const canDamageSpectral =
+        !enemy.spectral ||
+        effectiveness > 1 ||
+        species.attackType === "ghost" ||
+        species.attackType === "psychic";
+      return total + (canDamageSpectral ? effectiveness : 0.01);
+    }, 0) / earlyEnemies.length;
+  };
+
   const manage = (): void => {
-    // Deploy any affordable, unplaced member on its best tile.
-    for (const m of team) {
-      if (game.isPlaced(m.uid)) continue;
-      if (game.gold < getSpecies(m.speciesId).base.cost) continue;
-      const tile = bestTile(game, m.uid, m.speciesId, pathPts);
-      if (tile) game.placeTower(m.uid, tile.col, tile.row);
+    // Choose affordable deployments by route coverage and matchup rather than
+    // by roster order. Players can reorder teams, so the simulator should model
+    // a competent route-specific lead.
+    while (true) {
+      const candidates = team
+        .filter(
+          (member) =>
+            !game.isPlaced(member.uid) && game.gold >= getSpecies(member.speciesId).base.cost,
+        )
+        .map((member) => {
+          const tile = bestTile(game, member.uid, member.speciesId, pathPts);
+          const species = getSpecies(member.speciesId);
+          const offense = species.base.damage / species.base.cooldown;
+          return tile
+            ? { member, tile, score: tile.score * routeFit(member.speciesId) * offense }
+            : null;
+        })
+        .filter((candidate): candidate is NonNullable<typeof candidate> => candidate !== null)
+        .sort((left, right) => right.score - left.score);
+      const best = candidates[0];
+      if (!best) break;
+      game.placeTower(best.member.uid, best.tile.col, best.tile.row);
     }
     // Spend remaining gold leveling the weakest placed tower, keeping a buffer
     // to redeploy the rest of the team as gold accrues.

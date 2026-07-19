@@ -15,17 +15,18 @@ export class Tower {
   species: SpeciesDef;
   readonly ownerUid: string;
   readonly ivs: IVs;
-  readonly favored: boolean;
+  favored: boolean;
   readonly persistentDamageBonus: number;
-  readonly col: number;
-  readonly row: number;
-  readonly pos: Point;
+  col: number;
+  row: number;
+  pos: Point;
   level = 1;
   xp = 0;
   runXp = 0;
   goldLevels = 0;
   cooldownLeft = 0;
   abilityCooldownLeft = 0;
+  redeployCooldownLeft = 0;
   targeting: TargetingMode = "first";
   totalInvested: number;
 
@@ -47,6 +48,14 @@ export class Tower {
     this.row = row;
     this.pos = { x: (col + 0.5) * TILE, y: (row + 0.5) * TILE };
     this.totalInvested = this.species.base.cost;
+  }
+
+  // Mid-run redeployment: relocate in place so all progression state survives.
+  moveTo(col: number, row: number, favored: boolean): void {
+    this.col = col;
+    this.row = row;
+    this.pos = { x: (col + 0.5) * TILE, y: (row + 0.5) * TILE };
+    this.favored = favored;
   }
 
   private levelFactor(exp: number): number {

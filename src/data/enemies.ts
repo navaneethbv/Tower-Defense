@@ -1,5 +1,6 @@
 import type { EnemyDef } from "../types";
 import { getSpecies } from "./species";
+import { CANONICAL_POKEMON } from "./generated/pokemon";
 
 type EnemyStats = Omit<EnemyDef, "id" | "name" | "dex" | "types">;
 
@@ -63,9 +64,32 @@ export const ENEMIES: EnemyDef[] = [
 ];
 
 const BY_ID = new Map(ENEMIES.map((e) => [e.id, e]));
+const CANONICAL_BY_ID = new Map(CANONICAL_POKEMON.map((pokemon) => [pokemon.id, pokemon]));
+
+function generatedEnemy(id: string): EnemyDef | undefined {
+  const pokemon = CANONICAL_BY_ID.get(id);
+  if (!pokemon) return undefined;
+  const species = getSpecies(id);
+  const offense = Math.max(pokemon.baseStats.attack, pokemon.baseStats.specialAttack);
+  return {
+    id,
+    name: species.name,
+    dex: species.dex,
+    types: species.types,
+    hp: Math.round(24 + pokemon.baseStats.hp * 0.7 + offense * 0.2),
+    speed: Math.min(1.9, 0.65 + pokemon.baseStats.speed / 130),
+    reward: Math.max(
+      8,
+      Math.round(Object.values(pokemon.baseStats).reduce((sum, stat) => sum + stat, 0) / 55),
+    ),
+    heartDamage: pokemon.isLegendary || pokemon.isMythical ? 5 : 3,
+    armor: Math.floor((pokemon.baseStats.defense + pokemon.baseStats.specialDefense) / 65),
+    boss: true,
+  };
+}
 
 export function getEnemy(id: string): EnemyDef {
-  const def = BY_ID.get(id);
+  const def = BY_ID.get(id) ?? generatedEnemy(id);
   if (!def) throw new Error(`Unknown enemy id: ${id}`);
   return def;
 }

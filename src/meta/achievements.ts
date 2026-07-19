@@ -29,8 +29,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: "first_clear",
     title: "Route Master",
-    description: "Clear all 50 waves of a map.",
-    isUnlocked: (save) => save.stats.victories >= 1 || highestWave(save) >= 50,
+    description: "Clear all 100 waves of a map.",
+    isUnlocked: (save) => save.stats.victories >= 1 || highestWave(save) >= 100,
   },
   {
     id: "six_owned",
@@ -47,8 +47,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     id: "plateau_champion",
     title: "Plateau Champion",
-    description: "Clear wave 50 of Indigo Plateau.",
-    isUnlocked: (save) => (save.bestWaveByMap.indigo_plateau ?? 0) >= 50,
+    description: "Clear wave 100 of Indigo Plateau.",
+    isUnlocked: (save) => (save.bestWaveByMap.indigo_plateau ?? 0) >= 100,
   },
 ];
 

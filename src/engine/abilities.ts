@@ -19,7 +19,7 @@ function enemiesInRange(tower: Tower, enemies: Enemy[]): Enemy[] {
 }
 
 function applyStatus(enemy: Enemy, status: StatusApplication): void {
-  if (enemy.alive) enemy.status.apply(status.kind, status.duration, status.magnitude);
+  if (enemy.alive) enemy.applyStatus(status);
 }
 
 function lineTargets(tower: Tower, enemies: Enemy[]): Enemy[] {

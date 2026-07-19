@@ -3,6 +3,7 @@ import {
   SPECIES,
   baseSpeciesByRarity,
   getSpecies,
+  hasSpecies,
   isBaseSpecies,
   selectEvolution,
 } from "../src/data/species";
@@ -90,6 +91,9 @@ describe("runtime species roster", () => {
     expect(getSpecies("charmander").base.damage).toBe(12);
     expect(getSpecies("venusaur").ability?.id).toBe("solar_beam");
     expect(getSpecies("blastoise").ability?.id).toBe("surf");
+    expect(hasSpecies("charmander")).toBe(true);
+    expect(hasSpecies("nonexistent")).toBe(false);
+    expect(() => getSpecies("nonexistent")).toThrow("Unknown species id: nonexistent");
   });
 
   it("assigns reusable active kits across the expanded roster", () => {
@@ -99,5 +103,24 @@ describe("runtime species roster", () => {
     expect(getSpecies("mewtwo").ability).toBeDefined();
     expect(getSpecies("arceus").ability).toBeDefined();
     expect(getSpecies("miraidon").ability).toBeDefined();
+  });
+});
+
+describe("combat profiles", () => {
+  it("assigns deterministic combat profiles and status-specialist tradeoffs", () => {
+    expect(getSpecies("charmander").combatProfile).toBe("balanced");
+    expect(getSpecies("vulpix").combatProfile).toBe("status");
+    expect(getSpecies("vulpix").onHitStatus?.kind).toBe("burn");
+    expect(getSpecies("salandit").combatProfile).toBe("status");
+    expect(["poison", "toxic"]).toContain(getSpecies("salandit").onHitStatus?.kind);
+    expect(getSpecies("mareep").onHitStatus?.kind).toBe("paralysis");
+    expect(getSpecies("smoochum").onHitStatus?.kind).toBe("freeze");
+    expect(SPECIES.filter((species) => species.combatProfile === "status").length).toBeGreaterThan(100);
+    expect(SPECIES.every((species) => species.combatProfile !== "status" || species.onHitStatus)).toBe(true);
+    // Vulpix derives 13 direct damage before the specialist tradeoff; the 0.80
+    // multiplier (a 20% cut, the shallow end of the approved 20-30% band) takes
+    // it to 11. Balance tuning settled on 0.80 because 0.75 left specialist
+    // teams unable to hold Ember Caldera.
+    expect(getSpecies("vulpix").base.damage).toBe(11);
   });
 });
