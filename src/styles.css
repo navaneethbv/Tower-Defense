@@ -1010,3 +1010,45 @@ canvas.route-preview {
     display: none;
   }
 }
+
+.map-gallery {
+  width: 100%;
+  padding: 16px;
+}
+
+.map-gallery header p {
+  color: var(--muted);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+.map-gallery header h1 {
+  margin: 4px 0 16px;
+}
+
+.map-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 16px;
+}
+
+.map-gallery-card h2 {
+  font-size: 0.95rem;
+  margin: 0 0 6px;
+}
+
+canvas.map-gallery-board {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #0a1721;
+  image-rendering: pixelated;
+}
+
+@media (max-width: 900px) {
+  .map-gallery-grid {
+    grid-template-columns: 1fr;
+  }
+}

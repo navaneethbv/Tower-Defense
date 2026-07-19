@@ -105,15 +105,24 @@ Do not manually edit `src/data/generated/pokemon.ts`.
 
 ## Route map pipeline
 
-The nine route layouts are authored as checked-in Tiled-compatible JSON under `src/data/maps/authored/`.
-They share an original project atlas stored as `public/maps/route-tileset.svg`, `public/maps/route-tileset.png`, and `public/maps/route-tileset.tsx`.
+The nine 18-by-12 battlefields are fully authored Tiled-compatible maps under `src/data/maps/authored/`.
+Each route carries original ground, path, landmark, decor, habitat, and deployment-pad layers, all rendered from the shared 8-by-8 pixel atlas.
+Route cards render miniature versions of the same authored map data used by combat, so a card shows the battlefield the player will actually fight on.
+The atlas is stored as `public/maps/route-tileset.png`, described to Tiled by `public/maps/route-tileset.tsx`.
 The route art is inspired by classic handheld route readability, but it does not copy PokePath or mainline Pokemon map assets.
 
-Regenerate the authored route JSON and atlas when changing the route generator.
+Several atlas tiles bake their edges into all four sides, so they only work as objects or borders and will show seams or a grass fringe if used to fill a region.
+Tiles 3, 4, 20, 21, 31, and 32 tile seamlessly and are the safe choice for interiors; 14, 42, 44, 45, 48, 50, and 51 do not.
+Tile 2 is a path-on-grass tile, which is why cave corridors use the seamless brick instead.
+
+The authored JSON is the source of truth and is no longer generated.
+This command validates that every committed export still satisfies the loader contract:
 
 ```bash
 node tools/generate-route-maps.mjs
 ```
+
+Set `?__qaMaps=1` on the dev server to open a development-only gallery rendering all nine battlefields at full board size for side-by-side review.
 
 Pokemon battle sprites are downloaded from the PokeAPI sprite repository during development and served locally in production.
 PokeAPI does not provide complete route-map tilesets, buildings, paths, fences, or other world art, so the route atlas is maintained by this project.
