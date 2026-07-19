@@ -60,8 +60,8 @@ describe("map configs", () => {
 
   it.each([
     ["verdant_route", "research-outpost", [1, 2, 13, 17, 25, 30, 33, 36], 8, 6, 50.5, 12],
-    ["river_crossing", "river-islands", [1, 2, 3, 13, 25, 27, 51, 59], 6, 4, 36, 14],
-    ["granite_cave", "crystal-chambers", [2, 11, 14, 20, 32, 40, 44, 52], 8, 6, 50, 12],
+    ["river_crossing", "river-islands", [1, 2, 3, 13, 17, 25, 27, 59], 6, 4, 36, 14],
+    ["granite_cave", "crystal-chambers", [3, 4, 11, 12, 20, 21, 32, 40], 8, 6, 50, 12],
   ] as const)("gives %s a dense balanced authored identity", (
     mapId,
     dominantId,
