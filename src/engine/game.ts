@@ -34,6 +34,7 @@ export interface PlacementError {
   reason: string;
 }
 export type PlacementResult = { ok: true; tower: Tower } | PlacementError;
+export type ValidationResult = { ok: true } | PlacementError;
 
 // Owns all mutable run state and advances the simulation one dt at a time.
 export class GameSession {
@@ -120,6 +121,44 @@ export class GameSession {
     return { ok: true, tower };
   }
 
+  // Redeployment is free and keeps the tower object, so level, XP, evolution,
+  // targeting and investment all survive the move. Validation is deliberately
+  // separate from `canPlace`: moving must never re-check or re-charge cost.
+  static readonly REDEPLOY_COOLDOWN_SECONDS = 5;
+
+  canRedeploy(tower: Tower, col: number, row: number): ValidationResult {
+    if (!this.towers.includes(tower)) return { ok: false, reason: "Tower is not deployed" };
+    if (tower.redeployCooldownLeft > 0) {
+      return { ok: false, reason: `Redeploy ready in ${tower.redeployCooldownLeft.toFixed(1)}s` };
+    }
+    if (tower.col === col && tower.row === row) {
+      return { ok: false, reason: "Choose a different habitat pad" };
+    }
+    if (col < 0 || col >= this.map.cols || row < 0 || row >= this.map.rows) {
+      return { ok: false, reason: "Out of bounds" };
+    }
+    const pad = this.padAt(col, row);
+    if (!pad) return { ok: false, reason: "Only marked habitat pads can hold Pokémon" };
+    if (this.towerAt(col, row)) return { ok: false, reason: "Habitat pad occupied" };
+    if (!tower.species.allowedTerrain.includes(pad.terrain)) {
+      return {
+        ok: false,
+        reason: `${tower.species.name} needs a ${tower.species.allowedTerrain.join(" or ")} pad`,
+      };
+    }
+    return { ok: true };
+  }
+
+  redeployTower(tower: Tower, col: number, row: number): PlacementResult {
+    const check = this.canRedeploy(tower, col, row);
+    if (!check.ok) return check;
+    const pad = this.padAt(col, row)!;
+    tower.moveTo(col, row, pad.terrain === tower.species.favoredTerrain);
+    tower.redeployCooldownLeft = GameSession.REDEPLOY_COOLDOWN_SECONDS;
+    this.emitChange();
+    return { ok: true, tower };
+  }
+
   sellTower(tower: Tower): void {
     const idx = this.towers.indexOf(tower);
     if (idx < 0) return;
@@ -137,6 +176,7 @@ export class GameSession {
 
   activateAbility(tower: Tower): Omit<AbilityActivationResult & { ok: true }, "killed"> | Extract<AbilityActivationResult, { ok: false }> {
     if (!this.towers.includes(tower)) return { ok: false, reason: "Tower is not deployed" };
+    if (tower.redeployCooldownLeft > 0) return { ok: false, reason: "Pokemon is redeploying" };
     const result = executeAbility(tower, this.enemies, this.path);
     if (!result.ok) return result;
     for (const enemy of result.killed) this.onKill(enemy);
@@ -205,9 +245,10 @@ export class GameSession {
 
     // Towers fire
     for (const t of this.towers) {
+      t.redeployCooldownLeft = Math.max(0, t.redeployCooldownLeft - dt);
       t.abilityCooldownLeft = Math.max(0, t.abilityCooldownLeft - dt);
       t.cooldownLeft -= dt;
-      if (t.cooldownLeft > 0) continue;
+      if (t.redeployCooldownLeft > 0 || t.cooldownLeft > 0) continue;
       const target = chooseTarget(t.pos, t.rangePx(), this.enemies, t.targeting);
       if (!target) continue;
       const eff = getEffectiveness(t.species.attackType, target.def.types);

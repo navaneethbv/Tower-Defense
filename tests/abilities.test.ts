@@ -234,3 +234,19 @@ describe("game session helper methods", () => {
     expect(game.gold).toBe(initialGold);
   });
 });
+
+describe("redeployment lockout", () => {
+  it("blocks attacks and abilities during the redeployment cooldown", () => {
+    const { game, tower } = setup("charizard");
+    const destination = game.map.deploymentPads.find(
+      (pad) => tower.species.allowedTerrain.includes(pad.terrain) && (pad.col !== tower.col || pad.row !== tower.row),
+    )!;
+    expect(game.redeployTower(tower, destination.col, destination.row).ok).toBe(true);
+    expect(game.activateAbility(tower)).toEqual({
+      ok: false,
+      reason: "Pokemon is redeploying",
+    });
+    game.update(5);
+    expect(tower.redeployCooldownLeft).toBe(0);
+  });
+});

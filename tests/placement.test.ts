@@ -124,3 +124,71 @@ describe("authored deployment pads", () => {
     expect(check.ok).toBe(false);
   });
 });
+
+describe("mid-run redeployment", () => {
+  it("redeploys the same tower without charging gold or resetting state", () => {
+    const map = getMap("verdant_route");
+    const member = owned("mover", "charmander");
+    const game = new GameSession(map, [member], 10);
+    const pads = map.deploymentPads.filter((pad) => pad.terrain === "grass");
+    const placed = game.placeTower(member.uid, pads[0]!.col, pads[0]!.row);
+    expect(placed.ok).toBe(true);
+    if (!placed.ok) throw new Error(placed.reason);
+    const tower = placed.tower;
+    tower.level = 4;
+    tower.xp = 3;
+    tower.runXp = 12;
+    tower.targeting = "strongest";
+    tower.cooldownLeft = 0.4;
+    tower.abilityCooldownLeft = 6;
+    const gold = game.gold;
+
+    const moved = game.redeployTower(tower, pads[1]!.col, pads[1]!.row);
+
+    expect(moved).toEqual({ ok: true, tower });
+    expect(game.gold).toBe(gold);
+    expect(game.towers).toEqual([tower]);
+    expect(tower).toMatchObject({
+      col: pads[1]!.col,
+      row: pads[1]!.row,
+      level: 4,
+      xp: 3,
+      runXp: 12,
+      targeting: "strongest",
+      cooldownLeft: 0.4,
+      abilityCooldownLeft: 6,
+      redeployCooldownLeft: 5,
+    });
+  });
+
+  it("rejects invalid, occupied, incompatible, and cooling-down moves", () => {
+    const map = getMap("verdant_route");
+    const charmander = owned("fire", "charmander");
+    const bulbasaur = owned("grass", "bulbasaur");
+    const game = new GameSession(map, [charmander, bulbasaur], 11);
+    const grassPads = map.deploymentPads.filter((pad) => pad.terrain === "grass");
+    const mountainPads = map.deploymentPads.filter((pad) => pad.terrain === "mountain");
+    const waterPad = map.deploymentPads.find((pad) => pad.terrain === "water")!;
+    const fire = game.placeTower(charmander.uid, mountainPads[0]!.col, mountainPads[0]!.row);
+    const grass = game.placeTower(bulbasaur.uid, grassPads[0]!.col, grassPads[0]!.row);
+    if (!fire.ok || !grass.ok) throw new Error("test setup failed");
+
+    expect(game.canRedeploy(fire.tower, fire.tower.col, fire.tower.row)).toEqual({
+      ok: false,
+      reason: "Choose a different habitat pad",
+    });
+    expect(game.canRedeploy(fire.tower, grass.tower.col, grass.tower.row)).toEqual({
+      ok: false,
+      reason: "Habitat pad occupied",
+    });
+    expect(game.canRedeploy(fire.tower, waterPad.col, waterPad.row)).toEqual({
+      ok: false,
+      reason: "Charmander needs a grass or mountain pad",
+    });
+    expect(game.redeployTower(fire.tower, mountainPads[1]!.col, mountainPads[1]!.row).ok).toBe(true);
+    expect(game.canRedeploy(fire.tower, grassPads[1]!.col, grassPads[1]!.row)).toEqual({
+      ok: false,
+      reason: "Redeploy ready in 5.0s",
+    });
+  });
+});
