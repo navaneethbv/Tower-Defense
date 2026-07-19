@@ -24,6 +24,12 @@ async function main(): Promise<void> {
   if (!app) throw new Error("#app root not found");
   app.style.alignItems = "flex-start";
 
+  if (import.meta.env.DEV && new URLSearchParams(window.location.search).get("__qaMaps") === "1") {
+    const { showMapGallery } = await import("./ui/screens/mapGalleryScreen");
+    showMapGallery(app);
+    return;
+  }
+
   if (import.meta.env.DEV) {
     const qaCaptureWave = Number(new URLSearchParams(window.location.search).get("__qaCapture"));
     if (isMilestoneWave(qaCaptureWave)) {

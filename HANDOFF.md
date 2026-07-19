@@ -107,3 +107,38 @@ It covered mid-wave redeployment by mouse and by `Q`, `E`, and `Enter`, `Escape`
 The browser console reported no warnings or errors from the application.
 
 Pikachu is deliberately offered as a Generation 1 starter even though Pichu evolves into it, so `tests/starters.test.ts` records it as the single allowed exception to the base-stage invariant.
+
+## Full authored map density overhaul
+
+The suite is 207 tests across 28 files.
+Coverage is 99.7 percent statements, 97.16 percent branches, 99.47 percent functions, and 99.7 percent lines, all above the 95 percent thresholds.
+
+The nine battlefields are now fully authored from the checked-in pixel-art atlas.
+The map contract gained a `pathTiles` layer, semantic `landmarks` with validated roles, and a per-pad `tile`, all enforced by the Tiled loader.
+
+Stage commits: `1992b26` map contract, `b6774f8` composition validation, `7daff10` renderer layers, `67b5af4` atlas restore and first three routes, `e308bdb` river and cave corrections, `5e541cb` volcanic frozen and marsh routes, `77c4afc` endgame routes, `6673a7c` route thumbnails.
+
+`7daff10` was a wrong turn worth recording.
+It replaced the authored GBA pixel-art tileset with a generated flat-vector SVG on a 12-by-12 grid, because the repository contained both a stale minimalist SVG and the real PNG that `87d1501` had introduced.
+`67b5af4` restored the PNG as the runtime atlas and returned the catalog to its real 8-by-8 layout.
+Treat `public/maps/route-tileset.png` as the authored art.
+
+Several atlas tiles bake their edges into all four sides and must not be used as interior fill.
+Tiles 3, 4, 20, 21, 31, and 32 tile seamlessly; 14, 42, 44, 45, 48, 50, and 51 do not.
+Tile 51 punched dark banks through the river, tile 42 drew a green grid across the cave floor, and tile 2 outlined cave corridors in grass green because it is a path-on-grass tile.
+Tiling a candidate three-by-three and looking at it settles this in seconds.
+
+Deployment-pad geometry drives the difficulty bands, which the plan did not mention.
+`headlessSim` always deploys onto the highest-coverage pad, so one pocket where the route wraps a cell lets a lone starter hold an entire map.
+Pad slots are therefore derived from the route and capped by path coverage, and each route's cap and front-line ratio were fitted against the real bands.
+Verdant Route sits at 19.2 waves against a ceiling of 20, so re-check that route first when pad placement changes.
+
+`tests/abilities.test.ts` previously hard-coded a path distance of 432 that happened to sit beside the tower on the old Verdant geometry; re-authoring moved it out of range.
+It now derives that distance from the map, so future route changes cannot silently void the assertion.
+
+The plan called for DOM tests covering the route cards and the gallery, but this project has no DOM test environment and excludes `src/ui` from coverage.
+The pure renderer is unit tested and both surfaces were verified in the browser instead.
+
+Browser verification ran at 1440 by 900 and 390 by 844 on Chrome.
+It covered the route selector with nine real map thumbnails, the development gallery at `?__qaMaps=1` showing all nine battlefields, and a live Verdant Route wave confirming enemies follow the authored corridor and that compatible and incompatible pad states stay legible over the terrain.
+The browser console reported no warnings or errors from the application.

@@ -160,6 +160,18 @@ export interface DeploymentPad {
   col: number;
   row: number;
   terrain: Terrain;
+  tile: number;
+}
+
+export type LandmarkRole = "dominant" | "secondary" | "entrance" | "exit";
+
+export interface MapLandmark {
+  id: string;
+  role: LandmarkRole;
+  col: number;
+  row: number;
+  width: number;
+  height: number;
 }
 
 export interface MapTheme {
@@ -184,8 +196,10 @@ export interface MapConfig {
   terrain: Terrain[][]; // [row][col]
   theme: MapTheme;
   tiles: number[];
+  pathTiles: number[];
   decor: MapDecor[];
   deploymentPads: DeploymentPad[];
+  landmarks: MapLandmark[];
   totalWaves: number;
   waveGen: WaveGenParams;
   unlockRequirement: { mapId: string; wave: number } | null;

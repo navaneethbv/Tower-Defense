@@ -2,6 +2,7 @@ import type { MapConfig, SaveGame, Terrain } from "../../types";
 import { getMap, MAPS } from "../../data/maps";
 import { isMapUnlocked, unlockedSlots, nextSlotHint } from "../../meta/progression";
 import { ACHIEVEMENTS } from "../../meta/achievements";
+import { mountRouteThumbnail } from "../mapThumbnail";
 
 export type HomeAction =
   | { type: "play"; mapId: string }
@@ -81,16 +82,7 @@ export function showHome(
       const card = document.createElement("article");
       card.className = "map-card" + (view.unlocked ? "" : " locked");
       card.innerHTML = `
-        <div class="route-preview palette-${map.theme.palette}" aria-hidden="true">
-          <span class="preview-path"></span>
-          ${map.deploymentPads
-            .slice(0, 8)
-            .map(
-              (pad) =>
-                `<i class="preview-pad habitat-${pad.terrain}" style="--pad-x:${pad.col};--pad-y:${pad.row}"></i>`,
-            )
-            .join("")}
-        </div>
+        <div class="route-preview-slot palette-${map.theme.palette}"></div>
         <div class="route-card-head"><b>${map.name}</b><span class="best">${view.bestLabel}</span></div>
         <span class="route-description">${map.description}</span>
         <div class="habitat-chips" aria-label="Available habitats">
@@ -110,6 +102,7 @@ export function showHome(
             : `<span class="lock-note">🔒 ${view.lockLabel}</span>`
         }
       `;
+      mountRouteThumbnail(card.querySelector<HTMLElement>(".route-preview-slot")!, map);
       if (view.unlocked) {
         card.querySelector<HTMLButtonElement>(".play-btn")!.addEventListener("click", () =>
           resolve({ type: "play", mapId: map.id }),

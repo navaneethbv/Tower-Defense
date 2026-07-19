@@ -5,9 +5,6 @@ import type { Point } from "./path";
 
 const MAX_LEVEL = 100;
 
-export function xpToNext(level: number): number {
-  return 6 + level * 4;
-}
 
 // A placed tower. Wraps a species that can evolve in-run, applies IV and
 // level scaling, and tracks cooldown / targeting.

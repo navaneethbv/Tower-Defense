@@ -28,8 +28,8 @@ describe("redeployment controls", () => {
 
   it("cycles forward and backward with wraparound", () => {
     const pads = [
-      { id: "a", col: 1, row: 1, terrain: "grass" as const },
-      { id: "b", col: 2, row: 1, terrain: "grass" as const },
+      { id: "a", col: 1, row: 1, terrain: "grass" as const, tile: 127 },
+      { id: "b", col: 2, row: 1, terrain: "grass" as const, tile: 127 },
     ];
     expect(cycleRedeploymentPad(pads, null, 1)).toEqual(pads[0]);
     expect(cycleRedeploymentPad(pads, { col: 2, row: 1 }, 1)).toEqual(pads[0]);

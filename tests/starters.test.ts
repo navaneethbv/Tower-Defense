@@ -60,3 +60,14 @@ describe("starter combat identity", () => {
     }
   });
 });
+
+import { Tower } from "../src/engine/tower";
+
+describe("Tower level logic", () => {
+  it("cannot level up beyond max level", () => {
+    const tower = new Tower("user1", "charmander", { damage: 0, range: 0, attackSpeed: 0 }, 0, 0, false, 0, 100);
+    expect(tower.atMaxLevel()).toBe(true);
+    expect(tower.levelUp()).toBe(false);
+  });
+});
+

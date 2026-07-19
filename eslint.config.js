@@ -7,6 +7,7 @@ export default defineConfig(
     ignores: [
       ".cache/**",
       ".playwright-mcp/**",
+      ".remember/**",
       ".vercel/**",
       "coverage/**",
       "dist/**",

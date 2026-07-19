@@ -1,10 +1,19 @@
-import type { DeploymentPad, MapConfig, MapDecor, Terrain } from "../../types";
+import type {
+  DeploymentPad,
+  LandmarkRole,
+  MapConfig,
+  MapDecor,
+  MapLandmark,
+  Terrain,
+} from "../../types";
 import type {
   RouteRuntimeConfig,
   TiledObjectLayer,
+  TiledProperty,
   TiledRouteSource,
   TiledTileLayer,
 } from "./authored/types";
+import { MAP_ATLAS_TILE_COUNT } from "./tileCatalog";
 
 const HABITATS: Record<number, Terrain> = {
   1: "grass",
@@ -45,17 +54,48 @@ function terrainProperty(
   throw new Error(`${id}: pad is missing a valid terrain property`);
 }
 
+function numberProperty(
+  properties: TiledProperty[] | undefined,
+  name: string,
+): number | undefined {
+  const value = properties?.find((property) => property.name === name)?.value;
+  return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : undefined;
+}
+
+function assertTile(tile: number, context: string, id: string, allowEmpty = false): void {
+  if (allowEmpty && tile === 0) return;
+  if (!Number.isInteger(tile) || tile < 1 || tile > MAP_ATLAS_TILE_COUNT) {
+    throw new Error(`${id}: undefined tile ${tile} in ${context}`);
+  }
+}
+
+function landmarkRole(properties: TiledProperty[] | undefined, id: string): LandmarkRole {
+  const value = properties?.find((property) => property.name === "role")?.value;
+  if (value === "dominant" || value === "secondary" || value === "entrance" || value === "exit") {
+    return value;
+  }
+  throw new Error(`${id}: landmark is missing a valid role`);
+}
+
 export function loadAuthoredMap(
   source: TiledRouteSource,
   config: RouteRuntimeConfig,
 ): MapConfig {
   const ground = tileLayer(source, "ground", config.id);
   const habitat = tileLayer(source, "habitat", config.id);
+  const pathTiles = tileLayer(source, "pathTiles", config.id);
+  const landmarksLayer = objectLayer(source, "landmarks", config.id);
   const pathLayer = objectLayer(source, "path", config.id);
   const padsLayer = objectLayer(source, "pads", config.id);
   const decorLayer = objectLayer(source, "decor", config.id);
   const pathObject = pathLayer.objects.find((object) => object.polyline?.length);
   if (!pathObject?.polyline) throw new Error(`${config.id}: path layer has no polyline`);
+
+  for (const tile of ground.data) assertTile(tile, "ground", config.id);
+  for (const tile of pathTiles.data) assertTile(tile, "pathTiles", config.id, true);
+  for (const object of decorLayer.objects) {
+    if (object.gid !== undefined) assertTile(object.gid, "decor", config.id);
+  }
 
   const terrain: Terrain[][] = [];
   for (let row = 0; row < source.height; row++) {
@@ -83,8 +123,51 @@ export function loadAuthoredMap(
     if (terrain[row]![col] !== padTerrain) {
       throw new Error(`${config.id}: pad ${id} does not match habitat layer`);
     }
-    return { id, col, row, terrain: padTerrain };
+    const tile = numberProperty(object.properties, "tile");
+    if (!tile) throw new Error(`${config.id}: pad ${id} is missing a valid tile property`);
+    assertTile(tile, `pad ${id}`, config.id);
+    return { id, col, row, terrain: padTerrain, tile };
   });
+
+  const landmarkIds = new Set<string>();
+  const landmarks: MapLandmark[] = landmarksLayer.objects.map((object) => {
+    const id = object.name?.trim();
+    if (!id) throw new Error(`${config.id}: landmark is missing an id`);
+    if (landmarkIds.has(id)) throw new Error(`${config.id}: duplicate landmark ${id}`);
+    landmarkIds.add(id);
+    const landmark = {
+      id,
+      role: landmarkRole(object.properties, config.id),
+      col: Math.floor(object.x / source.tilewidth),
+      row: Math.floor(object.y / source.tileheight),
+      width: Math.max(1, Math.ceil((object.width ?? source.tilewidth) / source.tilewidth)),
+      height: Math.max(1, Math.ceil((object.height ?? source.tileheight) / source.tileheight)),
+    };
+    if (
+      landmark.col < 0 ||
+      landmark.row < 0 ||
+      landmark.col + landmark.width > source.width ||
+      landmark.row + landmark.height > source.height
+    ) {
+      throw new Error(`${config.id}: landmark ${id} is outside the board`);
+    }
+    return landmark;
+  });
+
+  const roleCounts = landmarks.reduce<Record<LandmarkRole, number>>(
+    (counts, landmark) => ({ ...counts, [landmark.role]: counts[landmark.role] + 1 }),
+    { dominant: 0, secondary: 0, entrance: 0, exit: 0 },
+  );
+  if (
+    roleCounts.dominant !== 1 ||
+    roleCounts.secondary < 2 ||
+    roleCounts.entrance !== 1 ||
+    roleCounts.exit !== 1
+  ) {
+    throw new Error(
+      `${config.id}: landmarks require 1 dominant, 2 secondary, 1 entrance, and 1 exit`,
+    );
+  }
 
   const path = pathObject.polyline.map((point) => ({
     x: (pathObject.x + point.x) / source.tilewidth - 0.5,
@@ -105,7 +188,9 @@ export function loadAuthoredMap(
     path,
     terrain,
     tiles: [...ground.data],
+    pathTiles: [...pathTiles.data],
     decor,
     deploymentPads,
+    landmarks,
   };
 }
