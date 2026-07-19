@@ -13,6 +13,7 @@ import type {
   TiledRouteSource,
   TiledTileLayer,
 } from "./authored/types";
+import { MAP_ATLAS_TILE_COUNT } from "./tileCatalog";
 
 const HABITATS: Record<number, Terrain> = {
   1: "grass",
@@ -61,6 +62,13 @@ function numberProperty(
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : undefined;
 }
 
+function assertTile(tile: number, context: string, id: string, allowEmpty = false): void {
+  if (allowEmpty && tile === 0) return;
+  if (!Number.isInteger(tile) || tile < 1 || tile > MAP_ATLAS_TILE_COUNT) {
+    throw new Error(`${id}: undefined tile ${tile} in ${context}`);
+  }
+}
+
 function landmarkRole(properties: TiledProperty[] | undefined, id: string): LandmarkRole {
   const value = properties?.find((property) => property.name === "role")?.value;
   if (value === "dominant" || value === "secondary" || value === "entrance" || value === "exit") {
@@ -82,6 +90,12 @@ export function loadAuthoredMap(
   const decorLayer = objectLayer(source, "decor", config.id);
   const pathObject = pathLayer.objects.find((object) => object.polyline?.length);
   if (!pathObject?.polyline) throw new Error(`${config.id}: path layer has no polyline`);
+
+  for (const tile of ground.data) assertTile(tile, "ground", config.id);
+  for (const tile of pathTiles.data) assertTile(tile, "pathTiles", config.id, true);
+  for (const object of decorLayer.objects) {
+    if (object.gid !== undefined) assertTile(object.gid, "decor", config.id);
+  }
 
   const terrain: Terrain[][] = [];
   for (let row = 0; row < source.height; row++) {
@@ -111,6 +125,7 @@ export function loadAuthoredMap(
     }
     const tile = numberProperty(object.properties, "tile");
     if (!tile) throw new Error(`${config.id}: pad ${id} is missing a valid tile property`);
+    assertTile(tile, `pad ${id}`, config.id);
     return { id, col, row, terrain: padTerrain, tile };
   });
 

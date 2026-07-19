@@ -1,5 +1,6 @@
 import type { MapConfig, Terrain } from "../../types";
 import { TILE } from "../../data/constants";
+import { MAP_ATLAS_COLUMNS } from "../../data/maps/tileCatalog";
 
 export type PadVisualState = "idle" | "compatible" | "incompatible" | "occupied";
 
@@ -19,8 +20,8 @@ export function tileSourceRect(tileId: number): {
 } {
   const index = Math.max(0, tileId - 1);
   return {
-    x: (index % 8) * TILE,
-    y: Math.floor(index / 8) * TILE,
+    x: (index % MAP_ATLAS_COLUMNS) * TILE,
+    y: Math.floor(index / MAP_ATLAS_COLUMNS) * TILE,
     width: TILE,
     height: TILE,
   };

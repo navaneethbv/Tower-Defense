@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { loadAuthoredMap } from "../src/data/maps/tiled";
-import type { TiledRouteSource, RouteRuntimeConfig } from "../src/data/maps/authored/types";
+import type {
+  RouteRuntimeConfig,
+  TiledRouteSource,
+  TiledTileLayer,
+} from "../src/data/maps/authored/types";
 
 // The failure cases below deliberately corrupt a valid fixture to exercise the
 // loader's validation, which means writing values the strict source types
@@ -315,6 +319,35 @@ describe("loadAuthoredMap", () => {
     looseLayer(source, "landmarks").objects[0]!.x = 96;
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow(
       "test_route: landmark main-site is outside the board",
+    );
+  });
+
+  it("rejects undefined ground and path tile ids", () => {
+    const source = createValidSource();
+    (source.layers.find((layer) => layer.name === "ground") as TiledTileLayer).data[0] = 145;
+    expect(() => loadAuthoredMap(source, mockConfig)).toThrow(
+      "test_route: undefined tile 145 in ground",
+    );
+
+    const second = createValidSource();
+    (second.layers.find((layer) => layer.name === "pathTiles") as TiledTileLayer).data[0] = 145;
+    expect(() => loadAuthoredMap(second, mockConfig)).toThrow(
+      "test_route: undefined tile 145 in pathTiles",
+    );
+  });
+
+  it("rejects undefined decor and pad tile ids", () => {
+    const source = createValidSource();
+    looseLayer(source, "decor").objects[0]!.gid = 145;
+    expect(() => loadAuthoredMap(source, mockConfig)).toThrow(
+      "test_route: undefined tile 145 in decor",
+    );
+
+    const second = createValidSource();
+    (looseLayer(second, "pads").objects[0]!.properties as { name: string; value: number }[])
+      .find((property) => property.name === "tile")!.value = 145;
+    expect(() => loadAuthoredMap(second, mockConfig)).toThrow(
+      "test_route: undefined tile 145 in pad pad-1",
     );
   });
 });
