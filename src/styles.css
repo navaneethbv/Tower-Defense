@@ -510,9 +510,62 @@ button.redeploy-btn:focus-visible {
 
 .starter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 16px;
+}
+
+/* Nine generations of starters stay reachable through a scrollable tab row. */
+.starter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.starter-tab {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.starter-tab:hover:not(.active) {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.starter-tab.active {
+  background: #0c4a6e;
+  border-color: var(--accent);
+  color: #e0f2fe;
+}
+
+.starter-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.starter-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.starter-details {
+  font-size: 0.78rem;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.starter-traits {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.35;
 }
 
 .starter-card,
@@ -955,6 +1008,23 @@ button.redeploy-btn:focus-visible {
 @media (max-width: 699px) {
   .map-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Two starter columns keep sprite, types, and traits legible on phones. */
+@media (max-width: 639px) {
+  .starter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .starter-card {
+    padding: 12px 10px;
+  }
+
+  .starter-card img {
+    width: 88px;
+    height: 88px;
   }
 }
 

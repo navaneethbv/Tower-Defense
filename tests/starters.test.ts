@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getSpecies, isBaseSpecies } from "../src/data/species";
 import { STARTER_GROUPS, STARTER_IDS, starterGroup } from "../src/data/starters";
+import { starterCardView } from "../src/ui/screens/starterScreen";
 
 describe("starter catalogue", () => {
   it("contains all nine generations and exactly 28 unique base species", () => {
@@ -28,5 +29,21 @@ describe("starter catalogue", () => {
 
   it("rejects an unknown generation", () => {
     expect(() => starterGroup(10)).toThrow("Unknown starter generation: 10");
+  });
+});
+
+describe("starter card presentation", () => {
+  it("describes starter combat and habitat identity", () => {
+    expect(starterCardView("charmander")).toMatchObject({
+      name: "Charmander",
+      types: "fire",
+      role: "Dps",
+      habitats: "grass / mountain",
+      status: "Burn",
+    });
+    expect(starterCardView("mudkip")).toMatchObject({
+      name: "Mudkip",
+      types: "water",
+    });
   });
 });
