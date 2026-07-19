@@ -17,11 +17,16 @@ export function waveHpMultiplier(params: WaveGenParams, waveNumber: number): num
   const actStart = (act - 1) * 25 + 1;
   const actPressure = 1 + (act - 1) * 0.04 + (waveNumber - actStart) * 0.001;
   const lateGameRelief = 1 / (1 + 0.055 * Math.max(0, waveNumber - 10));
+  
+  // Scale enemy HP exponentially beyond wave 35 to provide end-game challenge for level 100 Pokemon
+  const waveScaling = waveNumber <= 35 ? 1 : Math.pow(1.025, waveNumber - 35);
+
   return (
     (params.hpBase / 30) *
     Math.pow(waveNumber, params.hpGrowth) *
     lateGameRelief *
-    actPressure
+    actPressure *
+    waveScaling
   );
 }
 

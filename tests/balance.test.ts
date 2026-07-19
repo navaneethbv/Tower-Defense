@@ -60,16 +60,16 @@ describe("balance bands (Verdant Route)", () => {
       owned("geodude", GOOD_IV, 8),
     ]);
     const sixMax = await avgWaves([
-      owned("charmander", MAX_IV, 20),
-      owned("squirtle", MAX_IV, 20),
-      owned("bulbasaur", MAX_IV, 20),
-      owned("pikachu", MAX_IV, 20),
-      owned("geodude", MAX_IV, 20),
-      owned("pidgey", MAX_IV, 20),
+      owned("charmander", MAX_IV, 100),
+      owned("squirtle", MAX_IV, 100),
+      owned("bulbasaur", MAX_IV, 100),
+      owned("pikachu", MAX_IV, 100),
+      owned("geodude", MAX_IV, 100),
+      owned("pidgey", MAX_IV, 100),
     ]);
     const roster = ["charmander", "squirtle", "bulbasaur", "pikachu", "pidgey", "geodude"];
     const tenMax = await avgWaves(
-      Array.from({ length: 10 }, (_, i) => owned(roster[i % roster.length]!, MAX_IV, 20)),
+      Array.from({ length: 10 }, (_, i) => owned(roster[i % roster.length]!, MAX_IV, 100)),
     );
     console.log(
       "BALANCE  solo=%s trio=%s six=%s sixStrong=%s sixMax=%s tenMax=%s",
@@ -117,7 +117,7 @@ describe("all-map endgame balance", () => {
   ];
 
   it.each(mapIds)("lets a maxed final-stage team clear all 100 waves on %s", (mapId) => {
-    const team = finalRoster.map((speciesId) => owned(speciesId, MAX_IV, 20));
+    const team = finalRoster.map((speciesId) => owned(speciesId, MAX_IV, 100));
     const results = [11, 22, 33].map((seed) => simulateRun(getMap(mapId), team, seed));
     expect(results.map((result) => result.wavesCleared)).toEqual([100, 100, 100]);
   });
