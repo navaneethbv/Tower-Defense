@@ -1,4 +1,10 @@
-import type { EnemyDef, EnemyStatMods } from "../types";
+import type {
+  EnemyDef,
+  EnemyStatMods,
+  StatusApplication,
+  StatusEventKind,
+  TypeName,
+} from "../types";
 import { StatusSet } from "./status";
 import type { PathGeometry, Point } from "./path";
 
@@ -33,13 +39,32 @@ export class Enemy {
     this.pos = path.positionAt(0);
   }
 
+  private statusEvents: StatusEventKind[] = [];
+
   effectiveArmor(): number {
     return this.status.armorNegated() ? 0 : this.armor;
+  }
+
+  // Single entry point for status so boss duration normalization can never be
+  // bypassed by a caller reaching into `status` directly.
+  applyStatus(application: StatusApplication): void {
+    this.status.apply(application.kind, application.duration, application.magnitude, this.isBoss);
+  }
+
+  afterDirectHit(attackType: TypeName): StatusEventKind[] {
+    const events = this.status.afterDirectHit(attackType);
+    this.statusEvents.push(...events);
+    return events;
+  }
+
+  drainStatusEvents(): StatusEventKind[] {
+    return this.statusEvents.splice(0);
   }
 
   update(dt: number, path: PathGeometry): void {
     const tick = this.status.tick(dt, this.isBoss);
     if (tick.damage > 0) this.hp -= tick.damage;
+    if (tick.events.length > 0) this.statusEvents.push(...tick.events);
     if (this.def.regen && this.hp > 0) this.hp = Math.min(this.maxHp, this.hp + this.def.regen * dt);
     if (this.hp <= 0) {
       this.alive = false;

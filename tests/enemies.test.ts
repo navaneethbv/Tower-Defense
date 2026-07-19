@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ENEMIES, getEnemy } from "../src/data/enemies";
 import { MAPS } from "../src/data/maps";
 import { getSpecies } from "../src/data/species";
+import { Enemy } from "../src/engine/enemy";
+import { PathGeometry } from "../src/engine/path";
 
 describe("expanded enemy roster", () => {
   it("uses valid unique species across reusable archetypes", () => {
@@ -47,5 +49,32 @@ describe("expanded enemy roster", () => {
 
   it("throws error for unknown enemy IDs", () => {
     expect(() => getEnemy("nonexistent")).toThrow("Unknown enemy id: nonexistent");
+  });
+});
+
+describe("enemy status transitions", () => {
+  function createTestEnemy(boss = false): Enemy {
+    const map = MAPS[0]!;
+    return new Enemy(
+      getEnemy("rattata"),
+      { hp: 100, speed: 1, armor: 0, reward: 5, heartDamage: 1, boss },
+      new PathGeometry(map),
+    );
+  }
+
+  it("wakes sleep and thaws freeze only after direct damage", () => {
+    const enemy = createTestEnemy();
+    enemy.applyStatus({ kind: "sleep", chance: 1, duration: 3, magnitude: 1 });
+    enemy.applyStatus({ kind: "freeze", chance: 1, duration: 3, magnitude: 1 });
+    expect(enemy.afterDirectHit("water")).toEqual(["wake"]);
+    expect(enemy.status.has("freeze")).toBe(true);
+    expect(enemy.afterDirectHit("fire")).toEqual(["thaw"]);
+    expect(enemy.status.has("freeze")).toBe(false);
+  });
+
+  it("normalizes hard control when status is applied to a boss", () => {
+    const boss = createTestEnemy(true);
+    boss.applyStatus({ kind: "freeze", chance: 1, duration: 4, magnitude: 1 });
+    expect(boss.status.get("freeze")?.remaining).toBe(2);
   });
 });

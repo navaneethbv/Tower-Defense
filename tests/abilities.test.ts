@@ -250,3 +250,20 @@ describe("redeployment lockout", () => {
     expect(tower.redeployCooldownLeft).toBe(0);
   });
 });
+
+describe("status kill rewards", () => {
+  it("awards status kills exactly once", () => {
+    const { game, tower } = setup("charmander");
+    const enemy = addEnemy(game, tower.pos.x + 20, tower.pos.y, 1);
+    tower.cooldownLeft = 999;
+    enemy.applyStatus({ kind: "burn", chance: 1, duration: 2, magnitude: 2 });
+    const gold = game.gold;
+
+    game.update(1);
+
+    expect(game.gold).toBe(gold + enemy.reward);
+    expect(tower.runXp).toBe(3);
+    game.update(1);
+    expect(game.gold).toBe(gold + enemy.reward);
+  });
+});

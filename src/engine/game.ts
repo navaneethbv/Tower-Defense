@@ -1,4 +1,10 @@
-import type { DeploymentPad, MapConfig, OwnedPokemon, TargetingMode } from "../types";
+import type {
+  DeploymentPad,
+  MapConfig,
+  OwnedPokemon,
+  StatusEventKind,
+  TargetingMode,
+} from "../types";
 import { getSpecies } from "../data/species";
 import { STARTING_GOLD, STARTING_LIVES } from "../data/constants";
 import { generateWave } from "../waves/generator";
@@ -226,6 +232,21 @@ export class GameSession {
     this.floating.push({ x, y, text, color, life: 0.9 });
   }
 
+  private static readonly STATUS_EVENT_LABELS: Partial<
+    Record<StatusEventKind, { text: string; color: string }>
+  > = {
+    thaw: { text: "Thawed!", color: "#7dd3fc" },
+    wake: { text: "Woke up!", color: "#fde68a" },
+    confusion: { text: "Confused!", color: "#f0abfc" },
+  };
+
+  private showStatusEvents(enemy: Enemy): void {
+    for (const event of enemy.drainStatusEvents()) {
+      const label = GameSession.STATUS_EVENT_LABELS[event];
+      if (label) this.addFloating(enemy.pos.x, enemy.pos.y, label.text, label.color);
+    }
+  }
+
   update(dt: number): void {
     if (this.phase === "won" || this.phase === "lost") return;
 
@@ -236,10 +257,16 @@ export class GameSession {
 
     // Enemies
     for (const e of this.enemies) {
+      const aliveBefore = e.alive;
       e.update(dt, this.path);
+      this.showStatusEvents(e);
       if (e.reachedEnd) {
         this.lives -= e.heartDamage;
         this.addFloating(e.pos.x, e.pos.y, `-${e.heartDamage}`, "#f87171");
+      } else if (aliveBefore && !e.alive) {
+        // Killed by damage over time rather than a projectile, so the reward
+        // path has to run here or status kills would pay nothing.
+        this.onKill(e);
       }
     }
 
@@ -265,7 +292,12 @@ export class GameSession {
       if (!p.target.alive) continue;
       const res = resolveHit(p.target, p.attackType, p.damage);
       if (res.dealt > 0 && p.status && this.combatRng.next() < p.status.chance) {
-        p.target.status.apply(p.status.kind, p.status.duration, p.status.magnitude);
+        p.target.applyStatus(p.status);
+      }
+      // Wake and thaw resolve only after the triggering hit's damage lands.
+      if (res.dealt > 0) {
+        p.target.afterDirectHit(p.attackType);
+        this.showStatusEvents(p.target);
       }
       if (res.killed) this.onKill(p.target);
     }
