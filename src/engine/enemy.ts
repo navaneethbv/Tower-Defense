@@ -38,15 +38,15 @@ export class Enemy {
   }
 
   update(dt: number, path: PathGeometry): void {
-    const dot = this.status.tick(dt);
-    if (dot > 0) this.hp -= dot;
+    const tick = this.status.tick(dt, this.isBoss);
+    if (tick.damage > 0) this.hp -= tick.damage;
     if (this.def.regen && this.hp > 0) this.hp = Math.min(this.maxHp, this.hp + this.def.regen * dt);
     if (this.hp <= 0) {
       this.alive = false;
       return;
     }
     // Enemy walks at TILE tiles/sec scaled; convert tiles/sec to px/sec.
-    const pxPerSec = this.speed * 48 * this.status.speedFactor();
+    const pxPerSec = this.speed * 48 * this.status.speedFactor(this.isBoss);
     this.distance += pxPerSec * dt;
     this.pos = path.positionAt(this.distance);
     if (this.distance >= path.length) {

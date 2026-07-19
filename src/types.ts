@@ -35,7 +35,21 @@ export type TargetingMode =
   | "slowest"
   | "closest";
 
-export type StatusKind = "slow" | "poison" | "burn" | "stun" | "armorBreak" | "curse";
+export type StatusKind =
+  | "slow"
+  | "poison"
+  | "burn"
+  | "toxic"
+  | "paralysis"
+  | "freeze"
+  | "sleep"
+  | "confusion"
+  | "stun"
+  | "armorBreak"
+  | "curse";
+
+// Discrete things a status did this frame, surfaced for combat feedback.
+export type StatusEventKind = "toxic" | "confusion" | "thaw" | "wake" | "recover";
 
 export interface StatusApplication {
   kind: StatusKind;
