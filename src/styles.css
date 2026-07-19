@@ -633,78 +633,19 @@ button.redeploy-btn:focus-visible {
   font-size: 0.8rem;
 }
 
-.route-preview {
-  position: relative;
+.route-preview-slot {
   width: 100%;
-  aspect-ratio: 18 / 8;
+  aspect-ratio: 3 / 2;
   overflow: hidden;
   border: 2px solid #0a1721;
-  background-color: #79bd68;
-  background-image:
-    linear-gradient(90deg, transparent 47%, rgba(24, 37, 54, 0.12) 48% 52%, transparent 53%),
-    radial-gradient(circle at 18% 28%, #4f8f5b 0 7%, transparent 8%),
-    radial-gradient(circle at 82% 72%, #4f91bd 0 13%, #3a759a 14% 17%, transparent 18%);
+  background: #253746;
+}
+
+canvas.route-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
   image-rendering: pixelated;
-}
-
-.palette-river,
-.palette-frost {
-  background-color: #78b98a;
-  background-image:
-    linear-gradient(115deg, transparent 0 38%, #4f91bd 39% 61%, transparent 62%),
-    linear-gradient(0deg, transparent 47%, #d7bd72 48% 54%, transparent 55%);
-}
-
-.palette-granite,
-.palette-ember {
-  background-color: #736f68;
-  background-image:
-    linear-gradient(90deg, transparent 0 28%, #d7bd72 29% 38%, transparent 39% 68%, #d7bd72 69% 78%, transparent 79%),
-    repeating-linear-gradient(0deg, rgba(24, 37, 54, 0.22) 0 2px, transparent 2px 12px);
-}
-
-.palette-shadow,
-.palette-ancient,
-.palette-champion {
-  background-color: #557b68;
-  background-image:
-    linear-gradient(90deg, transparent 0 43%, #d7bd72 44% 56%, transparent 57%),
-    radial-gradient(circle at 24% 70%, #4f91bd 0 12%, transparent 13%);
-}
-
-.palette-sky {
-  background-color: #91b9ce;
-  background-image:
-    linear-gradient(0deg, #6d8f83 0 24%, transparent 25%),
-    linear-gradient(90deg, transparent 0 44%, #d7bd72 45% 55%, transparent 56%);
-}
-
-.preview-path {
-  position: absolute;
-  inset: 43% -5% auto;
-  height: 16%;
-  background: #d7bd72;
-  border-block: 2px solid #9e7f45;
-}
-
-.preview-pad {
-  position: absolute;
-  left: calc(var(--pad-x) * 100% / 18);
-  top: calc(var(--pad-y) * 100% / 12);
-  width: 8px;
-  height: 8px;
-  border: 1px solid #eef8c9;
-  background: #8fd27c;
-  transform: translate(-50%, -50%);
-}
-
-.preview-pad.habitat-water {
-  background: #82a86c;
-  border-radius: 50%;
-}
-
-.preview-pad.habitat-mountain {
-  background: #918b80;
 }
 
 .route-card-head {
