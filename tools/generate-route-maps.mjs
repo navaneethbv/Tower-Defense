@@ -66,20 +66,77 @@ const routes = [
 ];
 
 function makeMap(route) {
+  // 1. Trace path cells
+  const pathCells = new Set();
+  for (let i = 0; i < route.path.length - 1; i++) {
+    const [c1, r1] = route.path[i];
+    const [c2, r2] = route.path[i+1];
+    const startC = Math.max(0, Math.min(width - 1, Math.min(c1, c2)));
+    const endC = Math.max(0, Math.min(width - 1, Math.max(c1, c2)));
+    const startR = Math.max(0, Math.min(height - 1, Math.min(r1, r2)));
+    const endR = Math.max(0, Math.min(height - 1, Math.max(r1, r2)));
+    for (let r = startR; r <= endR; r++) {
+      for (let c = startC; c <= endC; c++) {
+        pathCells.add(`${c},${r}`);
+      }
+    }
+  }
+  const padCells = new Set(route.pads.map(([c, r]) => `${c},${r}`));
+
+  // 2. Build habitat layer
   const habitat = Array(width * height).fill(1);
   for (const [col, row, terrain] of route.pads) {
     habitat[row * width + col] = terrain === "grass" ? 1 : terrain === "water" ? 2 : 3;
   }
-  const ground = habitat.map((value, index) => {
-    if (value === 2) return 3;
-    if (value === 3) return 4;
-    return route.ground + ((index + Math.floor(index / width)) % 11 === 0 ? 16 : 0);
-  });
+
+  // 3. Build ground layer with rich environmental details
+  const ground = Array(width * height).fill(route.ground);
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const idx = r * width + c;
+      if (pathCells.has(`${c},${r}`)) continue;
+      if (padCells.has(`${c},${r}`)) continue;
+      if (c <= 1 || c >= 16) continue; // skip border columns for trees/rocks
+
+      const val = (c * 7 + r * 13) % 10;
+      if (route.ground === 1 || route.ground === 3 || route.ground === 7 || route.ground === 8) {
+        // Grass detail: sprouts, red flowers, yellow flowers
+        if (val === 0 || val === 3) {
+          ground[idx] = 17; // sprouts
+        } else if (val === 1) {
+          ground[idx] = 25; // red flowers
+        } else if (val === 2) {
+          ground[idx] = 35; // yellow flowers
+        }
+      } else if (route.ground === 4 || route.ground === 9 || route.ground === 10) {
+        // Cave detail: dark stone, cave bump
+        if (val === 0 || val === 3) {
+          ground[idx] = 11;
+        } else if (val === 1) {
+          ground[idx] = 36;
+        }
+      } else if (route.ground === 5) {
+        // Volcano detail: lava spot, volcanic bump
+        if (val === 0 || val === 3) {
+          ground[idx] = 21;
+        } else if (val === 1) {
+          ground[idx] = 36;
+        }
+      } else if (route.ground === 6) {
+        // Snow detail: ice bump
+        if (val === 0 || val === 3) {
+          ground[idx] = 22;
+        }
+      }
+    }
+  }
+
   const first = route.path[0];
   const polyline = route.path.map(([col, row]) => ({
     x: (col - first[0]) * tileSize,
     y: (row - first[1]) * tileSize,
   }));
+
   const padObjects = route.pads.map(([col, row, terrain], index) => ({
     id: 100 + index,
     name: `${terrain}-${index + 1}`,
@@ -88,16 +145,65 @@ function makeMap(route) {
     y: row * tileSize,
     properties: [{ name: "terrain", type: "string", value: terrain }],
   }));
-  const decor = [[0, 0, 33], [17, 0, 34], [0, 11, 35], [17, 11, 36]].map(
-    ([col, row, gid], index) => ({
-      id: 200 + index,
+
+  // 4. Generate decors (border items & walls)
+  const decor = [];
+  let nextObjectId = 200;
+
+  function addDecor(col, row, gid) {
+    if (col < 0 || col >= width || row < 0 || row >= height) return;
+    const key = `${col},${row}`;
+    if (pathCells.has(key) || padCells.has(key)) return;
+
+    decor.push({
+      id: nextObjectId++,
       gid,
       x: col * tileSize,
       y: (row + 1) * tileSize,
       width: tileSize,
       height: tileSize,
-    }),
-  );
+    });
+  }
+
+  // Set decor themes
+  let borderGid = 33; // round tree
+  let forestGid = 34; // group tree
+  if (route.ground === 4 || route.ground === 9) {
+    borderGid = 36; // cave stone
+    forestGid = 31; // cave block
+  } else if (route.ground === 5) {
+    borderGid = 36; // volcanic stone
+    forestGid = 20; // dark block
+  } else if (route.ground === 6) {
+    borderGid = 22; // ice peaks
+    forestGid = 12; // ice wall
+  } else if (route.ground === 10) {
+    borderGid = 36; // rock
+    forestGid = 14; // stone wall
+  }
+
+  // Border items
+  for (let c = 0; c < width; c++) {
+    addDecor(c, 0, borderGid);
+    addDecor(c, height - 1, borderGid);
+  }
+  for (let r = 0; r < height; r++) {
+    addDecor(0, r, forestGid);
+    addDecor(1, r, forestGid);
+    addDecor(width - 2, r, forestGid);
+    addDecor(width - 1, r, forestGid);
+  }
+
+  // Fences for grass routes
+  if (route.ground === 1 || route.ground === 3 || route.ground === 7 || route.ground === 8) {
+    const fenceRows = [2, 4, 6, 10];
+    for (const r of fenceRows) {
+      for (let c = 3; c <= 14; c++) {
+        addDecor(c, r, 37);
+      }
+    }
+  }
+
   return {
     compressionlevel: -1,
     height,
@@ -110,7 +216,7 @@ function makeMap(route) {
       { id: 5, name: "pads", type: "objectgroup", objects: padObjects, opacity: 1, visible: true, x: 0, y: 0 },
     ],
     nextlayerid: 6,
-    nextobjectid: 300,
+    nextobjectid: nextObjectId,
     orientation: "orthogonal",
     renderorder: "right-down",
     tiledversion: "1.11.2",
@@ -125,5 +231,6 @@ function makeMap(route) {
 
 mkdirSync(outputDir, { recursive: true });
 for (const route of routes) {
+  if (route.file === "verdant-route.json") continue; // Keep manually custom-built Route 1-1
   writeFileSync(resolve(outputDir, route.file), `${JSON.stringify(makeMap(route), null, 2)}\n`);
 }
