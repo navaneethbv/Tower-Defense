@@ -93,8 +93,14 @@ Coverage is 99.88 percent statements, 97.82 percent branches, 100 percent functi
 
 Stage 1 shipped state-preserving redeployment in `a4ce7fc` and `f825df9`.
 Stage 2 shipped the generation-grouped starter picker in `a615657` and `7ae3399`.
-Stage 3 shipped the status engine, roster profiles, presentation, and balance in `8700c1b`, `49e64db`, `3ac4cfb`, `cac7113`, and `93629de`.
+Stage 3 shipped the status engine, roster profiles, presentation, and balance in `8700c1b`, `49e64db`, `3ac4cfb`, `cac7113`, `93629de`, and `a60a915`.
+The production deployment for this work is `dpl_745MFqb9EE5rTM3m2uakN8JS6YGa`, aliased to `https://tower-defense-navy.vercel.app`.
 A preceding fix in `dfcd5b4` cleared nine pre-existing `no-explicit-any` lint errors in `tests/tiled.test.ts` that were already failing the `Quality` workflow's Lint job before this work began.
+
+The `Quality` workflow then failed once with `[vitest-worker]: Timeout calling "onTaskUpdate"` while all 186 tests passed and coverage held.
+`simulateRun` is synchronous and CPU-bound, so chaining thirty runs inside one test starved the worker's reporter RPC on a two-core runner.
+The balance helpers now yield to the macrotask queue between runs, which left every seed, assertion, and reported balance number unchanged.
+Keep that yield in place when adding further simulation-heavy tests.
 
 Browser verification ran at 1440 by 900 and 390 by 844 on Chrome.
 It covered mid-wave redeployment by mouse and by `Q`, `E`, and `Enter`, `Escape` cancellation, the 5-second cooldown veil and attack and ability lockout, all nine starter generation tabs with keyboard navigation, Generation 9 starter selection on a fresh profile, the two-column mobile starter grid, status chips on live enemies, and the selected-tower status description.
