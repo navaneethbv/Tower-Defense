@@ -69,8 +69,31 @@ for (let r = 0; r < ROWS; r++) {
     }
   }
 }
+// 5. Paint Grass Details (Sprouts and Flowers)
+const padLocations = [
+  "2,0", "4,0", "7,0", "3,7", "12,7", "11,11", "14,11", "8,3", "6,7", "9,7", "17,3", "17,8"
+];
 
-// 5. Generate Decors (Objects)
+for (let r = 0; r < ROWS; r++) {
+  for (let c = 0; c < COLS; c++) {
+    const idx = r * COLS + c;
+    if (pathCells.has(`${c},${r}`)) continue;
+    if (groundData[idx] !== 1) continue; // only paint on plain grass
+    if (padLocations.includes(`${c},${r}`)) continue;
+
+    // Deterministic pattern based on coordinates
+    const val = (c * 7 + r * 13) % 10;
+    if (val === 0 || val === 3) {
+      groundData[idx] = 17; // sprouts
+    } else if (val === 1) {
+      groundData[idx] = 25; // red flowers
+    } else if (val === 2) {
+      groundData[idx] = 35; // yellow flowers
+    }
+  }
+}
+
+// 6. Generate Decors (Objects)
 const decorObjects = [];
 let nextObjectId = 200;
 
@@ -88,6 +111,26 @@ function addDecor(tileId, col, row) {
 // Top House
 addDecor(39, 12, 0);
 
+// Border Trees (33 = tree)
+const borderTrees = [
+  // Top border
+  { col: 10, row: 0 }, { col: 11, row: 0 }, { col: 14, row: 0 }, { col: 15, row: 0 },
+  // Bottom border
+  { col: 0, row: 11 }, { col: 4, row: 11 }, { col: 5, row: 11 }, { col: 6, row: 11 },
+  { col: 7, row: 11 }, { col: 8, row: 11 }, { col: 9, row: 11 }, { col: 10, row: 11 },
+  { col: 12, row: 11 }, { col: 13, row: 11 },
+  // Right border
+  { col: 17, row: 0 }, { col: 17, row: 1 }, { col: 17, row: 5 }, { col: 17, row: 10 }, { col: 17, row: 11 },
+  // Garden tree corners
+  { col: 3, row: 2 }, { col: 3, row: 10 }
+];
+
+for (const bt of borderTrees) {
+  if (!pathCells.has(`${bt.col},${bt.row}`) && !padLocations.includes(`${bt.col},${bt.row}`)) {
+    addDecor(33, bt.col, bt.row);
+  }
+}
+
 // Fences (37 = fence)
 const fenceRows = [
   { row: 2, cols: [3, 4, 5, 6, 7, 8, 10, 11] },
@@ -98,7 +141,7 @@ const fenceRows = [
 
 for (const fr of fenceRows) {
   for (const col of fr.cols) {
-    if (!pathCells.has(`${col},${fr.row}`)) {
+    if (!pathCells.has(`${col},${fr.row}`) && !padLocations.includes(`${col},${fr.row}`)) {
       addDecor(37, col, fr.row);
     }
   }
