@@ -1,13 +1,13 @@
 import type { SpeciesDef } from "../types";
 import { CANONICAL_POKEMON } from "./generated/pokemon";
-import { deriveSpecies } from "./speciesDerivation";
+import { deriveSpecies, type SpeciesTemplate } from "./speciesDerivation";
 
 export { selectEvolution } from "./speciesDerivation";
 
 // Tower species. Base stages are hatchable (rarity drives egg pools); evolutions
 // are reached in-run at the `atLevel` thresholds. Phase 1-2 ships tuned starter
 // lines plus a few staples; generated defaults fill the rest of the National Dex.
-const CURATED_SPECIES: SpeciesDef[] = [
+const CURATED_SPECIES: SpeciesTemplate[] = [
   // --- Bulbasaur line (grass) ---
   {
     id: "bulbasaur", dex: 1, name: "Bulbasaur", types: ["grass", "poison"], attackType: "grass",

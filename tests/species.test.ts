@@ -105,3 +105,18 @@ describe("runtime species roster", () => {
     expect(getSpecies("miraidon").ability).toBeDefined();
   });
 });
+
+describe("combat profiles", () => {
+  it("assigns deterministic combat profiles and status-specialist tradeoffs", () => {
+    expect(getSpecies("charmander").combatProfile).toBe("balanced");
+    expect(getSpecies("vulpix").combatProfile).toBe("status");
+    expect(getSpecies("vulpix").onHitStatus?.kind).toBe("burn");
+    expect(getSpecies("salandit").combatProfile).toBe("status");
+    expect(["poison", "toxic"]).toContain(getSpecies("salandit").onHitStatus?.kind);
+    expect(getSpecies("mareep").onHitStatus?.kind).toBe("paralysis");
+    expect(getSpecies("smoochum").onHitStatus?.kind).toBe("freeze");
+    expect(SPECIES.filter((species) => species.combatProfile === "status").length).toBeGreaterThan(100);
+    expect(SPECIES.every((species) => species.combatProfile !== "status" || species.onHitStatus)).toBe(true);
+    expect(getSpecies("vulpix").base.damage).toBe(10);
+  });
+});

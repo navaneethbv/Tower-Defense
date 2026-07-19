@@ -121,7 +121,7 @@ describe("egg economy", () => {
   it("falls back to lower tier if rolled tier is unpopulated", () => {
     const spy = vi.spyOn(speciesModule, "baseSpeciesByRarity").mockImplementation((rarity) => {
       if (rarity === "legendary") return [];
-      return [{ id: "mock-pokemon", dex: 1, name: "Mock", rarity: "common", role: "support", description: "Mock pokemon description", base: { damage: 1, cooldown: 1, range: 1, cost: 1 }, types: ["normal"], attackType: "normal", allowedTerrain: ["grass"], favoredTerrain: "grass", projectile: { color: "#fff", kind: "normal" } }];
+      return [{ id: "mock-pokemon", dex: 1, name: "Mock", rarity: "common", role: "support", combatProfile: "damage", description: "Mock pokemon description", base: { damage: 1, cooldown: 1, range: 1, cost: 1 }, types: ["normal"], attackType: "normal", allowedTerrain: ["grass"], favoredTerrain: "grass", projectile: { color: "#fff", kind: "normal" } }];
     });
     const pokemon = rollHatch("legendary", () => 0.05); // rolls legendary (first in order)
     expect(pokemon.speciesId).toBe("mock-pokemon");

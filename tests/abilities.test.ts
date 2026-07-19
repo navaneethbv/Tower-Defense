@@ -136,7 +136,9 @@ describe("active abilities", () => {
 
     const result = game.activateAbility(tower);
     expect(result.ok).toBe(true);
-    expect(enemy.status.has("slow") || enemy.status.has("poison") || enemy.status.has("burn") || enemy.status.has("curse")).toBe(true);
+    // Asserts the burst lands some status, rather than enumerating kinds that
+    // shift whenever a type's specialist kit is retuned.
+    expect(enemy.status.active().length).toBeGreaterThan(0);
   });
 });
 

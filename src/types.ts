@@ -26,6 +26,10 @@ export type Rarity = "common" | "rare" | "legendary";
 
 export type Role = "dps" | "aoe" | "sniper" | "support" | "tank_killer" | "balanced";
 
+// How a species spends its power budget. `status` trades roughly 25% direct
+// damage for stronger status application.
+export type CombatProfile = "damage" | "balanced" | "status";
+
 export type TargetingMode =
   | "first"
   | "last"
@@ -91,6 +95,7 @@ export interface SpeciesDef {
   attackType: TypeName;
   role: Role;
   rarity: Rarity;
+  combatProfile: CombatProfile;
   base: { damage: number; cooldown: number; range: number; cost: number };
   allowedTerrain: Terrain[];
   favoredTerrain: Terrain;

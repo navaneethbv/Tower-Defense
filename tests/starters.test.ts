@@ -47,3 +47,16 @@ describe("starter card presentation", () => {
     });
   });
 });
+
+describe("starter combat identity", () => {
+  it("gives every starter an understandable combat identity", () => {
+    for (const id of STARTER_IDS) {
+      const species = getSpecies(id);
+      expect(["damage", "balanced", "status"]).toContain(species.combatProfile);
+      expect(species.combatProfile === "status" ? species.onHitStatus : true).toBeTruthy();
+      // Every approved first choice must be affordable under the same opening economy.
+      expect(species.base.cost).toBeGreaterThanOrEqual(80);
+      expect(species.base.cost).toBeLessThanOrEqual(90);
+    }
+  });
+});
