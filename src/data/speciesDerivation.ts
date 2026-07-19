@@ -207,7 +207,7 @@ export type SpeciesTemplate = Omit<SpeciesDef, "combatProfile"> & {
 };
 
 // Status specialists give up direct damage for stronger status application.
-const SPECIALIST_DAMAGE_MULTIPLIER = 0.75;
+const SPECIALIST_DAMAGE_MULTIPLIER = 0.8;
 
 export function deriveSpecies(
   record: CanonicalPokemon,

@@ -117,6 +117,10 @@ describe("combat profiles", () => {
     expect(getSpecies("smoochum").onHitStatus?.kind).toBe("freeze");
     expect(SPECIES.filter((species) => species.combatProfile === "status").length).toBeGreaterThan(100);
     expect(SPECIES.every((species) => species.combatProfile !== "status" || species.onHitStatus)).toBe(true);
-    expect(getSpecies("vulpix").base.damage).toBe(10);
+    // Vulpix derives 13 direct damage before the specialist tradeoff; the 0.80
+    // multiplier (a 20% cut, the shallow end of the approved 20-30% band) takes
+    // it to 11. Balance tuning settled on 0.80 because 0.75 left specialist
+    // teams unable to hold Ember Caldera.
+    expect(getSpecies("vulpix").base.damage).toBe(11);
   });
 });

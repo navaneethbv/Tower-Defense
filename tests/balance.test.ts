@@ -135,6 +135,30 @@ describe("all-map endgame balance", () => {
     expect(developed).toBeGreaterThanOrEqual(novice);
   });
 
+  // A team built entirely from status specialists trades direct damage for
+  // control, so it has to remain competitive with the developed damage team.
+  // Composition is load-bearing on two routes and was chosen deliberately:
+  // Mareanie (poison/water) supplies water-pad coverage, because water-typed
+  // Pokemon attack as water, which has no status kit, so poison/water and
+  // ice/water duals are the only specialists that can hold a water pad at all.
+  // Gastly, Drowzee, and Abra supply the three spectral-capable attackers that
+  // Shadow Marsh's spectral enemies require.
+  const specialistRoster = ["vulpix", "gastly", "drowzee", "abra", "mareanie", "magnemite"];
+
+  it.each(mapIds)("lets a status-specialist team reach wave 35 on %s", (mapId) => {
+    const team = specialistRoster.map((speciesId) => owned(speciesId, GOOD_IV, 12));
+    const results = [11, 22, 33].map((seed) => simulateRun(getMap(mapId), team, seed));
+    expect(Math.min(...results.map((result) => result.wavesCleared))).toBeGreaterThanOrEqual(35);
+  });
+
+  it("replays status-specialist runs identically for a fixed seed", () => {
+    const map = getMap("verdant_route");
+    const team = specialistRoster.map((speciesId) => owned(speciesId, GOOD_IV, 12));
+    const first = simulateRun(map, team, 4242).wavesCleared;
+    const second = simulateRun(map, team, 4242).wavesCleared;
+    expect(first).toBe(second);
+  });
+
   it("repeats exactly for the same run seed", () => {
     const map = getMap("indigo_plateau");
     const team = finalRoster.slice(0, 6).map((speciesId) => owned(speciesId, GOOD_IV, 12));
