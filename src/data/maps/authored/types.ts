@@ -13,6 +13,8 @@ export interface TiledObject {
   point?: boolean;
   x: number;
   y: number;
+  width?: number;
+  height?: number;
   polyline?: { x: number; y: number }[];
   properties?: TiledProperty[];
 }

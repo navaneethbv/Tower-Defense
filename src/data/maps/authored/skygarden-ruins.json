@@ -462,6 +462,235 @@
       "y": 0
     },
     {
+      "id": 6,
+      "type": "tilelayer",
+      "name": "pathTiles",
+      "width": 18,
+      "height": 12,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "visible": true,
+      "data": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
       "id": 3,
       "name": "decor",
       "type": "objectgroup",
@@ -1283,6 +1512,11 @@
               "name": "terrain",
               "type": "string",
               "value": "mountain"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 139
             }
           ]
         },
@@ -1297,6 +1531,11 @@
               "name": "terrain",
               "type": "string",
               "value": "grass"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 127
             }
           ]
         },
@@ -1311,6 +1550,11 @@
               "name": "terrain",
               "type": "string",
               "value": "mountain"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 139
             }
           ]
         },
@@ -1325,6 +1569,11 @@
               "name": "terrain",
               "type": "string",
               "value": "water"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 133
             }
           ]
         },
@@ -1339,6 +1588,11 @@
               "name": "terrain",
               "type": "string",
               "value": "grass"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 127
             }
           ]
         },
@@ -1353,6 +1607,11 @@
               "name": "terrain",
               "type": "string",
               "value": "mountain"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 139
             }
           ]
         },
@@ -1367,6 +1626,11 @@
               "name": "terrain",
               "type": "string",
               "value": "grass"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 127
             }
           ]
         },
@@ -1381,6 +1645,11 @@
               "name": "terrain",
               "type": "string",
               "value": "water"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 133
             }
           ]
         },
@@ -1395,6 +1664,11 @@
               "name": "terrain",
               "type": "string",
               "value": "mountain"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 139
             }
           ]
         },
@@ -1409,6 +1683,11 @@
               "name": "terrain",
               "type": "string",
               "value": "grass"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 127
             }
           ]
         },
@@ -1423,6 +1702,11 @@
               "name": "terrain",
               "type": "string",
               "value": "mountain"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 139
             }
           ]
         },
@@ -1437,6 +1721,11 @@
               "name": "terrain",
               "type": "string",
               "value": "grass"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 127
             }
           ]
         },
@@ -1451,6 +1740,11 @@
               "name": "terrain",
               "type": "string",
               "value": "mountain"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 139
             }
           ]
         },
@@ -1465,6 +1759,11 @@
               "name": "terrain",
               "type": "string",
               "value": "water"
+            },
+            {
+              "name": "tile",
+              "type": "int",
+              "value": 133
             }
           ]
         }
@@ -1473,10 +1772,112 @@
       "visible": true,
       "x": 0,
       "y": 0
+    },
+    {
+      "id": 7,
+      "type": "objectgroup",
+      "name": "landmarks",
+      "draworder": "topdown",
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "visible": true,
+      "objects": [
+        {
+          "id": 293,
+          "name": "floating-courtyard",
+          "type": "",
+          "rotation": 0,
+          "visible": true,
+          "x": 0,
+          "y": 0,
+          "width": 48,
+          "height": 48,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "dominant"
+            }
+          ]
+        },
+        {
+          "id": 294,
+          "name": "broken-colonnade",
+          "type": "",
+          "rotation": 0,
+          "visible": true,
+          "x": 48,
+          "y": 0,
+          "width": 48,
+          "height": 48,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "secondary"
+            }
+          ]
+        },
+        {
+          "id": 295,
+          "name": "sky-bridge-garden",
+          "type": "",
+          "rotation": 0,
+          "visible": true,
+          "x": 96,
+          "y": 0,
+          "width": 48,
+          "height": 48,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "secondary"
+            }
+          ]
+        },
+        {
+          "id": 296,
+          "name": "north-ruin-gate",
+          "type": "",
+          "rotation": 0,
+          "visible": true,
+          "x": 144,
+          "y": 0,
+          "width": 48,
+          "height": 48,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "entrance"
+            }
+          ]
+        },
+        {
+          "id": 297,
+          "name": "south-ruin-gate",
+          "type": "",
+          "rotation": 0,
+          "visible": true,
+          "x": 192,
+          "y": 0,
+          "width": 48,
+          "height": 48,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "exit"
+            }
+          ]
+        }
+      ]
     }
   ],
-  "nextlayerid": 6,
-  "nextobjectid": 293,
+  "nextlayerid": 8,
+  "nextobjectid": 298,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.11.2",
