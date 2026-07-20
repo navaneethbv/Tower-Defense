@@ -55,17 +55,28 @@ export function showLoadout(root: HTMLElement, save: SaveGame, map: MapConfig): 
       for (const p of save.collection) {
         const s = getSpecies(p.speciesId);
         const chosen = selected.includes(p.uid);
-        const card = document.createElement("div");
+        const shell = document.createElement("div");
+        shell.className = "loadout-card-shell";
+        const card = document.createElement("button");
+        card.type = "button";
         card.className = "collection-card box-card loadout-card interactive-card" + (chosen ? " chosen" : "");
-        card.style.position = "relative";
+        card.setAttribute("aria-pressed", String(chosen));
+        card.setAttribute(
+          "aria-label",
+          `${chosen ? "Remove" : "Add"} ${displayName(p)} ${chosen ? "from" : "to"} team`,
+        );
         card.innerHTML = `
-          <button class="info-btn" aria-label="View Stats" title="View Stats">ℹ️</button>
           <img src="${spriteUrl(s.dex)}" alt="${displayName(p)}" />
           <b>${displayName(p)}</b>
           <span class="muted">Lv ${p.level} · IV ${ivScore(p)}%</span>
         `;
-        card.querySelector(".info-btn")!.addEventListener("click", (e) => {
-          e.stopPropagation();
+        const infoButton = document.createElement("button");
+        infoButton.type = "button";
+        infoButton.className = "info-btn";
+        infoButton.setAttribute("aria-label", `View ${displayName(p)} stats`);
+        infoButton.title = `View ${displayName(p)} stats`;
+        infoButton.textContent = "ℹ️";
+        infoButton.addEventListener("click", () => {
           showPokemonDetails(wrap, p, () => {});
         });
         card.addEventListener("click", () => {
@@ -74,7 +85,8 @@ export function showLoadout(root: HTMLElement, save: SaveGame, map: MapConfig): 
           else if (selected.length < slots) selected.push(p.uid);
           render();
         });
-        collectionGrid.appendChild(card);
+        shell.append(card, infoButton);
+        collectionGrid.appendChild(shell);
       }
 
       wrap.querySelector<HTMLButtonElement>("#back-btn")!.addEventListener("click", () => {

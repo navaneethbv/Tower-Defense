@@ -1065,6 +1065,15 @@ canvas.map-gallery-board {
 }
 
 /* Info overlay button for loadout selection */
+.loadout-card-shell {
+  position: relative;
+}
+
+.loadout-card-shell .loadout-card {
+  width: 100%;
+  height: 100%;
+}
+
 .info-btn {
   position: absolute;
   top: 8px;
@@ -1088,6 +1097,13 @@ canvas.map-gallery-board {
   background: var(--accent);
   border-color: var(--accent);
   color: #e0f2fe;
+}
+
+.interactive-card:focus-visible,
+.info-btn:focus-visible,
+.close-details-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
 }
 
 /* Pokémon Details Modal */
@@ -1288,4 +1304,3 @@ canvas.map-gallery-board {
   line-height: 1.4;
   margin: 4px 0 0;
 }
-

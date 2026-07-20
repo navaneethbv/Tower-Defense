@@ -197,6 +197,35 @@ export function drawPadState(
   ctx.strokeStyle = hovered ? "#ffffff" : colors[state];
   ctx.lineWidth = hovered || state === "compatible" ? 3 : 2;
   ctx.strokeRect(x + 5, y + 5, TILE - 10, TILE - 10);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (pad.terrain === "grass") {
+    ctx.moveTo(x + 9, y + 15);
+    ctx.lineTo(x + 15, y + 9);
+    ctx.lineTo(x + 21, y + 15);
+    ctx.lineTo(x + 15, y + 21);
+    ctx.closePath();
+    ctx.moveTo(x + 15, y + 10);
+    ctx.lineTo(x + 15, y + 20);
+  } else if (pad.terrain === "water") {
+    ctx.moveTo(x + 8, y + 12);
+    ctx.lineTo(x + 12, y + 10);
+    ctx.lineTo(x + 16, y + 12);
+    ctx.lineTo(x + 20, y + 10);
+    ctx.moveTo(x + 8, y + 19);
+    ctx.lineTo(x + 12, y + 17);
+    ctx.lineTo(x + 16, y + 19);
+    ctx.lineTo(x + 20, y + 17);
+  } else {
+    ctx.moveTo(x + 8, y + 20);
+    ctx.lineTo(x + 14, y + 9);
+    ctx.lineTo(x + 21, y + 20);
+    ctx.closePath();
+    ctx.moveTo(x + 11, y + 15);
+    ctx.lineTo(x + 14, y + 12);
+    ctx.lineTo(x + 17, y + 16);
+  }
+  ctx.stroke();
   if (state === "incompatible") {
     ctx.beginPath();
     ctx.moveTo(x + 14, y + 14);

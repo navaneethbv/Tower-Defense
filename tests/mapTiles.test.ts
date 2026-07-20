@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { MapConfig } from "../src/types";
 import {
   drawMapLayers,
+  drawPadState,
   padVisualState,
   pathTileConnections,
   tileSourceRect,
@@ -76,4 +77,32 @@ describe("map tile rendering helpers", () => {
       "idle",
     );
   });
+
+  it.each(["grass", "water", "mountain"] as const)(
+    "draws a non-color terrain glyph for %s pads",
+    (terrain) => {
+      const ctx = {
+        strokeStyle: "",
+        lineWidth: 0,
+        strokeRect: vi.fn(),
+        beginPath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        closePath: vi.fn(),
+        stroke: vi.fn(),
+      } as unknown as CanvasRenderingContext2D;
+
+      drawPadState(
+        ctx,
+        { id: `${terrain}-pad`, col: 1, row: 1, terrain, tile: 1 },
+        "idle",
+        false,
+      );
+
+      expect(ctx.beginPath).toHaveBeenCalled();
+      expect(ctx.moveTo).toHaveBeenCalled();
+      expect(ctx.lineTo).toHaveBeenCalled();
+      expect(ctx.stroke).toHaveBeenCalled();
+    },
+  );
 });

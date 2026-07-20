@@ -1,7 +1,8 @@
 import type { OwnedPokemon } from "../../types";
 import { getSpecies } from "../../data/species";
 import { spriteUrl } from "../../data/constants";
-import { displayName, ivScore } from "../../meta/collection";
+import { displayName, ivScore, persistentDamageBonus } from "../../meta/collection";
+import { Tower } from "../../engine/tower";
 import { ivBarsHtml, rarityColor } from "../components";
 
 export function showPokemonDetails(
@@ -11,18 +12,19 @@ export function showPokemonDetails(
 ): void {
   const s = getSpecies(p.speciesId);
 
-  // Calculate real-time stats
-  const persistentBonus = Math.min(1.5, (p.level - 1) * 0.05);
-  const dmg = Math.round(
-    s.base.damage * Math.pow(p.level, 0.48) * (1 + p.ivs.damage / 100) * (1 + persistentBonus)
+  const statsTower = new Tower(
+    p.uid,
+    p.speciesId,
+    p.ivs,
+    0,
+    0,
+    false,
+    persistentDamageBonus(p),
+    p.level,
   );
-  const range = Math.round(
-    s.base.range * Math.pow(p.level, 0.25) * (1 + p.ivs.range / 100)
-  );
-  const rawCooldown =
-    (s.base.cooldown * Math.pow(0.97, Math.pow(p.level - 1, 0.7))) /
-    (1 - p.ivs.attackSpeed / 300);
-  const attackSpeed = (1 / rawCooldown).toFixed(2);
+  const dmg = Math.round(statsTower.damage());
+  const range = Math.round(statsTower.rangePx());
+  const attackSpeed = (1 / statsTower.cooldown()).toFixed(2);
 
   const modal = document.createElement("div");
   modal.className = "reveal pokemon-details-overlay";
@@ -82,10 +84,20 @@ export function showPokemonDetails(
       : "";
 
   modal.innerHTML = `
-    <div class="reveal-card pokemon-details-card" style="border-color:${rarityColor(s.rarity)}">
+    <div
+      class="reveal-card pokemon-details-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pokemon-details-title"
+      style="border-color:${rarityColor(s.rarity)}"
+    >
       <div class="details-header">
-        <h2>${displayName(p)}</h2>
-        <button class="close-details-btn" id="close-details-btn">×</button>
+        <h2 id="pokemon-details-title">${displayName(p)}</h2>
+        <button
+          class="close-details-btn"
+          id="close-details-btn"
+          aria-label="Close Pokémon details"
+        >×</button>
       </div>
       
       <div class="details-body">
@@ -110,7 +122,7 @@ export function showPokemonDetails(
           </div>
 
           <div class="details-section">
-            <h3>Battle Stats</h3>
+            <h3>Battle Stats (Neutral Pad)</h3>
             <div class="detail-row"><span>Damage</span><b>${dmg}</b></div>
             <div class="detail-row"><span>Range</span><b>${range} px</b></div>
             <div class="detail-row"><span>Attack Speed</span><b>${attackSpeed} /s</b></div>
@@ -125,15 +137,33 @@ export function showPokemonDetails(
     </div>
   `;
 
+  const previousFocus = document.activeElement as HTMLElement | null;
+  const closeButton = modal.querySelector<HTMLButtonElement>("#close-details-btn")!;
+  let closed = false;
   const close = () => {
+    if (closed) return;
+    closed = true;
+    document.removeEventListener("keydown", onKeyDown);
     modal.remove();
+    previousFocus?.focus();
     onClose();
   };
+  const onKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+    } else if (event.key === "Tab") {
+      event.preventDefault();
+      closeButton.focus();
+    }
+  };
 
-  modal.querySelector("#close-details-btn")!.addEventListener("click", close);
+  closeButton.addEventListener("click", close);
   modal.addEventListener("click", (e) => {
     if (e.target === modal) close();
   });
 
   parent.appendChild(modal);
+  document.addEventListener("keydown", onKeyDown);
+  closeButton.focus();
 }
