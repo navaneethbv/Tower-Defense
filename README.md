@@ -13,12 +13,13 @@ Play the production build at [tower-defense-navy.vercel.app](https://tower-defen
 - All 1,025 default-form National Dex species with modern Generation IX types.
 - Local Pokemon sprites for deterministic loading and offline-friendly production builds.
 - Egg purchasing, rarity pools, hatching, IVs, a persistent collection, and team loadouts.
-- In-run deployment, targeting modes, upgrades, evolution, selling, statuses, and active abilities.
+- Interactive Pokémon Stats & Pokedex Details Modal: Tap any Pokémon in your Collection or click the `ℹ️` Info button in the Team Loadout screen to view real-time calculated stats (damage, range, and attack speed taking level and IVs into account), combat roles, terrain compatibility, status applications, active abilities, and evolution conditions.
+- In-run gold upgrades, targeting modes, evolution, selling, statuses, and active abilities. Pokémon can be leveled up to 100 in-run using gold only, while battle kills feed persistent Collection XP.
 - Free mid-wave redeployment: a deployed Pokemon keeps its level, XP, evolution, targeting, and investment, and pays only a 5-second cooldown during which it cannot attack or use its ability.
 - Twenty-eight starter choices grouped by generation: the traditional Grass, Fire, and Water trio from Generations 1 through 9, plus Pikachu.
 - Eleven status effects: burn, poison, toxic, paralysis, freeze, sleep, confusion, slow, stun, armor break, and curse.
 - Status specialists trade roughly 20 percent direct damage for stronger status chance, duration, and magnitude, derived across the full roster from canonical types and stats.
-- Bosses and milestone enemies remain susceptible to every status, but freeze, sleep, stun, and paralysis interruptions last half as long against them and toxic growth uses a lower cap, so control never becomes permanent.
+- Bosses and milestone enemies remain susceptible to every status, but freeze, sleep, stun, and paralysis interruptions last half as long against them and toxic growth uses a lower cap, so control never becomes permanent. Steeper exponential HP scaling starts after wave 35 to match the level 100 power curve.
 - All status timing is deterministic for a fixed run seed, including paralysis and confusion interruptions, so runs replay identically.
 - Persistent speed, auto-wave, audio mute, and battle-effect preferences.
 - Seven progress achievements, route records, milestone captures, milestone egg drops, collection XP, and Pokecoin rewards.
@@ -49,6 +50,18 @@ Run the complete automated test suite.
 ```bash
 npm test
 ```
+
+Run test coverage analysis.
+
+```bash
+npm run test:coverage
+```
+
+The codebase maintains extremely high code coverage thresholds:
+- **Statements**: 99.77%
+- **Branches**: 97.29%
+- **Functions**: 100%
+- **Lines**: 99.77%
 
 Run the TypeScript check and production build.
 
