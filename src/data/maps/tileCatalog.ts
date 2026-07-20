@@ -9,10 +9,6 @@ export const PATH_TILE_IDS = new Set<number>([2, 10, 15, 18, 26, 42, 50, 58]);
 // Pad bases sit flush with their habitat and let drawPadState supply the
 // deployment ring. River and boulder tiles carry baked dark banks, so using
 // them here punched dark holes through ponds and cliffs.
-export const PAD_TILE_IDS = new Set<number>([3, 20, 29, 30, 46, 59]);
-
-export const PAD_TILE_BY_TERRAIN = {
-  grass: 29,
-  water: 3,
-  mountain: 20,
-} as const;
+export const PAD_TILE_IDS = new Set<number>([
+  3, 4, 5, 12, 14, 20, 23, 27, 29, 30, 31, 41, 44, 46, 48, 59,
+]);

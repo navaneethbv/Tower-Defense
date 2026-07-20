@@ -4,7 +4,11 @@ import { getEnemy } from "../src/data/enemies";
 import { generateWave } from "../src/waves/generator";
 import { buildTerrain } from "../src/data/maps/terrain";
 import { MAP_ATLAS_TILE_COUNT, PAD_TILE_IDS } from "../src/data/maps/tileCatalog";
-import { pathCellKeys, routeVisualMetrics } from "../src/data/maps/validation";
+import {
+  maxPadPathCoverage,
+  pathCellKeys,
+  routeVisualMetrics,
+} from "../src/data/maps/validation";
 
 describe("map configs", () => {
   it("rejects unknown route ids", () => {
@@ -117,6 +121,29 @@ describe("map configs", () => {
     const padCells = new Set(map.deploymentPads.map((pad) => `${pad.col},${pad.row}`));
     for (const padCell of padCells) expect(pathCells.has(padCell)).toBe(false);
     for (const decor of map.decor) expect(padCells.has(`${decor.col},${decor.row}`)).toBe(false);
+  });
+
+  it.each([
+    ["verdant_route", 11, [20, 29, 30]],
+    ["river_crossing", 14, [20, 27, 29]],
+    ["granite_cave", 14, [3, 14, 44]],
+    ["ember_caldera", 11, [3, 5, 44]],
+    ["frostbound_lake", 13, [12, 23, 46]],
+    ["shadow_marsh", 14, [41, 48, 59]],
+    ["skygarden_ruins", 9, [14, 29, 30]],
+    ["ancient_sanctuary", 10, [4, 30, 31]],
+    ["indigo_plateau", 9, [20, 30, 31]],
+  ] as const)("keeps %s pad coverage bounded and visually biome-specific", (
+    mapId,
+    coverageCap,
+    padTiles,
+  ) => {
+    const map = getMap(mapId);
+
+    expect(maxPadPathCoverage(map, 2.5)).toBeLessThanOrEqual(coverageCap);
+    expect([...new Set(map.deploymentPads.map((pad) => pad.tile))].sort((a, b) => a - b)).toEqual(
+      padTiles,
+    );
   });
 
   it("every enemy and boss id in every pool resolves", () => {

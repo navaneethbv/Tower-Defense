@@ -4,6 +4,7 @@ import { spriteUrl } from "../../data/constants";
 import { hatchEgg } from "../../meta/eggs";
 import { displayName, ivScore } from "../../meta/collection";
 import { ivBarsHtml, rarityColor } from "../components";
+import { showPokemonDetails } from "../components/pokemonDetails";
 import { playSound } from "../audio";
 
 // The player's box: hatch eggs (with a reveal) and browse every owned Pokémon.
@@ -57,8 +58,8 @@ export function showCollection(root: HTMLElement, save: SaveGame): Promise<void>
       }
       for (const p of save.collection) {
         const s = getSpecies(p.speciesId);
-        const card = document.createElement("div");
-        card.className = "collection-card box-card";
+        const card = document.createElement("button");
+        card.className = "collection-card box-card interactive-card";
         card.style.borderColor = rarityColor(s.rarity);
         card.innerHTML = `
           <img src="${spriteUrl(s.dex)}" alt="${displayName(p)}" />
@@ -66,6 +67,9 @@ export function showCollection(root: HTMLElement, save: SaveGame): Promise<void>
           <span class="muted">Lv ${p.level} · ${ivScore(p)}% IV</span>
           ${ivBarsHtml(p.ivs)}
         `;
+        card.addEventListener("click", () => {
+          showPokemonDetails(wrap, p, () => {});
+        });
         grid.appendChild(card);
       }
 

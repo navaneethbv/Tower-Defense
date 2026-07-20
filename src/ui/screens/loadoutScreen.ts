@@ -3,6 +3,7 @@ import { getSpecies } from "../../data/species";
 import { spriteUrl } from "../../data/constants";
 import { unlockedSlots } from "../../meta/progression";
 import { displayName, ivScore } from "../../meta/collection";
+import { showPokemonDetails } from "../components/pokemonDetails";
 
 export type LoadoutResult = { start: true } | { start: false };
 
@@ -54,13 +55,19 @@ export function showLoadout(root: HTMLElement, save: SaveGame, map: MapConfig): 
       for (const p of save.collection) {
         const s = getSpecies(p.speciesId);
         const chosen = selected.includes(p.uid);
-        const card = document.createElement("button");
-        card.className = "collection-card" + (chosen ? " chosen" : "");
+        const card = document.createElement("div");
+        card.className = "collection-card box-card loadout-card interactive-card" + (chosen ? " chosen" : "");
+        card.style.position = "relative";
         card.innerHTML = `
+          <button class="info-btn" aria-label="View Stats" title="View Stats">ℹ️</button>
           <img src="${spriteUrl(s.dex)}" alt="${displayName(p)}" />
           <b>${displayName(p)}</b>
           <span class="muted">Lv ${p.level} · IV ${ivScore(p)}%</span>
         `;
+        card.querySelector(".info-btn")!.addEventListener("click", (e) => {
+          e.stopPropagation();
+          showPokemonDetails(wrap, p, () => {});
+        });
         card.addEventListener("click", () => {
           const idx = selected.indexOf(p.uid);
           if (idx >= 0) selected.splice(idx, 1);

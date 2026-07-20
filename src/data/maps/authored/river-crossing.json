@@ -1855,7 +1855,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 27
             }
           ]
         },
@@ -1921,7 +1921,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 27
             }
           ]
         },
@@ -1987,7 +1987,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 27
             }
           ]
         },
@@ -2053,7 +2053,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 27
             }
           ]
         },
@@ -2119,7 +2119,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 27
             }
           ]
         },

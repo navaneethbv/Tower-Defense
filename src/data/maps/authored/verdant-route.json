@@ -2260,7 +2260,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 30
             }
           ]
         },
@@ -2326,7 +2326,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 30
             }
           ]
         },
@@ -2392,7 +2392,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 30
             }
           ]
         },
@@ -2458,7 +2458,7 @@
             {
               "name": "tile",
               "type": "int",
-              "value": 3
+              "value": 30
             }
           ]
         },
