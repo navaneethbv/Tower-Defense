@@ -50,6 +50,35 @@ export function pathCellKeys(
   return keys;
 }
 
+export function maxPadPathCoverage(
+  map: MapConfig,
+  range: number,
+  spacing = 0.5,
+): number {
+  const samples: { x: number; y: number }[] = [];
+  for (let index = 1; index < map.path.length; index++) {
+    const start = map.path[index - 1]!;
+    const end = map.path[index]!;
+    const distance = Math.hypot(end.x - start.x, end.y - start.y);
+    const steps = Math.max(1, Math.ceil(distance / spacing));
+    for (let step = 0; step <= steps; step++) {
+      const progress = step / steps;
+      samples.push({
+        x: start.x + (end.x - start.x) * progress,
+        y: start.y + (end.y - start.y) * progress,
+      });
+    }
+  }
+
+  const rangeSquared = range * range;
+  return map.deploymentPads.reduce((highest, pad) => {
+    const coverage = samples.filter(
+      (point) => (point.x - pad.col) ** 2 + (point.y - pad.row) ** 2 <= rangeSquared,
+    ).length;
+    return Math.max(highest, coverage);
+  }, 0);
+}
+
 export function routeVisualMetrics(map: MapConfig): RouteVisualMetrics {
   const landmarkRoles: Record<LandmarkRole, number> = {
     dominant: 0,

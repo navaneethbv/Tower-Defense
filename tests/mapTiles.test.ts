@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { MapConfig } from "../src/types";
-import { drawMapLayers, padVisualState, tileSourceRect } from "../src/engine/render/mapTiles";
+import {
+  drawMapLayers,
+  drawPadState,
+  padVisualState,
+  pathTileConnections,
+  tileSourceRect,
+} from "../src/engine/render/mapTiles";
 
 describe("map tile rendering helpers", () => {
   it("maps one-based tile IDs into the eight-column atlas", () => {
@@ -31,6 +37,32 @@ describe("map tile rendering helpers", () => {
     expect(draws).toEqual([1, 2, 5, 5]);
   });
 
+  it("connects baked-edge dirt tiles to horizontal runs and corners", () => {
+    const horizontal = {
+      cols: 3,
+      rows: 1,
+      pathTiles: [2, 2, 2],
+    } as MapConfig;
+    const corner = {
+      cols: 3,
+      rows: 3,
+      pathTiles: [0, 0, 0, 2, 2, 0, 0, 2, 0],
+    } as MapConfig;
+
+    expect(pathTileConnections(horizontal, 1, 0)).toEqual({
+      north: false,
+      east: true,
+      south: false,
+      west: true,
+    });
+    expect(pathTileConnections(corner, 1, 1)).toEqual({
+      north: false,
+      east: false,
+      south: true,
+      west: true,
+    });
+  });
+
   it("prioritizes occupied and compatibility pad states", () => {
     expect(padVisualState({ occupied: true, selectedTerrain: null, padTerrain: "grass" })).toBe(
       "occupied",
@@ -45,4 +77,32 @@ describe("map tile rendering helpers", () => {
       "idle",
     );
   });
+
+  it.each(["grass", "water", "mountain"] as const)(
+    "draws a non-color terrain glyph for %s pads",
+    (terrain) => {
+      const ctx = {
+        strokeStyle: "",
+        lineWidth: 0,
+        strokeRect: vi.fn(),
+        beginPath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        closePath: vi.fn(),
+        stroke: vi.fn(),
+      } as unknown as CanvasRenderingContext2D;
+
+      drawPadState(
+        ctx,
+        { id: `${terrain}-pad`, col: 1, row: 1, terrain, tile: 1 },
+        "idle",
+        false,
+      );
+
+      expect(ctx.beginPath).toHaveBeenCalled();
+      expect(ctx.moveTo).toHaveBeenCalled();
+      expect(ctx.lineTo).toHaveBeenCalled();
+      expect(ctx.stroke).toHaveBeenCalled();
+    },
+  );
 });

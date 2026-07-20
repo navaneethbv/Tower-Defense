@@ -3,6 +3,7 @@ import { getSpecies } from "../../data/species";
 import { spriteUrl } from "../../data/constants";
 import { unlockedSlots } from "../../meta/progression";
 import { displayName, ivScore } from "../../meta/collection";
+import { showPokemonDetails } from "../components/pokemonDetails";
 
 export type LoadoutResult = { start: true } | { start: false };
 
@@ -54,20 +55,38 @@ export function showLoadout(root: HTMLElement, save: SaveGame, map: MapConfig): 
       for (const p of save.collection) {
         const s = getSpecies(p.speciesId);
         const chosen = selected.includes(p.uid);
+        const shell = document.createElement("div");
+        shell.className = "loadout-card-shell";
         const card = document.createElement("button");
-        card.className = "collection-card" + (chosen ? " chosen" : "");
+        card.type = "button";
+        card.className = "collection-card box-card loadout-card interactive-card" + (chosen ? " chosen" : "");
+        card.setAttribute("aria-pressed", String(chosen));
+        card.setAttribute(
+          "aria-label",
+          `${chosen ? "Remove" : "Add"} ${displayName(p)} ${chosen ? "from" : "to"} team`,
+        );
         card.innerHTML = `
           <img src="${spriteUrl(s.dex)}" alt="${displayName(p)}" />
           <b>${displayName(p)}</b>
           <span class="muted">Lv ${p.level} · IV ${ivScore(p)}%</span>
         `;
+        const infoButton = document.createElement("button");
+        infoButton.type = "button";
+        infoButton.className = "info-btn";
+        infoButton.setAttribute("aria-label", `View ${displayName(p)} stats`);
+        infoButton.title = `View ${displayName(p)} stats`;
+        infoButton.textContent = "ℹ️";
+        infoButton.addEventListener("click", () => {
+          showPokemonDetails(wrap, p, () => {});
+        });
         card.addEventListener("click", () => {
           const idx = selected.indexOf(p.uid);
           if (idx >= 0) selected.splice(idx, 1);
           else if (selected.length < slots) selected.push(p.uid);
           render();
         });
-        collectionGrid.appendChild(card);
+        shell.append(card, infoButton);
+        collectionGrid.appendChild(shell);
       }
 
       wrap.querySelector<HTMLButtonElement>("#back-btn")!.addEventListener("click", () => {

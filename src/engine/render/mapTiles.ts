@@ -10,6 +10,15 @@ export interface PadStateInput {
   padTerrain: Terrain;
 }
 
+export interface PathTileConnections {
+  north: boolean;
+  east: boolean;
+  south: boolean;
+  west: boolean;
+}
+
+const AUTO_CONNECTED_PATH_TILE_IDS = new Set([2]);
+
 let atlas: HTMLImageElement | undefined;
 let atlasPromise: Promise<HTMLImageElement | undefined> | undefined;
 
@@ -78,6 +87,77 @@ function drawTile(
   );
 }
 
+export function pathTileConnections(
+  map: Pick<MapConfig, "cols" | "rows" | "pathTiles">,
+  col: number,
+  row: number,
+): PathTileConnections {
+  const hasPath = (targetCol: number, targetRow: number): boolean =>
+    targetCol >= 0 &&
+    targetCol < map.cols &&
+    targetRow >= 0 &&
+    targetRow < map.rows &&
+    (map.pathTiles[targetRow * map.cols + targetCol] ?? 0) > 0;
+  const connections = {
+    north: hasPath(col, row - 1),
+    east: hasPath(col + 1, row),
+    south: hasPath(col, row + 1),
+    west: hasPath(col - 1, row),
+  };
+  const interiorConnectionCount = Object.values(connections).filter(Boolean).length;
+  if (interiorConnectionCount === 1) {
+    if (row === 0) connections.north = true;
+    if (col === map.cols - 1) connections.east = true;
+    if (row === map.rows - 1) connections.south = true;
+    if (col === 0) connections.west = true;
+  }
+  return connections;
+}
+
+function drawConnectedPathTile(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  tile: number,
+  col: number,
+  row: number,
+  connections: PathTileConnections,
+): void {
+  const source = tileSourceRect(tile);
+  const x = col * TILE;
+  const y = row * TILE;
+  const drawArm = (
+    clipX: number,
+    clipY: number,
+    clipWidth: number,
+    clipHeight: number,
+    rotation: number,
+  ): void => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(clipX, clipY, clipWidth, clipHeight);
+    ctx.clip();
+    ctx.translate(x + TILE / 2, y + TILE / 2);
+    ctx.rotate(rotation);
+    ctx.drawImage(
+      image,
+      source.x,
+      source.y,
+      source.width,
+      source.height,
+      -TILE / 2,
+      -TILE / 2,
+      TILE,
+      TILE,
+    );
+    ctx.restore();
+  };
+
+  if (connections.north) drawArm(x, y, TILE, TILE / 2, 0);
+  if (connections.south) drawArm(x, y + TILE / 2, TILE, TILE / 2, 0);
+  if (connections.west) drawArm(x, y, TILE / 2, TILE, Math.PI / 2);
+  if (connections.east) drawArm(x + TILE / 2, y, TILE / 2, TILE, Math.PI / 2);
+}
+
 export function drawMapLayers(
   ctx: CanvasRenderingContext2D,
   map: MapConfig,
@@ -87,7 +167,13 @@ export function drawMapLayers(
   for (let row = 0; row < map.rows; row++) {
     for (let col = 0; col < map.cols; col++) {
       drawTile(ctx, image, map.tiles[row * map.cols + col] ?? map.theme.groundTile, col, row);
-      drawTile(ctx, image, map.pathTiles[row * map.cols + col] ?? 0, col, row);
+      const pathTile = map.pathTiles[row * map.cols + col] ?? 0;
+      const connections = pathTileConnections(map, col, row);
+      if (AUTO_CONNECTED_PATH_TILE_IDS.has(pathTile) && Object.values(connections).some(Boolean)) {
+        drawConnectedPathTile(ctx, image, pathTile, col, row, connections);
+      } else {
+        drawTile(ctx, image, pathTile, col, row);
+      }
     }
   }
   for (const decor of map.decor) drawTile(ctx, image, decor.tile, decor.col, decor.row);
@@ -111,6 +197,35 @@ export function drawPadState(
   ctx.strokeStyle = hovered ? "#ffffff" : colors[state];
   ctx.lineWidth = hovered || state === "compatible" ? 3 : 2;
   ctx.strokeRect(x + 5, y + 5, TILE - 10, TILE - 10);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (pad.terrain === "grass") {
+    ctx.moveTo(x + 9, y + 15);
+    ctx.lineTo(x + 15, y + 9);
+    ctx.lineTo(x + 21, y + 15);
+    ctx.lineTo(x + 15, y + 21);
+    ctx.closePath();
+    ctx.moveTo(x + 15, y + 10);
+    ctx.lineTo(x + 15, y + 20);
+  } else if (pad.terrain === "water") {
+    ctx.moveTo(x + 8, y + 12);
+    ctx.lineTo(x + 12, y + 10);
+    ctx.lineTo(x + 16, y + 12);
+    ctx.lineTo(x + 20, y + 10);
+    ctx.moveTo(x + 8, y + 19);
+    ctx.lineTo(x + 12, y + 17);
+    ctx.lineTo(x + 16, y + 19);
+    ctx.lineTo(x + 20, y + 17);
+  } else {
+    ctx.moveTo(x + 8, y + 20);
+    ctx.lineTo(x + 14, y + 9);
+    ctx.lineTo(x + 21, y + 20);
+    ctx.closePath();
+    ctx.moveTo(x + 11, y + 15);
+    ctx.lineTo(x + 14, y + 12);
+    ctx.lineTo(x + 17, y + 16);
+  }
+  ctx.stroke();
   if (state === "incompatible") {
     ctx.beginPath();
     ctx.moveTo(x + 14, y + 14);
