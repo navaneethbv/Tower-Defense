@@ -51,6 +51,18 @@ Run the complete automated test suite.
 npm test
 ```
 
+Run test coverage analysis.
+
+```bash
+npm run test:coverage
+```
+
+The codebase maintains extremely high code coverage thresholds:
+- **Statements**: 99.77%
+- **Branches**: 97.29%
+- **Functions**: 100%
+- **Lines**: 99.77%
+
 Run the TypeScript check and production build.
 
 ```bash
