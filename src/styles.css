@@ -1304,3 +1304,230 @@ canvas.map-gallery-board {
   line-height: 1.4;
   margin: 4px 0 0;
 }
+
+/* --- Upcoming wave preview -------------------------------------------- */
+/* Wave generation is deterministic for a run seed, so this lists exactly what
+   is about to spawn. Shown only while building, when it can change a decision. */
+.wave-preview {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.wave-preview[hidden] {
+  display: none;
+}
+
+.wave-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.wave-preview-head h4 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.wave-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.wave-badge.boss {
+  background: #c95f58;
+  color: #fff;
+}
+
+.wave-badge.rare { background: #38bdf8; color: #06283d; }
+.wave-badge.power { background: #fbbf24; color: #3b2a06; }
+.wave-badge.mythical { background: #c084fc; color: #2a0b3d; }
+.wave-badge.legendary { background: #f472b6; color: #3d0a24; }
+
+.wave-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+.wave-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.wave-row.boss {
+  background: rgba(201, 95, 88, 0.16);
+}
+
+.wave-row img {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+.wave-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wave-count {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.wave-stat {
+  min-width: 34px;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.wave-warnings {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wave-warning {
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border-left: 2px solid #fbbf24;
+  padding: 3px 6px;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Column labels for the wave list: the HP and armor numbers are meaningless
+   without them. */
+.wave-head {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+}
+
+.wave-head span:nth-child(3),
+.wave-head span:nth-child(4),
+.wave-head span:nth-child(5) {
+  text-align: right;
+}
+
+.wave-head span:nth-child(4),
+.wave-head span:nth-child(5) {
+  min-width: 34px;
+}
+
+/* --- Enemy inspection ------------------------------------------------- */
+/* Surfaces mechanics that decide a fight (spectral, regen, heavy armor) and
+   that were previously invisible to the player. */
+.enemy-panel {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.enemy-panel[hidden] {
+  display: none;
+}
+
+.enemy-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.enemy-head img {
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+
+.enemy-head h4 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.enemy-hp {
+  height: 5px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.enemy-hp span {
+  display: block;
+  height: 100%;
+  background: #4ade80;
+}
+
+.enemy-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.enemy-chip {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  color: #0f172a;
+}
+
+.enemy-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.enemy-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  padding: 1px 0;
+}
+
+.enemy-row span {
+  color: var(--muted);
+}
+
+.enemy-row.emphasis b {
+  color: #fbbf24;
+}
+
+.enemy-note {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--muted);
+  border-left: 2px solid var(--border);
+  padding-left: 6px;
+}

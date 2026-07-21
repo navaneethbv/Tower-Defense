@@ -30,11 +30,9 @@ describe("route thumbnails", () => {
     drawRouteThumbnail(ctx, MAPS[0]!, {} as HTMLImageElement, 270, 180);
 
     expect(ctx.imageSmoothingEnabled).toBe(false);
-    expect(save.mock.calls.length).toBeGreaterThan(1);
+    expect(save.mock.calls.length).toBeGreaterThanOrEqual(1);
     expect(scale).toHaveBeenCalledWith(270 / 864, 180 / 576);
     expect(restore).toHaveBeenCalledTimes(save.mock.calls.length);
-    expect(clip).toHaveBeenCalled();
-    expect(rotate).toHaveBeenCalledWith(Math.PI / 2);
     expect(drawImage.mock.calls.length).toBeGreaterThan(20);
   });
 });

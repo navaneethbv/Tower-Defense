@@ -324,30 +324,30 @@ describe("loadAuthoredMap", () => {
 
   it("rejects undefined ground and path tile ids", () => {
     const source = createValidSource();
-    (source.layers.find((layer) => layer.name === "ground") as TiledTileLayer).data[0] = 65;
+    (source.layers.find((layer) => layer.name === "ground") as TiledTileLayer).data[0] = 999;
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow(
-      "test_route: undefined tile 65 in ground",
+      "test_route: undefined tile 999 in ground",
     );
 
     const second = createValidSource();
-    (second.layers.find((layer) => layer.name === "pathTiles") as TiledTileLayer).data[0] = 65;
+    (second.layers.find((layer) => layer.name === "pathTiles") as TiledTileLayer).data[0] = 999;
     expect(() => loadAuthoredMap(second, mockConfig)).toThrow(
-      "test_route: undefined tile 65 in pathTiles",
+      "test_route: undefined tile 999 in pathTiles",
     );
   });
 
   it("rejects undefined decor and pad tile ids", () => {
     const source = createValidSource();
-    looseLayer(source, "decor").objects[0]!.gid = 65;
+    looseLayer(source, "decor").objects[0]!.gid = 999;
     expect(() => loadAuthoredMap(source, mockConfig)).toThrow(
-      "test_route: undefined tile 65 in decor",
+      "test_route: undefined tile 999 in decor",
     );
 
     const second = createValidSource();
     (looseLayer(second, "pads").objects[0]!.properties as { name: string; value: number }[])
-      .find((property) => property.name === "tile")!.value = 65;
+      .find((property) => property.name === "tile")!.value = 999;
     expect(() => loadAuthoredMap(second, mockConfig)).toThrow(
-      "test_route: undefined tile 65 in pad pad-1",
+      "test_route: undefined tile 999 in pad pad-1",
     );
   });
 });

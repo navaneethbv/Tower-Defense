@@ -17,6 +17,9 @@ import { cycleRedeploymentPad, redeploymentPads } from "./redeployment";
 import { statusSummary } from "./statusPresentation";
 import { playSound } from "./audio";
 import { generateWave } from "../waves/generator";
+import type { Enemy } from "../engine/enemy";
+import { enemyAtPoint, enemyPanelHtml, enemyView } from "./enemyPanel";
+import { previewNextWave, wavePreviewHtml } from "./wavePreview";
 
 const TARGETING_MODES: TargetingMode[] = [
   "first",
@@ -117,10 +120,12 @@ export function runGame(
 ): Promise<GameScreenResult> {
   return new Promise((resolve) => {
     let selectedTower: Tower | null = null;
+    let selectedEnemy: Enemy | null = null;
     let movingTower: Tower | null = null;
     let deployUid: string | null = null;
     let hoveredTile: { col: number; row: number } | null = null;
     let autoWaveDelay = 0.75;
+    let enemyPanelTicks = 0;
     let milestoneBannerTimer: number | undefined;
 
     const game = new GameSession(map, team, runSeed, {
@@ -164,6 +169,8 @@ export function runGame(
         <h3>Team</h3>
         <div id="team-panel" class="team-panel"></div>
         <div id="tower-panel" class="tower-panel"></div>
+        <div id="enemy-panel" class="enemy-panel" hidden></div>
+        <div id="wave-preview" class="wave-preview"></div>
         <p class="hint" id="hint">Select a Pokémon, then click a tile to deploy.</p>
       </aside>
     `;
@@ -179,6 +186,8 @@ export function runGame(
     const hudAutoWave = layout.querySelector<HTMLInputElement>("#hud-auto-wave")!;
     const teamPanel = layout.querySelector<HTMLElement>("#team-panel")!;
     const towerPanel = layout.querySelector<HTMLElement>("#tower-panel")!;
+    const enemyPanel = layout.querySelector<HTMLElement>("#enemy-panel")!;
+    const wavePreviewPanel = layout.querySelector<HTMLElement>("#wave-preview")!;
     const hint = layout.querySelector<HTMLElement>("#hint")!;
     const milestoneBanner = layout.querySelector<HTMLElement>("#milestone-banner")!;
 
@@ -206,6 +215,15 @@ export function runGame(
           hovered: hoveredTile,
         });
         renderAbilityState();
+        // A selected enemy's health and statuses change every tick, but
+        // rebuilding its card at 60fps would be wasteful, so refresh ~10x/sec.
+        if (selectedEnemy) {
+          enemyPanelTicks += 1;
+          if (enemyPanelTicks >= 6) {
+            enemyPanelTicks = 0;
+            renderEnemy();
+          }
+        }
       },
     );
     loop.speed = settings.speed;
@@ -286,11 +304,20 @@ export function runGame(
         tryPlace(col, row);
       } else if (existing) {
         selectedTower = existing;
+        selectedEnemy = null;
         deployUid = null;
         renderTower();
+        renderEnemy();
       } else {
+        // No tower here: try to inspect an enemy instead. Enemies move, so the
+        // hit test needs a grab radius rather than exact tile containment.
+        const x = (ev.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (ev.clientY - rect.top) * (canvas.height / rect.height);
+        const enemy = enemyAtPoint(game.enemies, x, y, TILE * 0.7);
+        selectedEnemy = enemy;
         selectedTower = null;
         renderTower();
+        renderEnemy();
       }
     });
 
@@ -365,6 +392,36 @@ export function runGame(
       hudStart.textContent = game.phase === "wave" ? "Wave in progress…" : `Start Wave ${game.waveNumber + 1}`;
       renderTeam();
       renderTower();
+      renderEnemy();
+      renderWavePreview();
+    }
+
+    // Wave generation is deterministic for this run seed, so the preview shows
+    // exactly what will spawn. Only useful while building, when there is still
+    // a decision to make; during a wave the enemy panel is the live view.
+    function renderWavePreview(): void {
+      if (game.phase !== "building") {
+        wavePreviewPanel.hidden = true;
+        return;
+      }
+      const preview = previewNextWave(map, game.waveNumber, runSeed);
+      if (!preview) {
+        wavePreviewPanel.hidden = true;
+        return;
+      }
+      wavePreviewPanel.hidden = false;
+      wavePreviewPanel.innerHTML = wavePreviewHtml(preview);
+    }
+
+    function renderEnemy(): void {
+      if (selectedEnemy && !selectedEnemy.alive) selectedEnemy = null;
+      if (!selectedEnemy) {
+        enemyPanel.hidden = true;
+        enemyPanel.innerHTML = "";
+        return;
+      }
+      enemyPanel.hidden = false;
+      enemyPanel.innerHTML = enemyPanelHtml(enemyView(selectedEnemy));
     }
 
     function renderTeam(): void {

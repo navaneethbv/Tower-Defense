@@ -1,6 +1,6 @@
 import type { DeploymentPad, MapConfig, Terrain } from "../../types";
 import { TILE } from "../../data/constants";
-import { MAP_ATLAS_COLUMNS } from "../../data/maps/tileCatalog";
+import { MAP_ATLAS_COLUMNS, pathVariant } from "../../data/maps/tileCatalog";
 
 export type PadVisualState = "idle" | "compatible" | "incompatible" | "occupied";
 
@@ -16,8 +16,6 @@ export interface PathTileConnections {
   south: boolean;
   west: boolean;
 }
-
-const AUTO_CONNECTED_PATH_TILE_IDS = new Set([2]);
 
 let atlas: HTMLImageElement | undefined;
 let atlasPromise: Promise<HTMLImageElement | undefined> | undefined;
@@ -114,48 +112,14 @@ export function pathTileConnections(
   return connections;
 }
 
-function drawConnectedPathTile(
-  ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  tile: number,
-  col: number,
-  row: number,
-  connections: PathTileConnections,
-): void {
-  const source = tileSourceRect(tile);
-  const x = col * TILE;
-  const y = row * TILE;
-  const drawArm = (
-    clipX: number,
-    clipY: number,
-    clipWidth: number,
-    clipHeight: number,
-    rotation: number,
-  ): void => {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(clipX, clipY, clipWidth, clipHeight);
-    ctx.clip();
-    ctx.translate(x + TILE / 2, y + TILE / 2);
-    ctx.rotate(rotation);
-    ctx.drawImage(
-      image,
-      source.x,
-      source.y,
-      source.width,
-      source.height,
-      -TILE / 2,
-      -TILE / 2,
-      TILE,
-      TILE,
-    );
-    ctx.restore();
-  };
-
-  if (connections.north) drawArm(x, y, TILE, TILE / 2, 0);
-  if (connections.south) drawArm(x, y + TILE / 2, TILE, TILE / 2, 0);
-  if (connections.west) drawArm(x, y, TILE / 2, TILE, Math.PI / 2);
-  if (connections.east) drawArm(x + TILE / 2, y, TILE / 2, TILE, Math.PI / 2);
+/** Packs path connections into the four-bit mask the wang tables are indexed by. */
+export function pathConnectionMask(connections: PathTileConnections): number {
+  return (
+    (connections.north ? 1 : 0) |
+    (connections.east ? 2 : 0) |
+    (connections.south ? 4 : 0) |
+    (connections.west ? 8 : 0)
+  );
 }
 
 export function drawMapLayers(
@@ -168,65 +132,136 @@ export function drawMapLayers(
     for (let col = 0; col < map.cols; col++) {
       drawTile(ctx, image, map.tiles[row * map.cols + col] ?? map.theme.groundTile, col, row);
       const pathTile = map.pathTiles[row * map.cols + col] ?? 0;
-      const connections = pathTileConnections(map, col, row);
-      if (AUTO_CONNECTED_PATH_TILE_IDS.has(pathTile) && Object.values(connections).some(Boolean)) {
-        drawConnectedPathTile(ctx, image, pathTile, col, row, connections);
-      } else {
-        drawTile(ctx, image, pathTile, col, row);
+      if (pathTile > 0) {
+        // Autotiled variants are transparent outside the road body, so they
+        // composite over the authored ground and each route keeps its terrain.
+        const mask = pathConnectionMask(pathTileConnections(map, col, row));
+        drawTile(ctx, image, pathVariant(pathTile, mask), col, row);
       }
     }
   }
   for (const decor of map.decor) drawTile(ctx, image, decor.tile, decor.col, decor.row);
-  for (const pad of map.deploymentPads) drawTile(ctx, image, pad.tile, pad.col, pad.row);
+  // Pads deliberately draw no base tile. Stamping a pad's habitat tile here put
+  // water discs on top of grass wherever the habitat and ground layers disagree,
+  // which read as debris floating on the board. drawPadState marks them instead.
 }
 
+/**
+ * Habitat tints for idle pad markers. Chosen to stay legible over grass, water,
+ * stone and lava alike, since a pad's habitat routinely differs from the ground
+ * art beneath it.
+ */
+const PAD_TERRAIN_TINT: Record<Terrain, string> = {
+  grass: "rgba(158,230,130,0.95)",
+  water: "rgba(125,205,247,0.95)",
+  mountain: "rgba(214,205,188,0.95)",
+};
+
+/** Small habitat mark: leaf for grass, ripples for water, peak for mountain. */
+function drawTerrainGlyph(
+  ctx: CanvasRenderingContext2D,
+  terrain: Terrain,
+  x: number,
+  y: number,
+  colour: string,
+): void {
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (terrain === "grass") {
+    ctx.moveTo(x + 18, y + 24);
+    ctx.lineTo(x + 24, y + 18);
+    ctx.lineTo(x + 30, y + 24);
+    ctx.lineTo(x + 24, y + 30);
+    ctx.closePath();
+    ctx.moveTo(x + 24, y + 19);
+    ctx.lineTo(x + 24, y + 29);
+  } else if (terrain === "water") {
+    ctx.moveTo(x + 17, y + 21);
+    ctx.lineTo(x + 21, y + 19);
+    ctx.lineTo(x + 25, y + 21);
+    ctx.lineTo(x + 29, y + 19);
+    ctx.moveTo(x + 17, y + 28);
+    ctx.lineTo(x + 21, y + 26);
+    ctx.lineTo(x + 25, y + 28);
+    ctx.lineTo(x + 29, y + 26);
+  } else {
+    ctx.moveTo(x + 17, y + 29);
+    ctx.lineTo(x + 23, y + 18);
+    ctx.lineTo(x + 30, y + 29);
+    ctx.closePath();
+    ctx.moveTo(x + 20, y + 24);
+    ctx.lineTo(x + 23, y + 21);
+    ctx.lineTo(x + 26, y + 25);
+  }
+  ctx.stroke();
+}
+
+/**
+ * Deployment pads.
+ *
+ * Idle pads stay quiet so the artwork reads, but they are tinted and marked by
+ * habitat: `pad.terrain` decides which species may deploy there, and the ground
+ * art underneath contradicts it on more than half the pads in the shipped
+ * routes, so the marker is the only truthful cue available before the player
+ * commits to a Pokemon. A filled highlight is added only once a deployment or
+ * redeployment is actually in progress.
+ */
 export function drawPadState(
   ctx: CanvasRenderingContext2D,
   pad: DeploymentPad,
   state: PadVisualState,
   hovered: boolean,
 ): void {
+  // A tower already covers an occupied pad; drawing over it only adds noise.
+  if (state === "occupied") return;
+
   const x = pad.col * TILE;
   const y = pad.row * TILE;
+
+  if (state === "idle" && !hovered) {
+    // Tinted by habitat, because which species a pad accepts is decided by
+    // pad.terrain and the ground art underneath frequently disagrees with it:
+    // a water pad often sits on grass. The tint is the only cue a player has
+    // before picking a Pokemon, so it has to carry the habitat, not just say
+    // "buildable".
+    ctx.strokeStyle = PAD_TERRAIN_TINT[pad.terrain];
+    ctx.lineWidth = 2;
+    const inset = 7;
+    const arm = 6;
+    ctx.beginPath();
+    for (const [cx, cy, dx, dy] of [
+      [inset, inset, 1, 1],
+      [TILE - inset, inset, -1, 1],
+      [inset, TILE - inset, 1, -1],
+      [TILE - inset, TILE - inset, -1, -1],
+    ] as const) {
+      ctx.moveTo(x + cx, y + cy + dy * arm);
+      ctx.lineTo(x + cx, y + cy);
+      ctx.lineTo(x + cx + dx * arm, y + cy);
+    }
+    ctx.stroke();
+    drawTerrainGlyph(ctx, pad.terrain, x, y, PAD_TERRAIN_TINT[pad.terrain]);
+    return;
+  }
+
   const colors: Record<PadVisualState, string> = {
     idle: "rgba(238,248,201,0.72)",
     compatible: "#eef8c9",
     incompatible: "#c95f58",
     occupied: "#182536",
   };
+  if (state === "compatible" || hovered) {
+    ctx.fillStyle = hovered ? "rgba(238,248,201,0.26)" : "rgba(238,248,201,0.14)";
+    ctx.fillRect(x + 5, y + 5, TILE - 10, TILE - 10);
+  }
   ctx.strokeStyle = hovered ? "#ffffff" : colors[state];
   ctx.lineWidth = hovered || state === "compatible" ? 3 : 2;
   ctx.strokeRect(x + 5, y + 5, TILE - 10, TILE - 10);
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  if (pad.terrain === "grass") {
-    ctx.moveTo(x + 9, y + 15);
-    ctx.lineTo(x + 15, y + 9);
-    ctx.lineTo(x + 21, y + 15);
-    ctx.lineTo(x + 15, y + 21);
-    ctx.closePath();
-    ctx.moveTo(x + 15, y + 10);
-    ctx.lineTo(x + 15, y + 20);
-  } else if (pad.terrain === "water") {
-    ctx.moveTo(x + 8, y + 12);
-    ctx.lineTo(x + 12, y + 10);
-    ctx.lineTo(x + 16, y + 12);
-    ctx.lineTo(x + 20, y + 10);
-    ctx.moveTo(x + 8, y + 19);
-    ctx.lineTo(x + 12, y + 17);
-    ctx.lineTo(x + 16, y + 19);
-    ctx.lineTo(x + 20, y + 17);
-  } else {
-    ctx.moveTo(x + 8, y + 20);
-    ctx.lineTo(x + 14, y + 9);
-    ctx.lineTo(x + 21, y + 20);
-    ctx.closePath();
-    ctx.moveTo(x + 11, y + 15);
-    ctx.lineTo(x + 14, y + 12);
-    ctx.lineTo(x + 17, y + 16);
-  }
-  ctx.stroke();
+  drawTerrainGlyph(ctx, pad.terrain, x, y, hovered ? "#ffffff" : colors[state]);
   if (state === "incompatible") {
+    ctx.strokeStyle = colors.incompatible;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(x + 14, y + 14);
     ctx.lineTo(x + TILE - 14, y + TILE - 14);
