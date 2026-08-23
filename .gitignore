@@ -8,3 +8,7 @@ dist
 .env*.local
 coverage
 .superpowers
+
+# graphify (generated knowledge-graph output; regenerate with `graphify update .`)
+graphify-out/
+lib/graphify-out/
