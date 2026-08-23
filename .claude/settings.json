@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$HOME/.graphify-agent/graphify-hook.sh\" search"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$HOME/.graphify-agent/graphify-hook.sh\" read"
+          }
+        ]
+      }
+    ]
+  }
+}
