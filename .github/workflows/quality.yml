@@ -17,49 +17,34 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Bypass checks for Code Owner
-        if: github.actor == 'navaneethbv'
-        run: echo "Bypassing checks for Code Owner"
       - name: Checkout
-        if: github.actor != 'navaneethbv'
         uses: actions/checkout@v7
       - name: Setup Node
-        if: github.actor != 'navaneethbv'
         uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        if: github.actor != 'navaneethbv'
         run: npm ci
       - name: Run lint
-        if: github.actor != 'navaneethbv'
         run: npm run lint
 
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Bypass checks for Code Owner
-        if: github.actor == 'navaneethbv'
-        run: echo "Bypassing checks for Code Owner"
       - name: Checkout
-        if: github.actor != 'navaneethbv'
         uses: actions/checkout@v7
       - name: Setup Node
-        if: github.actor != 'navaneethbv'
         uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        if: github.actor != 'navaneethbv'
         run: npm ci
       - name: Run tests with coverage
-        if: github.actor != 'navaneethbv'
         run: npm run test:coverage
       - name: Upload coverage
-        if: github.actor != 'navaneethbv'
         uses: actions/upload-artifact@v7
         with:
           name: coverage
@@ -71,23 +56,16 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Bypass checks for Code Owner
-        if: github.actor == 'navaneethbv'
-        run: echo "Bypassing checks for Code Owner"
       - name: Checkout
-        if: github.actor != 'navaneethbv'
         uses: actions/checkout@v7
       - name: Setup Node
-        if: github.actor != 'navaneethbv'
         uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        if: github.actor != 'navaneethbv'
         run: npm ci
       - name: Run build
-        if: github.actor != 'navaneethbv'
         run: npm run build
 
   sonar:
@@ -97,25 +75,20 @@ jobs:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - name: Bypass checks for Code Owner
-        if: github.actor == 'navaneethbv'
-        run: echo "Bypassing checks for Code Owner"
       - name: Checkout
-        if: github.actor != 'navaneethbv'
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Download coverage
-        if: github.actor != 'navaneethbv'
         uses: actions/download-artifact@v8
         with:
           name: coverage
           path: coverage/
       - name: Analyze with SonarQube Cloud
-        if: github.actor != 'navaneethbv' && env.SONAR_TOKEN != ''
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
       - name: Report missing SonarQube Cloud setup
-        if: github.actor != 'navaneethbv' && env.SONAR_TOKEN == ''
+        if: env.SONAR_TOKEN == ''
         run: echo '### SonarQube Cloud analysis is ready but requires the `SONAR_TOKEN` repository secret.' >> "$GITHUB_STEP_SUMMARY"
