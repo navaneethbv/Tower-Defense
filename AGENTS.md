@@ -1,3 +1,8 @@
+## Dependency freshness
+
+Before starting a new task, run `npx npm-check-updates` to check whether dependencies have newer versions available.
+Apply updates that are safe for this codebase, and skip a major bump if it breaks the toolchain (record why in the PR description) rather than forcing it through.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
