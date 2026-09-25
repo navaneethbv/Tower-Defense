@@ -641,7 +641,7 @@ Expected: zero failed tests, TypeScript exit zero, Vite build exit zero, and no 
 - [ ] **Step 3: Deploy through the linked Vercel project**
 
 Run: `vercel --prod --yes`.
-Expected: production deploy completes for the linked `navaneethbv/tower-defense` project.
+Expected: production deploy completes for the linked `tower-defense` Vercel project.
 
 - [ ] **Step 4: Smoke-test production**
 

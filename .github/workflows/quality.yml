@@ -89,6 +89,10 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+        with:
+          args: >-
+            -Dsonar.organization=${{ github.repository_owner }}
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
       - name: Report missing SonarQube Cloud setup
         if: env.SONAR_TOKEN == ''
         run: echo '### SonarQube Cloud analysis is ready but requires the `SONAR_TOKEN` repository secret.' >> "$GITHUB_STEP_SUMMARY"
