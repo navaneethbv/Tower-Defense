@@ -1,19 +1,23 @@
 version: 2
+# Every ecosystem below is batched into one weekly pull request per repository.
+multi-ecosystem-groups:
+  all-dependencies:
+    schedule:
+      interval: weekly
+
 updates:
   - package-ecosystem: npm
     directory: /
-    schedule:
-      interval: weekly
-    groups:
-      npm-dependencies:
-        patterns:
-          - "*"
+    patterns: ["*"]
+    multi-ecosystem-group: all-dependencies
+    ignore:
+      # TypeScript 7 is the native (Go) port; typescript-eslint does not support
+      # it yet ("typescript-eslint does not support TS 7.0"), so lint fails.
+      # Drop this ignore once typescript-eslint ships TS 7 support.
+      - dependency-name: "typescript"
+        versions: ["7.x"]
 
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: weekly
-    groups:
-      github-actions:
-        patterns:
-          - "*"
+    patterns: ["*"]
+    multi-ecosystem-group: all-dependencies
