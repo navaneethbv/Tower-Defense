@@ -162,7 +162,7 @@ Clearing browser site data resets progress.
 ## Deployment
 
 The project builds to a static `dist/` directory and includes Vercel configuration for asset caching.
-The production project is linked as `navaneethbv/tower-defense`.
+The production project is linked as the owner's `tower-defense` Vercel project.
 
 ```bash
 vercel --prod
@@ -172,9 +172,9 @@ vercel --prod
 
 GitHub Actions runs lint, 95 percent coverage-gated tests, and a production build on every push and pull request.
 The workflow also uploads the coverage report and passes it to SonarQube Cloud when the `SONAR_TOKEN` repository secret is configured.
-The SonarQube Cloud project uses the key `navaneethbv_Tower-Defense` and the organization `navaneethbv`.
+The SonarQube Cloud project uses the key `<owner>_Tower-Defense` and the owner's organization; the quality workflow passes both from the repository.
 Until that project and secret are created in SonarQube Cloud, the Sonar job reports the missing setup in its job summary and remains non-blocking.
-Dependabot checks npm and GitHub Actions dependencies weekly, and `CODEOWNERS` assigns repository-wide ownership to `@navaneethbv`.
+Dependabot checks npm and GitHub Actions dependencies weekly, and the repository owner reviews all changes.
 The protected `main` branch requires pull requests, green Lint, Test, and Build checks, resolved conversations, and linear history.
 
 ## Fan project notice

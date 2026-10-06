@@ -68,7 +68,7 @@ Persistent collection levels grant up to a 100 percent in-run damage bonus.
 ## Deployment state
 
 Vercel CLI was upgraded from 54.21.0 to 56.3.1.
-The local checkout is linked to `navaneethbv/tower-defense`.
+The local checkout is linked to the owner's `tower-defense` Vercel project.
 The production deployment is live at `https://tower-defense-navy.vercel.app`.
 Production boot, local starter sprites, starter persistence, desktop layout, mobile layout, root delivery, and immutable sprite caching were smoke-tested successfully.
 
@@ -76,9 +76,9 @@ Production boot, local starter sprites, starter persistence, desktop layout, mob
 
 The `Quality` GitHub Actions workflow runs independent Lint, Test, Build, and SonarCloud jobs.
 Tests enforce the existing 95 percent coverage thresholds and upload LCOV for SonarQube Cloud analysis.
-The SonarQube Cloud project key is `navaneethbv_Tower-Defense`, and analysis requires a repository `SONAR_TOKEN` secret that is not currently configured.
+The SonarQube Cloud project key is `<owner>_Tower-Defense` (passed by the workflow), and analysis requires a repository `SONAR_TOKEN` secret that is not currently configured.
 The SonarCloud job remains non-blocking and writes a setup notice until that secret exists.
-Dependabot checks npm and GitHub Actions weekly, and `CODEOWNERS` assigns the repository to `@navaneethbv`.
+Dependabot checks npm and GitHub Actions weekly, and the repository owner reviews all changes.
 The `main` branch is protected by required pull requests, Lint, Test, and Build checks, resolved conversations, linear history, and force-push and deletion prevention.
 
 ## Working tree
