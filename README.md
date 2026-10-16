@@ -29,7 +29,7 @@ Play the production build at [tower-defense-navy.vercel.app](https://tower-defen
 
 ## Requirements
 
-- Node.js 20 or newer.
+- Node.js 22.12 or newer, matching the Node 22 release line used by CI.
 - npm 10 or newer.
 
 ## Local development
@@ -37,7 +37,7 @@ Play the production build at [tower-defense-navy.vercel.app](https://tower-defen
 Install dependencies and start the Vite development server.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -57,11 +57,9 @@ Run test coverage analysis.
 npm run test:coverage
 ```
 
-The codebase maintains extremely high code coverage thresholds:
-- **Statements**: 99.77%
-- **Branches**: 97.29%
-- **Functions**: 100%
-- **Lines**: 99.77%
+`vite.config.ts` enforces 95% statements, branches, functions, and lines for the configured data, engine, meta, and wave modules.
+The UI, rendering, generated data, and other configured exclusions are outside that gate.
+Use the coverage report for measured results from the current revision.
 
 Run the TypeScript check and production build.
 

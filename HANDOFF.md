@@ -30,7 +30,8 @@ npm run build
 npm run preview -- --host 127.0.0.1
 ```
 
-The current automated gate contains 139 passing tests across 21 files.
+The original gameplay checkpoint recorded 139 passing tests across 21 files.
+Later checkpoints below record additional tests; run the verification commands for the current revision.
 The browser flow has been inspected at 1440 by 900 and 390 by 844.
 The verified flow covers home settings, reload persistence, route selection, loadout selection, mouse and keyboard deployment, milestone presentation, capture reveal, auto-wave start, and 3x speed.
 Earlier Phase 4 browser verification also covered starter selection, egg purchase, hatch reveal, collection display, and loadout use.
@@ -43,7 +44,9 @@ Run `npm run data:check` after either operation.
 The generator fetches only during development, uses bounded concurrency and retries, validates all 1,025 dex records, and replaces output atomically.
 Do not manually edit `src/data/generated/pokemon.ts` or generated reports.
 
-Regenerate the nine authored route maps and the shared original atlas with `node tools/generate-route-maps.mjs`.
+Validate the nine authored route maps with `node tools/generate-route-maps.mjs`.
+The command checks the committed maps; it does not regenerate maps or the atlas.
+Edit the authored map JSON and art directly when changing a battlefield.
 The checked-in Tiled-compatible map JSON lives under `src/data/maps/authored/`.
 The shared SVG, PNG, and TSX atlas lives under `public/maps/`.
 PokeAPI supplies Pokemon data and battle sprites, but it does not supply the complete route-map tileset used by the game.
